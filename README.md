@@ -1,58 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SimpPOS API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 REST API backend for SimpPOS — a home-use Point of Sale system for clothing stores.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3+
+- SQLite (included, zero setup)
+- Composer
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Quick Start
 
 ```bash
-composer require laravel/boost --dev
+# Install dependencies
+composer install
 
-php artisan boost:install
+# Configure environment
+cp .env.example .env
+php artisan key:generate
+
+# Run database migrations and seed
+php artisan migrate --seed
+
+# Create storage symlink for images
+php artisan storage:link
+
+# Start the development server
+php artisan serve
+# → http://localhost:8000
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Default Credentials
 
-## Contributing
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@simppos.test` | `password` |
+| Staff | `staff@simppos.test` | `password` |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Testing
 
-## Code of Conduct
+```bash
+php artisan test
+# 86 tests covering all endpoints
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## API Endpoints
 
-## Security Vulnerabilities
+All endpoints are prefixed with `/api` and protected by `auth:sanctum` (except login).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Auth
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Login (rate-limited) |
+| POST | `/api/auth/logout` | Revoke token |
+| GET | `/api/auth/me` | Current user |
 
-## License
+### Products & Variants
+| Method | Endpoint | Description |
+|---|---|---|
+| GET/POST/PUT/DELETE | `/api/products` | CRUD (paginated) |
+| POST | `/api/products/{id}/image` | Upload image |
+| GET | `/api/products/export/csv` | Export CSV |
+| POST | `/api/products/import/csv` | Import CSV |
+| GET | `/api/products/{id}/labels` | Barcode labels |
+| PATCH | `/api/variants/{id}/stock` | Adjust stock |
+| POST | `/api/variants/{id}/image` | Variant image |
+| GET | `/api/variants/by-sku/{sku}` | Barcode lookup |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Orders
+| Method | Endpoint | Description |
+|---|---|---|
+| GET/POST | `/api/orders` | List (paginated) / Create |
+| PATCH | `/api/orders/{id}/status` | Update status |
+| POST | `/api/orders/{id}/return` | Item-level return |
+
+### Invoices
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/invoices` | List (paginated) |
+| GET | `/api/invoices/{id}` | Detail |
+| GET | `/api/invoices/{id}/pdf` | Download PDF |
+| GET | `/api/invoices/{id}/receipt` | Thermal receipt |
+
+### Other
+- Categories, Customers, Suppliers, Discounts: full CRUD (paginated)
+- Cash Sessions: open/close/list/active
+- Stock Movements: list with filters (paginated)
+- Backup: create/list/download database snapshots
+- Reports: sales, best-sellers, payment methods
+- Dashboard: summary with low stock alerts
+- Users: admin-only CRUD (paginated)
+- Audit Log: admin-only (paginated)
+- Profile: self-service update
+
+Full documentation: see `SPECIFICATION.md`
+
+## Key Features
+
+- **Token authentication** via Laravel Sanctum
+- **Role-based access** (Admin/Staff) with admin middleware
+- **Validation errors** translated to user's locale
+- **Atomic stock operations** with transaction safety
+- **Idempotent status transitions** (no double-cancel)
+- **Thread-safe invoice numbering**
+- **86 feature tests** running on SQLite in-memory
