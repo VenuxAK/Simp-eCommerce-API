@@ -1,0 +1,40 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Category;
+use App\Models\Customer;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@simppos.test',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Staff',
+            'email' => 'staff@simppos.test',
+            'password' => bcrypt('password'),
+            'role' => 'staff',
+        ]);
+
+        $categories = Category::factory(6)->create();
+
+        $categories->each(function (Category $category) {
+            Product::factory(3)
+                ->has(ProductVariant::factory(4), 'variants')
+                ->create(['category_id' => $category->id]);
+        });
+
+        Customer::factory(15)->create();
+    }
+}

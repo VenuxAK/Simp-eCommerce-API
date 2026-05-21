@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class OrderResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'user' => new UserResource($this->whenLoaded('user')),
+            'customer_id' => $this->customer_id,
+            'customer' => new CustomerResource($this->whenLoaded('customer')),
+            'order_number' => $this->order_number,
+            'total_amount' => (float) $this->total_amount,
+            'status' => $this->status,
+            'notes' => $this->notes,
+            'items' => OrderItemResource::collection($this->whenLoaded('items')),
+            'payment' => new PaymentResource($this->whenLoaded('payment')),
+            'invoice' => new InvoiceResource($this->whenLoaded('invoice')),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
