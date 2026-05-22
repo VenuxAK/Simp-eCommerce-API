@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\StoreUserRequest;
-use App\Http\Requests\Api\UpdateUserRequest;
-use App\Http\Resources\UserResource;
+use App\Modules\Identity\Http\Requests\StoreUserRequest;
+use App\Modules\Identity\Http\Requests\UpdateUserRequest;
+use App\Modules\Identity\Http\Resources\UserResource;
+use App\Modules\Identity\Models\User;
 use App\Models\Order;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UserController extends Controller
 {
     use ApiResponse;
+
     public function index(): AnonymousResourceCollection
     {
         $users = User::orderBy('name')->paginate(20);
@@ -66,6 +67,7 @@ class UserController extends Controller
             return $this->respondError('Cannot delete another admin user.');
         }
 
+        // Check for orders linked to this user before allowing deletion.
         $orderCount = Order::where('user_id', $user->id)->count();
 
         if ($orderCount > 0) {

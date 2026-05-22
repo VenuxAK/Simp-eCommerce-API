@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Identity\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +15,11 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'role'];
+
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -31,23 +36,24 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    // TODO: Replace with contract calls when Sales/Cash/Inventory/Audit modules are extracted.
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(\App\Models\Order::class);
     }
 
     public function cashSessions(): HasMany
     {
-        return $this->hasMany(CashSession::class);
+        return $this->hasMany(\App\Models\CashSession::class);
     }
 
     public function stockMovements(): HasMany
     {
-        return $this->hasMany(StockMovement::class);
+        return $this->hasMany(\App\Models\StockMovement::class);
     }
 
     public function auditLogs(): HasMany
     {
-        return $this->hasMany(AuditLog::class);
+        return $this->hasMany(\App\Models\AuditLog::class);
     }
 }

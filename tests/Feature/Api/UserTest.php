@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Order;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use Tests\ApiTestCase;
 
 class UserTest extends ApiTestCase

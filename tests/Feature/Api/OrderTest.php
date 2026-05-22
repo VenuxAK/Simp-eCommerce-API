@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use Tests\ApiTestCase;
 
 class OrderTest extends ApiTestCase

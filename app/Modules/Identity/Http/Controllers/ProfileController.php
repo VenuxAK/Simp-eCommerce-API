@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\UpdateProfileRequest;
-use App\Http\Resources\UserResource;
-use Illuminate\Http\JsonResponse;
+use App\Modules\Identity\Http\Requests\UpdateProfileRequest;
+use App\Modules\Identity\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller

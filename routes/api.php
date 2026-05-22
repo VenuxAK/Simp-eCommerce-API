@@ -2,14 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/login', [App\Http\Controllers\Api\AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::post('/auth/login', [App\Modules\Identity\Http\Controllers\AuthController::class, 'login'])->middleware('throttle:10,1');
 
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
-    Route::post('/auth/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
-    Route::get('/auth/me', [App\Http\Controllers\Api\AuthController::class, 'me']);
+    Route::post('/auth/logout', [App\Modules\Identity\Http\Controllers\AuthController::class, 'logout']);
+    Route::get('/auth/me', [App\Modules\Identity\Http\Controllers\AuthController::class, 'me']);
 
-    Route::get('/profile', [App\Http\Controllers\Api\ProfileController::class, 'show']);
-    Route::put('/profile', [App\Http\Controllers\Api\ProfileController::class, 'update']);
+    Route::get('/profile', [App\Modules\Identity\Http\Controllers\ProfileController::class, 'show']);
+    Route::put('/profile', [App\Modules\Identity\Http\Controllers\ProfileController::class, 'update']);
 
     Route::get('/dashboard/summary', [App\Http\Controllers\Api\DashboardController::class, 'summary']);
 
@@ -82,6 +82,6 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/audit-logs', [App\Http\Controllers\Api\AuditLogController::class, 'index'])->middleware('admin');
 
     Route::middleware('admin')->group(function () {
-        Route::apiResource('users', App\Http\Controllers\Api\UserController::class);
+        Route::apiResource('users', App\Modules\Identity\Http\Controllers\UserController::class);
     });
 });

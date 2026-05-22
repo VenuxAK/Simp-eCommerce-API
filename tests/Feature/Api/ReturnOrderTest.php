@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\ProductVariant;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use Tests\ApiTestCase;
 
 class ReturnOrderTest extends ApiTestCase
