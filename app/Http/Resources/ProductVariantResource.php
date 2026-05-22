@@ -18,6 +18,7 @@ class ProductVariantResource extends JsonResource
             'color' => $this->color,
             'image' => $this->image,
             'image_url' => $this->image ? Storage::url($this->image) : null,
+            'product' => new ProductResource($this->whenLoaded('product')),
             'price_adjustment' => (float) $this->price_adjustment,
             'purchase_price' => $this->purchase_price ? (float) $this->purchase_price : null,
             'stock_quantity' => $this->stock_quantity,
