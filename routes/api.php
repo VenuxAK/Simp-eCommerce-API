@@ -83,5 +83,6 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::middleware('admin')->group(function () {
         Route::apiResource('users', App\Modules\Identity\Http\Controllers\UserController::class);
+        Route::apiResource('stores', App\Modules\Store\Http\Controllers\StoreController::class);
     });
 });
