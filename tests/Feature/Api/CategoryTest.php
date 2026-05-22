@@ -3,25 +3,10 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Category;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\ApiTestCase;
 
-class CategoryTest extends TestCase
+class CategoryTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
-    private array $adminHeaders;
-    private array $staffHeaders;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $admin = User::factory()->create(['role' => 'admin']);
-        $staff = User::factory()->create(['role' => 'staff']);
-        $this->adminHeaders = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
-        $this->staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
-    }
 
     public function test_can_list_categories(): void
     {

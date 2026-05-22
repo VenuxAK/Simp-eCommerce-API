@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\UpdateStockRequest;
 use App\Http\Resources\ProductVariantResource;
 use App\Models\ProductVariant;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductVariantController extends Controller
 {
+    use ApiResponse;
     public function updateStock(UpdateStockRequest $request, ProductVariant $variant): ProductVariantResource
     {
         $oldStock = $variant->stock_quantity;
@@ -44,7 +46,7 @@ class ProductVariantController extends Controller
         $path = $request->file('image')->store('variants', 'public');
         $variant->update(['image' => $path]);
 
-        return response()->json(new ProductVariantResource($variant));
+        return $this->respond(new ProductVariantResource($variant));
     }
 
     public function bySku(string $sku): JsonResponse
@@ -54,10 +56,10 @@ class ProductVariantController extends Controller
             ->first();
 
         if (!$variant) {
-            return response()->json(['message' => 'Variant not found for the given SKU.'], 404);
+            return $this->respondError('Variant not found for the given SKU.', 404);
         }
 
-        return response()->json([
+        return $this->respond([
             'variant' => new ProductVariantResource($variant),
             'product' => new \App\Http\Resources\ProductResource($variant->product),
         ]);

@@ -3,22 +3,15 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use Tests\TestCase;
+use Tests\ApiTestCase;
 
-class BackupTest extends TestCase
+class BackupTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
-    private array $headers;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->headers = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
 
         Storage::disk('local')->deleteDirectory('backups');
         Storage::disk('local')->makeDirectory('backups');
@@ -27,26 +20,26 @@ class BackupTest extends TestCase
 
     public function test_can_list_backups(): void
     {
-        $response = $this->getJson('/api/backups', $this->headers);
+        $response = $this->getJson('/api/backups', $this->adminHeaders);
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
     }
 
     public function test_can_download_backup(): void
     {
-        $response = $this->getJson('/api/backups/test-backup.sqlite/download', $this->headers);
+        $response = $this->getJson('/api/backups/test-backup.sqlite/download', $this->adminHeaders);
         $response->assertOk();
     }
 
     public function test_backup_download_rejects_path_traversal(): void
     {
-        $response = $this->getJson('/api/backups/..%2F..%2F..%2F.env/download', $this->headers);
+        $response = $this->getJson('/api/backups/..%2F..%2F..%2F.env/download', $this->adminHeaders);
         $response->assertStatus(404);
     }
 
     public function test_backup_download_rejects_direct_path(): void
     {
-        $response = $this->getJson('/api/backups/../../../.env/download', $this->headers);
+        $response = $this->getJson('/api/backups/../../../.env/download', $this->adminHeaders);
         $response->assertStatus(404);
     }
 

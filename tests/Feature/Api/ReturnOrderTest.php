@@ -2,19 +2,12 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Category;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\ApiTestCase;
 
-class ReturnOrderTest extends TestCase
+class ReturnOrderTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
-    private array $adminHeaders;
-    private array $staffHeaders;
     private int $orderId;
     private int $variantId;
     private int $orderItemId;
@@ -22,14 +15,7 @@ class ReturnOrderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $admin = User::factory()->create(['role' => 'admin']);
-        $staff = User::factory()->create(['role' => 'staff']);
-        $this->adminHeaders = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
-        $this->staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
-
-        $category = Category::factory()->create();
-        $product = Product::factory()->create(['category_id' => $category->id, 'base_price' => 50]);
-        $variant = ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10, 'price_adjustment' => 0]);
+        $variant = $this->createVariant(10, 50);
         $this->variantId = $variant->id;
 
         $orderRes = $this->postJson('/api/orders', [

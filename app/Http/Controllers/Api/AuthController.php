@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -29,7 +31,7 @@ class AuthController extends Controller
         $user->tokens()->delete();
         $token = $user->createToken('pos-token', ['*'], now()->addHours(24))->plainTextToken;
 
-        return response()->json([
+        return $this->respond([
             'token' => $token,
             'user' => new UserResource($user),
         ]);
@@ -43,7 +45,7 @@ class AuthController extends Controller
             $token->delete();
         }
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        return $this->respondMessage('Logged out successfully.');
     }
 
     public function me(Request $request): UserResource

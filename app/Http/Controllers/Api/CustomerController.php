@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreCustomerRequest;
 use App\Http\Requests\Api\UpdateCustomerRequest;
 use App\Http\Resources\CustomerResource;
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CustomerController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $customers = Customer::withCount('orders')
@@ -50,7 +52,7 @@ class CustomerController extends Controller
     {
         $customer->delete();
 
-        return response()->json(['message' => 'Customer deleted successfully.']);
+        return $this->respondMessage('Customer deleted successfully.');
     }
 
     public function orders(Customer $customer): AnonymousResourceCollection

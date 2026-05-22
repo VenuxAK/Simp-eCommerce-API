@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreDiscountRequest;
 use App\Http\Requests\Api\UpdateDiscountRequest;
 use App\Http\Resources\DiscountResource;
@@ -12,6 +13,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DiscountController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $discounts = Discount::orderBy('name')->paginate(20);
@@ -53,6 +55,6 @@ class DiscountController extends Controller
     public function destroy(Discount $discount): JsonResponse
     {
         $discount->delete();
-        return response()->json(['message' => 'Discount deleted.']);
+        return $this->respondMessage('Discount deleted.');
     }
 }

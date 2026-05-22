@@ -13,6 +13,13 @@ class StockMovement extends Model
         'reference_type', 'reference_id', 'user_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'quantity_change' => 'integer',
+        ];
+    }
+
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');

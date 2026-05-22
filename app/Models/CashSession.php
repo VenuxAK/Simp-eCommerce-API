@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CashSession extends Model
 {
+    /** @use HasFactory<\Database\Factories\CashSessionFactory> */
+    use HasFactory;
     protected $fillable = [
         'user_id', 'opened_at', 'closed_at',
         'opening_balance', 'closing_balance',

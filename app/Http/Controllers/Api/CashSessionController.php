@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Resources\CashSessionResource;
 use App\Models\CashSession;
 use App\Models\Order;
@@ -12,6 +13,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CashSessionController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $sessions = CashSession::with('user')
@@ -24,7 +26,7 @@ class CashSessionController extends Controller
     {
         $session = CashSession::whereNull('closed_at')->first();
         if (!$session) {
-            return response()->json(['data' => null]);
+            return $this->respond(['data' => null]);
         }
         return new CashSessionResource($session);
     }
@@ -33,7 +35,7 @@ class CashSessionController extends Controller
     {
         $existing = CashSession::whereNull('closed_at')->first();
         if ($existing) {
-            return response()->json(['message' => 'A cash session is already open.'], 422);
+            return $this->respondError('A cash session is already open.');
         }
 
         $data = $request->validate([
@@ -55,7 +57,7 @@ class CashSessionController extends Controller
     {
         $session = CashSession::whereNull('closed_at')->first();
         if (!$session) {
-            return response()->json(['message' => 'No open cash session.'], 422);
+            return $this->respondError('No open cash session.');
         }
 
         $data = $request->validate([
@@ -79,6 +81,6 @@ class CashSessionController extends Controller
             'notes' => $data['notes'] ?? $session->notes,
         ]);
 
-        return response()->json(new CashSessionResource($session));
+        return $this->respond(new CashSessionResource($session));
     }
 }

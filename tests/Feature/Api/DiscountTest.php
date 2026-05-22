@@ -2,29 +2,11 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Category;
 use App\Models\Discount;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\ApiTestCase;
 
-class DiscountTest extends TestCase
+class DiscountTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
-    private array $adminHeaders;
-    private array $staffHeaders;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $admin = User::factory()->create(['role' => 'admin']);
-        $staff = User::factory()->create(['role' => 'staff']);
-        $this->adminHeaders = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
-        $this->staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
-    }
 
     public function test_can_create_discount(): void
     {

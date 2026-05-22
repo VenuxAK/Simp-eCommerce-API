@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Resources\CashSessionResource;
 use App\Http\Resources\OrderResource;
 use App\Models\CashSession;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
+    use ApiResponse;
     public function summary(): JsonResponse
     {
         $today = now()->startOfDay();
@@ -37,7 +39,7 @@ class DashboardController extends Controller
 
         $activeSession = CashSession::whereNull('closed_at')->first();
 
-        return response()->json([
+        return $this->respond([
             'today_sales' => $todaySales,
             'today_orders_count' => $todayOrderCount,
             'active_session' => $activeSession ? new CashSessionResource($activeSession) : null,

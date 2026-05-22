@@ -14,6 +14,14 @@ class OrderItem extends Model
 
     protected $fillable = ['order_id', 'product_variant_id', 'quantity', 'unit_price', 'subtotal'];
 
+    protected function casts(): array
+    {
+        return [
+            'unit_price' => 'decimal:2',
+            'subtotal' => 'decimal:2',
+        ];
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

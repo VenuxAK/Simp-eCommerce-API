@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -12,6 +13,7 @@ use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $invoices = Invoice::with(['order.user', 'order.customer', 'order.items.variant.product'])
@@ -33,7 +35,7 @@ class InvoiceController extends Controller
     {
         $invoice->load(['order.user', 'order.customer', 'order.items.variant.product', 'order.payment']);
 
-        return response()->json([
+        return $this->respond([
             'invoice' => new InvoiceResource($invoice),
             'shop_name' => 'SimpPOS',
             'shop_address' => 'Home Store',

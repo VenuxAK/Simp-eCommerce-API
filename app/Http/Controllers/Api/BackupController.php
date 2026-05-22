@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -11,18 +12,19 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BackupController extends Controller
 {
+    use ApiResponse;
     public function create(): JsonResponse
     {
         $dbPath = database_path('database.sqlite');
         if (!File::exists($dbPath)) {
-            return response()->json(['message' => 'Database file not found.'], 404);
+            return $this->respondError('Database file not found.', 404);
         }
 
         $filename = 'backup-' . now()->format('Y-m-d-His') . '.sqlite';
         Storage::disk('local')->makeDirectory('backups');
         File::copy($dbPath, Storage::disk('local')->path("backups/{$filename}"));
 
-        return response()->json(['message' => 'Backup created.', 'filename' => $filename]);
+        return $this->respond(['message' => 'Backup created.', 'filename' => $filename]);
     }
 
     public function list(): JsonResponse
@@ -38,7 +40,7 @@ class BackupController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
-        return response()->json(['data' => $files]);
+        return $this->respond(['data' => $files]);
     }
 
     public function download(string $filename): BinaryFileResponse|JsonResponse
@@ -47,7 +49,7 @@ class BackupController extends Controller
 
         $path = "backups/{$filename}";
         if (!Storage::disk('local')->exists($path)) {
-            return response()->json(['message' => 'Backup not found.'], 404);
+            return $this->respondError('Backup not found.', 404);
         }
 
         return response()->download(Storage::disk('local')->path($path));

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreCategoryRequest;
 use App\Http\Requests\Api\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $categories = Category::withCount('products')->orderBy('name')->paginate(20);
@@ -51,6 +53,6 @@ class CategoryController extends Controller
     {
         $category->delete();
 
-        return response()->json(['message' => 'Category deleted successfully.']);
+        return $this->respondMessage('Category deleted successfully.');
     }
 }

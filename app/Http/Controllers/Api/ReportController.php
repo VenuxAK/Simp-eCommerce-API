@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 
 class ReportController extends Controller
 {
+    use ApiResponse;
     public function sales(): JsonResponse
     {
         $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
@@ -36,7 +38,7 @@ class ReportController extends Controller
             ])
             ->values();
 
-        return response()->json([
+        return $this->respond([
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'total_sales' => $totalSales,
@@ -100,7 +102,7 @@ class ReportController extends Controller
             ->groupBy('method')
             ->get();
 
-        return response()->json([
+        return $this->respond([
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'data' => $methods->map(fn($m) => [

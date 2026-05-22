@@ -15,6 +15,13 @@ class Product extends Model
 
     protected $fillable = ['category_id', 'supplier_id', 'name', 'slug', 'description', 'base_price', 'image'];
 
+    protected function casts(): array
+    {
+        return [
+            'base_price' => 'decimal:2',
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreSupplierRequest;
 use App\Http\Requests\Api\UpdateSupplierRequest;
 use App\Http\Resources\SupplierResource;
@@ -12,6 +13,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SupplierController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $suppliers = Supplier::withCount('products')->orderBy('name')->paginate(20);
@@ -39,11 +41,9 @@ class SupplierController extends Controller
     {
         $productCount = $supplier->products()->count();
         if ($productCount > 0) {
-            return response()->json([
-                'message' => "Cannot delete supplier with {$productCount} product(s).",
-            ], 422);
+            return $this->respondError("Cannot delete supplier with {$productCount} product(s).");
         }
         $supplier->delete();
-        return response()->json(['message' => 'Supplier deleted.']);
+        return $this->respondMessage('Supplier deleted.');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreProductRequest;
 use App\Http\Requests\Api\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $products = Product::with(['category', 'supplier', 'variants'])
@@ -100,9 +102,7 @@ class ProductController extends Controller
             if (!empty($toDelete)) {
                 $variantOrderCount = OrderItem::whereIn('product_variant_id', $toDelete)->count();
                 if ($variantOrderCount > 0) {
-                    return response()->json([
-                        'message' => "Cannot delete {$variantOrderCount} variant(s) with existing order history. Remove them from the payload to keep them.",
-                    ], 422);
+                    return $this->respondError("Cannot delete {$variantOrderCount} variant(s) with existing order history. Remove them from the payload to keep them.");
                 }
                 $product->variants()->whereIn('id', $toDelete)->delete();
             }
@@ -201,7 +201,7 @@ class ProductController extends Controller
         });
 
         fclose($handle);
-        return response()->json(['created' => $created, 'errors' => $errors]);
+        return $this->respond(['created' => $created, 'errors' => $errors]);
     }
 
     public function labels(Product $product): \Illuminate\View\View
@@ -223,7 +223,7 @@ class ProductController extends Controller
         $path = $request->file('image')->store('products', 'public');
         $product->update(['image' => $path]);
 
-        return response()->json(new ProductResource($product->load(['category', 'variants'])));
+        return $this->respond(new ProductResource($product->load(['category', 'variants'])));
     }
 
     public function destroy(Product $product): JsonResponse
@@ -231,13 +231,11 @@ class ProductController extends Controller
         $orderCount = OrderItem::whereIn('product_variant_id', $product->variants()->pluck('id'))->count();
 
         if ($orderCount > 0) {
-            return response()->json([
-                'message' => "Cannot delete product: {$orderCount} order item(s) reference it.",
-            ], 422);
+            return $this->respondError("Cannot delete product: {$orderCount} order item(s) reference it.");
         }
 
         $product->delete();
 
-        return response()->json(['message' => 'Product deleted successfully.']);
+        return $this->respondMessage('Product deleted successfully.');
     }
 }

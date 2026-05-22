@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\ReturnOrderRequest;
 use App\Http\Requests\Api\StoreOrderRequest;
 use App\Http\Requests\Api\UpdateOrderStatusRequest;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $orders = Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice'])
@@ -116,7 +118,7 @@ class OrderController extends Controller
         }
 
         if (!empty($errors)) {
-            return response()->json(['message' => implode(' ', $errors)], 422);
+            return $this->respondError(implode(' ', $errors));
         }
 
         try {
@@ -183,7 +185,7 @@ class OrderController extends Controller
                 return $order;
             });
         } catch (\RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+            return $this->respondError($e->getMessage());
         }
 
         return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice']))->response()->setStatusCode(201);
@@ -197,60 +199,64 @@ class OrderController extends Controller
     public function returnItems(ReturnOrderRequest $request, Order $order): JsonResponse
     {
         if (!in_array($order->status, ['completed', 'refunded'])) {
-            return response()->json(['message' => 'Order cannot be returned.'], 422);
+            return $this->respondError('Order cannot be returned.');
         }
 
         $data = $request->validated();
 
-        $order = DB::transaction(function () use ($order, $data) {
-            $totalReturn = 0;
+        try {
+            $order = DB::transaction(function () use ($order, $data) {
+                $totalReturn = 0;
 
-            foreach ($data['items'] as $returnItem) {
-                $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
+                foreach ($data['items'] as $returnItem) {
+                    $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
 
-                $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
-                    ->where('reference_type', 'order')
-                    ->where('reference_id', $order->id)
-                    ->where('reason', 'refunded')
-                    ->sum('quantity_change');
+                    $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
+                        ->where('reference_type', 'order')
+                        ->where('reference_id', $order->id)
+                        ->where('reason', 'refunded')
+                        ->sum('quantity_change');
 
-                $returnableQty = $orderItem->quantity - $alreadyReturned;
+                    $returnableQty = $orderItem->quantity - $alreadyReturned;
 
-                if ($returnItem['quantity'] > $returnableQty) {
-                    abort(422, "Return quantity exceeds remaining returnable quantity for item #{$orderItem->id} (max: {$returnableQty}).");
+                    if ($returnItem['quantity'] > $returnableQty) {
+                        throw new \RuntimeException("Return quantity exceeds remaining returnable quantity for item #{$orderItem->id} (max: {$returnableQty}).");
+                    }
+
+                    $unitPrice = $orderItem->unit_price;
+                    $subtotal = $unitPrice * $returnItem['quantity'];
+                    $totalReturn += $subtotal;
+
+                    $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
+                    $variant->increment('stock_quantity', $returnItem['quantity']);
+
+                    StockMovement::create([
+                        'product_variant_id' => $orderItem->product_variant_id,
+                        'quantity_change' => $returnItem['quantity'],
+                        'reason' => 'refunded',
+                        'reference_type' => 'order',
+                        'reference_id' => $order->id,
+                        'user_id' => request()->user()->id,
+                    ]);
                 }
 
-                $unitPrice = $orderItem->unit_price;
-                $subtotal = $unitPrice * $returnItem['quantity'];
-                $totalReturn += $subtotal;
+                $order->update(['status' => 'refunded']);
 
-                $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
-                $variant->increment('stock_quantity', $returnItem['quantity']);
+                if ($order->invoice) {
+                    $order->invoice->update(['status' => 'refunded']);
+                }
 
-                StockMovement::create([
-                    'product_variant_id' => $orderItem->product_variant_id,
-                    'quantity_change' => $returnItem['quantity'],
-                    'reason' => 'refunded',
-                    'reference_type' => 'order',
-                    'reference_id' => $order->id,
-                    'user_id' => request()->user()->id,
-                ]);
-            }
+                $notes = $order->notes ? $order->notes . "\n" : '';
+                $notes .= 'Return: ' . now()->toDateString() . ' - ' . $totalReturn . ' Ks returned';
+                $order->update(['notes' => $notes]);
 
-            $order->update(['status' => 'refunded']);
+                return $order;
+            });
+        } catch (\RuntimeException $e) {
+            return $this->respondError($e->getMessage());
+        }
 
-            if ($order->invoice) {
-                $order->invoice->update(['status' => 'refunded']);
-            }
-
-            $notes = $order->notes ? $order->notes . "\n" : '';
-            $notes .= 'Return: ' . now()->toDateString() . ' - ' . $totalReturn . ' Ks returned';
-            $order->update(['notes' => $notes]);
-
-            return $order;
-        });
-
-        return response()->json([
+        return $this->respond([
             'message' => 'Items returned successfully.',
             'order' => new OrderResource($order->load(['items.variant', 'invoice'])),
         ]);
@@ -269,9 +275,7 @@ class OrderController extends Controller
         ];
 
         if (!isset($allowedFrom[$currentStatus]) || !in_array($newStatus, $allowedFrom[$currentStatus])) {
-            return response()->json([
-                'message' => "Cannot transition from '{$currentStatus}' to '{$newStatus}'.",
-            ], 422);
+            return $this->respondError("Cannot transition from '{$currentStatus}' to '{$newStatus}'.");
         }
 
         $order = DB::transaction(function () use ($order, $newStatus, $currentStatus) {

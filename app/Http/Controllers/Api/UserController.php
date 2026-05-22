@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreUserRequest;
 use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UserController extends Controller
 {
+    use ApiResponse;
     public function index(): AnonymousResourceCollection
     {
         $users = User::orderBy('name')->paginate(20);
@@ -57,23 +59,21 @@ class UserController extends Controller
         $currentUser = request()->user();
 
         if ($user->id === $currentUser->id) {
-            return response()->json(['message' => 'Cannot delete yourself.'], 422);
+            return $this->respondError('Cannot delete yourself.');
         }
 
         if ($user->isAdmin() && $currentUser->isAdmin()) {
-            return response()->json(['message' => 'Cannot delete another admin user.'], 422);
+            return $this->respondError('Cannot delete another admin user.');
         }
 
         $orderCount = Order::where('user_id', $user->id)->count();
 
         if ($orderCount > 0) {
-            return response()->json([
-                'message' => "Cannot delete user: {$orderCount} order(s) are linked to this user.",
-            ], 422);
+            return $this->respondError("Cannot delete user: {$orderCount} order(s) are linked to this user.");
         }
 
         $user->delete();
 
-        return response()->json(['message' => 'User deleted successfully.']);
+        return $this->respondMessage('User deleted successfully.');
     }
 }
