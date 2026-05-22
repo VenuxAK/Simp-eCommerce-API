@@ -4,7 +4,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
-use App\Models\Supplier;
+use App\Modules\Supplier\Models\Supplier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;

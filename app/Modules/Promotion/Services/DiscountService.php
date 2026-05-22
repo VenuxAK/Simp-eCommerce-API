@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Promotion\Services;
 
-use App\Models\Discount;
+use App\Modules\Promotion\Models\Discount;
 
 class DiscountService
 {

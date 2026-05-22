@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Supplier;
+use App\Modules\Supplier\Models\Supplier;
 use Tests\ApiTestCase;
 
 class SupplierTest extends ApiTestCase

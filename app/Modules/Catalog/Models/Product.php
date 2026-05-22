@@ -2,7 +2,7 @@
 
 namespace App\Modules\Catalog\Models;
 
-use App\Models\Supplier;
+use App\Modules\Supplier\Models\Supplier;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

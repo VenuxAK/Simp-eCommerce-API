@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
-use App\Models\Payment;
+use App\Modules\Sales\Models\Payment;
 use Illuminate\Http\JsonResponse;
 
 class ReportController extends Controller

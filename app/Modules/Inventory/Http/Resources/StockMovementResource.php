@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Modules\Inventory\Http\Resources;
 
 use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use Illuminate\Http\Request;

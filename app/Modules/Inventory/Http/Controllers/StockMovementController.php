@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\QueryFilter;
-use App\Http\Resources\StockMovementResource;
-use App\Models\StockMovement;
+use App\Modules\Inventory\Http\Resources\StockMovementResource;
+use App\Modules\Inventory\Models\StockMovement;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StockMovementController extends Controller

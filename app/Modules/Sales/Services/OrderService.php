@@ -5,7 +5,7 @@ namespace App\Modules\Sales\Services;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
-use App\Services\StockService;
+use App\Modules\Inventory\Services\StockService;
 use Illuminate\Support\Facades\DB;
 
 class OrderService

@@ -7,7 +7,7 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
-use App\Models\StockMovement;
+use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Identity\Models\User;
 use Tests\ApiTestCase;
 

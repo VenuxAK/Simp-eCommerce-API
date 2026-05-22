@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Supplier\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\StoreSupplierRequest;
-use App\Http\Requests\Api\UpdateSupplierRequest;
-use App\Http\Resources\SupplierResource;
-use App\Models\Supplier;
+use App\Modules\Supplier\Http\Requests\StoreSupplierRequest;
+use App\Modules\Supplier\Http\Requests\UpdateSupplierRequest;
+use App\Modules\Supplier\Http\Resources\SupplierResource;
+use App\Modules\Supplier\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SupplierController extends Controller
 {
     use ApiResponse;
+
     public function index(): AnonymousResourceCollection
     {
         $suppliers = Supplier::withCount('products')->orderBy('name')->paginate(20);

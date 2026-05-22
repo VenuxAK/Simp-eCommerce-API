@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Promotion\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\StoreDiscountRequest;
-use App\Http\Requests\Api\UpdateDiscountRequest;
-use App\Http\Resources\DiscountResource;
-use App\Models\Discount;
+use App\Modules\Promotion\Http\Requests\StoreDiscountRequest;
+use App\Modules\Promotion\Http\Requests\UpdateDiscountRequest;
+use App\Modules\Promotion\Http\Resources\DiscountResource;
+use App\Modules\Promotion\Models\Discount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DiscountController extends Controller
 {
     use ApiResponse;
+
     public function index(): AnonymousResourceCollection
     {
         $discounts = Discount::orderBy('name')->paginate(20);

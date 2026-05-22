@@ -9,7 +9,7 @@ use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Catalog\Services\MediaService;
-use App\Services\StockService;
+use App\Modules\Inventory\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

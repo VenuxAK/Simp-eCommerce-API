@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Api;
+namespace App\Modules\Promotion\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDiscountRequest extends FormRequest
+class StoreDiscountRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,10 +14,10 @@ class UpdateDiscountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
-            'type' => ['sometimes', 'in:percentage,fixed'],
-            'value' => ['sometimes', 'numeric', 'min:0'],
-            'applies_to' => ['sometimes', 'in:all,category,product'],
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'in:percentage,fixed'],
+            'value' => ['required', 'numeric', 'min:0'],
+            'applies_to' => ['required', 'in:all,category,product'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'product_id' => ['nullable', 'exists:products,id'],
             'starts_at' => ['nullable', 'date'],

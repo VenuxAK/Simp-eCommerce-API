@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Inventory\Services;
 
 use App\Modules\Catalog\Models\ProductVariant;
-use App\Models\StockMovement;
+use App\Modules\Inventory\Models\StockMovement;
 
 class StockService
 {

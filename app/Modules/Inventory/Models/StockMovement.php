@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Inventory\Models;
 
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;

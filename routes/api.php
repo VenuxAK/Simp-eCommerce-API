@@ -49,12 +49,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/reports/best-sellers', [App\Http\Controllers\Api\ReportController::class, 'bestSellers']);
     Route::get('/reports/payment-methods', [App\Http\Controllers\Api\ReportController::class, 'paymentMethods']);
 
-    Route::get('/discounts/active', [App\Http\Controllers\Api\DiscountController::class, 'active']);
-    Route::get('/discounts', [App\Http\Controllers\Api\DiscountController::class, 'index']);
-    Route::get('/discounts/{discount}', [App\Http\Controllers\Api\DiscountController::class, 'show']);
-    Route::post('/discounts', [App\Http\Controllers\Api\DiscountController::class, 'store'])->middleware('admin');
-    Route::put('/discounts/{discount}', [App\Http\Controllers\Api\DiscountController::class, 'update'])->middleware('admin');
-    Route::delete('/discounts/{discount}', [App\Http\Controllers\Api\DiscountController::class, 'destroy'])->middleware('admin');
+    Route::get('/discounts/active', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'active']);
+    Route::get('/discounts', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'index']);
+    Route::get('/discounts/{discount}', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'show']);
+    Route::post('/discounts', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'store'])->middleware('admin');
+    Route::put('/discounts/{discount}', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'update'])->middleware('admin');
+    Route::delete('/discounts/{discount}', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'destroy'])->middleware('admin');
 
     Route::get('/categories', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'index']);
     Route::get('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'show']);
@@ -62,18 +62,18 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'update'])->middleware('admin');
     Route::delete('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'destroy'])->middleware('admin');
 
-    Route::get('/suppliers', [App\Http\Controllers\Api\SupplierController::class, 'index']);
-    Route::get('/suppliers/{supplier}', [App\Http\Controllers\Api\SupplierController::class, 'show']);
-    Route::post('/suppliers', [App\Http\Controllers\Api\SupplierController::class, 'store'])->middleware('admin');
-    Route::put('/suppliers/{supplier}', [App\Http\Controllers\Api\SupplierController::class, 'update'])->middleware('admin');
-    Route::delete('/suppliers/{supplier}', [App\Http\Controllers\Api\SupplierController::class, 'destroy'])->middleware('admin');
+    Route::get('/suppliers', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'index']);
+    Route::get('/suppliers/{supplier}', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'show']);
+    Route::post('/suppliers', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'store'])->middleware('admin');
+    Route::put('/suppliers/{supplier}', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'update'])->middleware('admin');
+    Route::delete('/suppliers/{supplier}', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'destroy'])->middleware('admin');
 
     Route::get('/cash-sessions', [App\Http\Controllers\Api\CashSessionController::class, 'index']);
     Route::get('/cash-sessions/active', [App\Http\Controllers\Api\CashSessionController::class, 'active']);
     Route::post('/cash-sessions/open', [App\Http\Controllers\Api\CashSessionController::class, 'open']);
     Route::post('/cash-sessions/close', [App\Http\Controllers\Api\CashSessionController::class, 'close']);
 
-    Route::get('/stock-movements', [App\Http\Controllers\Api\StockMovementController::class, 'index'])->middleware('admin');
+    Route::get('/stock-movements', [App\Modules\Inventory\Http\Controllers\StockMovementController::class, 'index'])->middleware('admin');
 
     Route::post('/backups', [App\Http\Controllers\Api\BackupController::class, 'create'])->middleware('admin');
     Route::get('/backups', [App\Http\Controllers\Api\BackupController::class, 'list'])->middleware('admin');

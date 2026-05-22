@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Promotion\Models;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use Database\Factories\DiscountFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,11 @@ class Discount extends Model
         'name', 'type', 'value', 'applies_to',
         'category_id', 'product_id', 'starts_at', 'ends_at', 'is_active',
     ];
+
+    protected static function newFactory(): DiscountFactory
+    {
+        return DiscountFactory::new();
+    }
 
     protected function casts(): array
     {

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Discount;
+use App\Modules\Promotion\Models\Discount;
 use Tests\ApiTestCase;
 
 class DiscountTest extends ApiTestCase
