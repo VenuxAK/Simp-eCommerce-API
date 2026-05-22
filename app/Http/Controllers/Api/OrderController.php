@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Api\Traits\ApiResponse;
-use App\Http\Controllers\Api\Traits\QueryFilter;
+use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\QueryFilter;
 use App\Http\Requests\Api\ReturnOrderRequest;
 use App\Http\Requests\Api\StoreOrderRequest;
 use App\Http\Requests\Api\UpdateOrderStatusRequest;

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Api\Traits\QueryFilter;
+use App\Modules\Core\Traits\QueryFilter;
 use App\Http\Resources\StockMovementResource;
 use App\Models\StockMovement;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

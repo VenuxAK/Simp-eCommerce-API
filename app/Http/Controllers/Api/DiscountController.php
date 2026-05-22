@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Api\Traits\ApiResponse;
+use App\Modules\Core\Traits\ApiResponse;
 use App\Http\Requests\Api\StoreDiscountRequest;
 use App\Http\Requests\Api\UpdateDiscountRequest;
 use App\Http\Resources\DiscountResource;
