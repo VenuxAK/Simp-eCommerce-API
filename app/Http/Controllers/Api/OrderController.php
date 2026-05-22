@@ -8,12 +8,12 @@ use App\Http\Requests\Api\ReturnOrderRequest;
 use App\Http\Requests\Api\StoreOrderRequest;
 use App\Http\Requests\Api\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
-use App\Models\Discount;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
-use App\Services\InvoiceNumberGenerator;
+use App\Services\DiscountService;
+use App\Services\OrderService;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\DB;
 class OrderController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(
+        private readonly OrderService $orderService,
+        private readonly DiscountService $discountService,
+        private readonly StockService $stockService,
+    ) {}
+
     public function index(): AnonymousResourceCollection
     {
         $orders = Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice'])
@@ -77,38 +84,9 @@ class OrderController extends Controller
             ];
         }
 
-        $discountAmount = 0;
-        $discountLabel = '';
-        $discountableTotal = 0;
-
-        if ($data['discount_id'] ?? null) {
-            $discount = Discount::find($data['discount_id']);
-            if ($discount && $discount->is_active) {
-                if ($discount->applies_to === 'all') {
-                    $discountableTotal = $totalAmount;
-                } elseif ($discount->applies_to === 'category' && $discount->category_id) {
-                    foreach ($orderItems as $item) {
-                        if ($item['variant']->product->category_id === $discount->category_id) {
-                            $discountableTotal += $item['subtotal'];
-                        }
-                    }
-                } elseif ($discount->applies_to === 'product' && $discount->product_id) {
-                    foreach ($orderItems as $item) {
-                        if ($item['variant']->product_id === $discount->product_id) {
-                            $discountableTotal += $item['subtotal'];
-                        }
-                    }
-                }
-
-                if ($discount->type === 'percentage') {
-                    $discountAmount = round($discountableTotal * $discount->value / 100, 2);
-                    $discountLabel = "{$discount->name} ({$discount->value}%)";
-                } else {
-                    $discountAmount = min($discount->value, $discountableTotal);
-                    $discountLabel = "{$discount->name} (-{$discount->value} Ks)";
-                }
-            }
-        }
+        [$discountAmount, $discountLabel] = $this->discountService->apply(
+            $data['discount_id'] ?? null, $orderItems, $totalAmount,
+        );
 
         $finalAmount = $totalAmount - $discountAmount;
 
@@ -122,68 +100,9 @@ class OrderController extends Controller
         }
 
         try {
-            $order = DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel) {
-                $notes = $data['notes'] ?? null;
-                if ($discountAmount > 0) {
-                    $notes = ($notes ? $notes . "\n" : '') . "Discount: {$discountLabel}";
-                }
-
-                $order = Order::create([
-                    'user_id' => request()->user()->id,
-                    'customer_id' => $data['customer_id'] ?? null,
-                    'order_number' => InvoiceNumberGenerator::generateOrderNumber(),
-                    'total_amount' => $finalAmount,
-                    'status' => 'completed',
-                    'notes' => $notes,
-                ]);
-
-                foreach ($orderItems as $item) {
-                    $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
-
-                    if (!$variant || $variant->stock_quantity < $item['quantity']) {
-                        throw new \RuntimeException("Insufficient stock for variant SKU: {$item['variant']['sku']}");
-                    }
-
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_variant_id' => $variant->id,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'subtotal' => $item['subtotal'],
-                    ]);
-
-                    $variant->decrement('stock_quantity', $item['quantity']);
-
-                    StockMovement::create([
-                        'product_variant_id' => $variant->id,
-                        'quantity_change' => -$item['quantity'],
-                        'reason' => 'sale',
-                        'reference_type' => 'order',
-                        'reference_id' => $order->id,
-                        'user_id' => request()->user()->id,
-                    ]);
-                }
-
-                $order->payment()->create([
-                    'method' => $data['payment']['method'],
-                    'amount' => $paidAmount,
-                    'paid_at' => now(),
-                ]);
-
-                $generator = app(InvoiceNumberGenerator::class);
-                $order->invoice()->create([
-                    'invoice_number' => $generator->generate(),
-                    'issued_date' => now(),
-                    'due_date' => now()->addDays(30),
-                    'status' => 'issued',
-                ]);
-
-                if ($data['customer_id'] ?? null) {
-                    $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
-                }
-
-                return $order;
-            });
+            $order = $this->orderService->createOrder(
+                $orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel,
+            );
         } catch (\RuntimeException $e) {
             return $this->respondError($e->getMessage());
         }
@@ -230,14 +149,9 @@ class OrderController extends Controller
                     $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
                     $variant->increment('stock_quantity', $returnItem['quantity']);
 
-                    StockMovement::create([
-                        'product_variant_id' => $orderItem->product_variant_id,
-                        'quantity_change' => $returnItem['quantity'],
-                        'reason' => 'refunded',
-                        'reference_type' => 'order',
-                        'reference_id' => $order->id,
-                        'user_id' => request()->user()->id,
-                    ]);
+                    $this->stockService->recordMovement(
+                        $variant, $returnItem['quantity'], 'refunded', 'order', $order->id,
+                    );
                 }
 
                 $order->update(['status' => 'refunded']);
@@ -288,30 +202,18 @@ class OrderController extends Controller
             if (in_array($newStatus, ['cancelled', 'refunded'])) {
                 foreach ($order->items as $item) {
                     $item->variant->increment('stock_quantity', $item->quantity);
-
-                    StockMovement::create([
-                        'product_variant_id' => $item->product_variant_id,
-                        'quantity_change' => $item->quantity,
-                        'reason' => $newStatus,
-                        'reference_type' => 'order',
-                        'reference_id' => $order->id,
-                        'user_id' => request()->user()->id,
-                    ]);
+                    $this->stockService->recordMovement(
+                        $item->variant, $item->quantity, $newStatus, 'order', $order->id,
+                    );
                 }
             }
 
             if ($newStatus === 'completed' && $currentStatus === 'pending') {
                 foreach ($order->items as $item) {
                     $item->variant->decrement('stock_quantity', $item->quantity);
-
-                    StockMovement::create([
-                        'product_variant_id' => $item->product_variant_id,
-                        'quantity_change' => -$item->quantity,
-                        'reason' => $newStatus,
-                        'reference_type' => 'order',
-                        'reference_id' => $order->id,
-                        'user_id' => request()->user()->id,
-                    ]);
+                    $this->stockService->recordMovement(
+                        $item->variant, -$item->quantity, $newStatus, 'order', $order->id,
+                    );
                 }
             }
 

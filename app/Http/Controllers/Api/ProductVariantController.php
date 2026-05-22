@@ -7,14 +7,20 @@ use App\Http\Controllers\Api\Traits\ApiResponse;
 use App\Http\Requests\Api\UpdateStockRequest;
 use App\Http\Resources\ProductVariantResource;
 use App\Models\ProductVariant;
-use App\Models\StockMovement;
+use App\Services\MediaService;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProductVariantController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(
+        private readonly StockService $stockService,
+        private readonly MediaService $mediaService,
+    ) {}
+
     public function updateStock(UpdateStockRequest $request, ProductVariant $variant): ProductVariantResource
     {
         $oldStock = $variant->stock_quantity;
@@ -22,12 +28,7 @@ class ProductVariantController extends Controller
         $diff = $request->quantity - $oldStock;
 
         if ($diff !== 0) {
-            StockMovement::create([
-                'product_variant_id' => $variant->id,
-                'quantity_change' => $diff,
-                'reason' => 'adjustment',
-                'user_id' => request()->user()->id,
-            ]);
+            $this->stockService->recordMovement($variant, $diff, 'adjustment');
         }
 
         return new ProductVariantResource($variant);
@@ -39,12 +40,7 @@ class ProductVariantController extends Controller
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        if ($variant->image) {
-            Storage::delete($variant->image);
-        }
-
-        $path = $request->file('image')->store('variants', 'public');
-        $variant->update(['image' => $path]);
+        $this->mediaService->uploadImage($variant, $request->file('image'));
 
         return $this->respond(new ProductVariantResource($variant));
     }

@@ -9,16 +9,24 @@ use App\Http\Requests\Api\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\MediaService;
+use App\Services\ProductExportService;
+use App\Services\ProductImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(
+        private readonly ProductImportService $importService,
+        private readonly ProductExportService $exportService,
+        private readonly MediaService $mediaService,
+    ) {}
+
     public function index(): AnonymousResourceCollection
     {
         $products = Product::with(['category', 'supplier', 'variants'])
@@ -113,25 +121,7 @@ class ProductController extends Controller
 
     public function exportCsv(): \Illuminate\Http\Response
     {
-        $products = Product::with(['category', 'variants', 'supplier'])->orderBy('name')->get();
-        $csv = "category,name,sku,size,color,base_price,price_adjustment,purchase_price,stock,supplier\n";
-
-        foreach ($products as $product) {
-            foreach ($product->variants as $variant) {
-                $csv .= implode(',', [
-                    '"' . ($product->category?->name ?? '') . '"',
-                    '"' . $product->name . '"',
-                    '"' . $variant->sku . '"',
-                    '"' . ($variant->size ?? '') . '"',
-                    '"' . ($variant->color ?? '') . '"',
-                    $product->base_price,
-                    $variant->price_adjustment,
-                    $variant->purchase_price ?? '',
-                    $variant->stock_quantity,
-                    '"' . ($product->supplier?->name ?? '') . '"',
-                ]) . "\n";
-            }
-        }
+        $csv = $this->exportService->exportToCsv();
 
         return response($csv, 200, [
             'Content-Type' => 'text/csv',
@@ -143,65 +133,9 @@ class ProductController extends Controller
     {
         $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
 
-        $handle = fopen($request->file('file')->getPathname(), 'r');
-        $header = fgetcsv($handle);
-        $created = 0;
-        $errors = [];
+        $result = $this->importService->importFromFile($request->file('file'));
 
-        DB::transaction(function () use ($handle, $header, &$created, &$errors) {
-            while (($row = fgetcsv($handle)) !== false) {
-                $data = array_combine($header, $row);
-
-                $rowValidator = \Illuminate\Support\Facades\Validator::make($data, [
-                    'name' => ['required', 'string', 'max:255'],
-                    'sku' => ['required', 'string', 'max:100'],
-                    'base_price' => ['nullable', 'numeric', 'min:0'],
-                    'price_adjustment' => ['nullable', 'numeric', 'min:0'],
-                    'stock' => ['nullable', 'integer', 'min:0'],
-                    'purchase_price' => ['nullable', 'numeric', 'min:0'],
-                ]);
-
-                if ($rowValidator->fails()) {
-                    $errors[] = "Row " . ($created + 1) . ": " . implode('; ', $rowValidator->errors()->all());
-                    continue;
-                }
-
-                $category = \App\Models\Category::firstOrCreate(['name' => $data['category'] ?? 'Uncategorized'], ['slug' => Str::slug($data['category'] ?? 'Uncategorized')]);
-                $supplier = null;
-                if (!empty($data['supplier'])) {
-                    $supplier = \App\Models\Supplier::firstOrCreate(['name' => $data['supplier']]);
-                }
-
-                try {
-                    $product = Product::firstOrCreate(
-                        ['name' => $data['name']],
-                        [
-                            'category_id' => $category->id,
-                            'supplier_id' => $supplier?->id,
-                            'slug' => Str::slug($data['name']) . '-' . Str::random(8),
-                            'base_price' => $data['base_price'] ?? 0,
-                        ]
-                    );
-
-                    $product->variants()->updateOrCreate(
-                        ['sku' => $data['sku']],
-                        [
-                            'size' => $data['size'] ?? null,
-                            'color' => $data['color'] ?? null,
-                            'price_adjustment' => $data['price_adjustment'] ?? 0,
-                            'purchase_price' => $data['purchase_price'] ?? null,
-                            'stock_quantity' => $data['stock'] ?? 0,
-                        ]
-                    );
-                    $created++;
-                } catch (\Exception $e) {
-                    $errors[] = "Row {$created}: {$e->getMessage()}";
-                }
-            }
-        });
-
-        fclose($handle);
-        return $this->respond(['created' => $created, 'errors' => $errors]);
+        return $this->respond($result);
     }
 
     public function labels(Product $product): \Illuminate\View\View
@@ -216,12 +150,7 @@ class ProductController extends Controller
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        if ($product->image) {
-            Storage::delete($product->image);
-        }
-
-        $path = $request->file('image')->store('products', 'public');
-        $product->update(['image' => $path]);
+        $this->mediaService->uploadImage($product, $request->file('image'));
 
         return $this->respond(new ProductResource($product->load(['category', 'variants'])));
     }
