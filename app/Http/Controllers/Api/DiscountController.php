@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreDiscountRequest;
+use App\Http\Requests\Api\UpdateDiscountRequest;
 use App\Http\Resources\DiscountResource;
 use App\Models\Discount;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DiscountController extends Controller
@@ -32,21 +33,9 @@ class DiscountController extends Controller
         return DiscountResource::collection($discounts);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreDiscountRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:percentage,fixed'],
-            'value' => ['required', 'numeric', 'min:0'],
-            'applies_to' => ['required', 'in:all,category,product'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'product_id' => ['nullable', 'exists:products,id'],
-            'starts_at' => ['nullable', 'date'],
-            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-            'is_active' => ['boolean'],
-        ]);
-
-        $discount = Discount::create($data);
+        $discount = Discount::create($request->validated());
         return new DiscountResource($discount)->response()->setStatusCode(201);
     }
 
@@ -55,21 +44,9 @@ class DiscountController extends Controller
         return new DiscountResource($discount);
     }
 
-    public function update(Request $request, Discount $discount): DiscountResource
+    public function update(UpdateDiscountRequest $request, Discount $discount): DiscountResource
     {
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'type' => ['sometimes', 'in:percentage,fixed'],
-            'value' => ['sometimes', 'numeric', 'min:0'],
-            'applies_to' => ['sometimes', 'in:all,category,product'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'product_id' => ['nullable', 'exists:products,id'],
-            'starts_at' => ['nullable', 'date'],
-            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-            'is_active' => ['boolean'],
-        ]);
-
-        $discount->update($data);
+        $discount->update($request->validated());
         return new DiscountResource($discount);
     }
 

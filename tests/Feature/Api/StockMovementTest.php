@@ -13,14 +13,17 @@ class StockMovementTest extends TestCase
 {
     use RefreshDatabase;
 
-    private array $headers;
+    private array $adminHeaders;
+    private array $staffHeaders;
     private int $variantId;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $user = User::factory()->create();
-        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
+        $admin = User::factory()->create(['role' => 'admin']);
+        $staff = User::factory()->create(['role' => 'staff']);
+        $this->adminHeaders = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
+        $this->staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
         $category = Category::factory()->create();
         $product = Product::factory()->create(['category_id' => $category->id, 'base_price' => 50]);
@@ -33,9 +36,9 @@ class StockMovementTest extends TestCase
         $this->postJson('/api/orders', [
             'items' => [['product_variant_id' => $this->variantId, 'quantity' => 2]],
             'payment' => ['method' => 'cash', 'amount' => 100],
-        ], $this->headers)->assertCreated();
+        ], $this->adminHeaders)->assertCreated();
 
-        $response = $this->getJson('/api/stock-movements', $this->headers);
+        $response = $this->getJson('/api/stock-movements', $this->adminHeaders);
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
         $this->assertEquals(-2, $response->json('data.0.quantity_change'));
@@ -44,9 +47,9 @@ class StockMovementTest extends TestCase
 
     public function test_stock_movement_created_on_adjustment(): void
     {
-        $this->patchJson("/api/variants/{$this->variantId}/stock", ['quantity' => 20], $this->headers);
+        $this->patchJson("/api/variants/{$this->variantId}/stock", ['quantity' => 20], $this->adminHeaders);
 
-        $response = $this->getJson('/api/stock-movements', $this->headers);
+        $response = $this->getJson('/api/stock-movements', $this->adminHeaders);
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
         $this->assertEquals(10, $response->json('data.0.quantity_change'));
@@ -58,13 +61,19 @@ class StockMovementTest extends TestCase
         $createRes = $this->postJson('/api/orders', [
             'items' => [['product_variant_id' => $this->variantId, 'quantity' => 2]],
             'payment' => ['method' => 'cash', 'amount' => 100],
-        ], $this->headers);
+        ], $this->adminHeaders);
         $orderId = $createRes->json('data.id');
 
-        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->headers);
+        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
 
-        $response = $this->getJson('/api/stock-movements', $this->headers);
+        $response = $this->getJson('/api/stock-movements', $this->adminHeaders);
         $this->assertEquals(2, $response->json('data.1.quantity_change'));
         $this->assertEquals('cancelled', $response->json('data.1.reason'));
+    }
+
+    public function test_staff_cannot_list_stock_movements(): void
+    {
+        $response = $this->getJson('/api/stock-movements', $this->staffHeaders);
+        $response->assertForbidden();
     }
 }

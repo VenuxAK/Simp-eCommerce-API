@@ -43,6 +43,8 @@ class BackupController extends Controller
 
     public function download(string $filename): BinaryFileResponse|JsonResponse
     {
+        $filename = basename($filename);
+
         $path = "backups/{$filename}";
         if (!Storage::disk('local')->exists($path)) {
             return response()->json(['message' => 'Backup not found.'], 404);

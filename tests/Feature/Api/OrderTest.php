@@ -4,8 +4,10 @@ namespace Tests\Feature\Api;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,14 +16,19 @@ class OrderTest extends TestCase
 {
     use RefreshDatabase;
 
-    private array $headers;
+    private array $adminHeaders;
+    private array $staffHeaders;
+    private string $staffToken;
     private array $validPayload;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $user = User::factory()->create();
-        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
+        $admin = User::factory()->create(['role' => 'admin']);
+        $staff = User::factory()->create(['role' => 'staff']);
+        $this->adminHeaders = ['Authorization' => "Bearer {$admin->createToken('test')->plainTextToken}"];
+        $this->staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
+        $this->staffToken = $staff->createToken('test2')->plainTextToken;
 
         $category = Category::factory()->create();
         $product = Product::factory()->create(['category_id' => $category->id, 'base_price' => 50]);
@@ -39,7 +46,7 @@ class OrderTest extends TestCase
 
     public function test_can_create_order(): void
     {
-        $response = $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $response = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
         $response->assertCreated()->assertJsonStructure([
             'data' => ['id', 'order_number', 'total_amount', 'status', 'items', 'payment', 'invoice'],
         ]);
@@ -50,7 +57,7 @@ class OrderTest extends TestCase
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
         $initialStock = $variant->stock_quantity;
 
-        $response = $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $response = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
 
         $response->assertCreated();
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
@@ -61,7 +68,7 @@ class OrderTest extends TestCase
         $response = $this->postJson('/api/orders', [
             'items' => [['product_variant_id' => $this->validPayload['items'][0]['product_variant_id'], 'quantity' => 999]],
             'payment' => ['method' => 'cash', 'amount' => 99999],
-        ], $this->headers);
+        ], $this->adminHeaders);
 
         $response->assertUnprocessable();
     }
@@ -71,7 +78,7 @@ class OrderTest extends TestCase
         $response = $this->postJson('/api/orders', [
             'items' => $this->validPayload['items'],
             'payment' => ['method' => 'cash', 'amount' => 1],
-        ], $this->headers);
+        ], $this->adminHeaders);
 
         $response->assertUnprocessable();
     }
@@ -86,7 +93,7 @@ class OrderTest extends TestCase
                 ['product_variant_id' => $variantId, 'quantity' => 1],
             ],
             'payment' => ['method' => 'cash', 'amount' => 200],
-        ], $this->headers);
+        ], $this->adminHeaders);
 
         $response->assertUnprocessable();
     }
@@ -96,25 +103,25 @@ class OrderTest extends TestCase
         $customer = Customer::factory()->create(['loyalty_points' => 0]);
         $this->validPayload['customer_id'] = $customer->id;
 
-        $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
 
         $this->assertGreaterThan(0, $customer->fresh()->loyalty_points);
     }
 
     public function test_can_list_orders(): void
     {
-        $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
 
-        $response = $this->getJson('/api/orders', $this->headers);
+        $response = $this->getJson('/api/orders', $this->adminHeaders);
         $response->assertOk()->assertJsonCount(1, 'data');
     }
 
     public function test_can_show_order(): void
     {
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
 
-        $response = $this->getJson("/api/orders/{$orderId}", $this->headers);
+        $response = $this->getJson("/api/orders/{$orderId}", $this->adminHeaders);
         $response->assertOk()->assertJsonPath('data.id', $orderId);
     }
 
@@ -123,11 +130,11 @@ class OrderTest extends TestCase
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
         $initialStock = $variant->stock_quantity;
 
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
 
-        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->headers);
+        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
 
         $this->assertEquals($initialStock, $variant->fresh()->stock_quantity);
     }
@@ -135,21 +142,70 @@ class OrderTest extends TestCase
     public function test_double_cancel_is_idempotent(): void
     {
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
 
-        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->headers);
+        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
         $afterFirst = $variant->fresh()->stock_quantity;
 
-        $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->headers);
+        $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
         $response->assertUnprocessable();
         $this->assertEquals($afterFirst, $variant->fresh()->stock_quantity);
     }
 
     public function test_order_creates_invoice_automatically(): void
     {
-        $this->postJson('/api/orders', $this->validPayload, $this->headers);
+        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
 
         $this->assertDatabaseCount('invoices', 1);
+    }
+
+    public function test_staff_cannot_update_order_status(): void
+    {
+        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $create->assertCreated();
+        $orderId = $create->json('data.id');
+
+        $staffUser = User::factory()->create(['role' => 'staff']);
+        $this->actingAs($staffUser, 'sanctum');
+
+        $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled']);
+        $response->assertStatus(403);
+    }
+
+    public function test_staff_can_create_order(): void
+    {
+        $response = $this->postJson('/api/orders', $this->validPayload, $this->staffHeaders);
+        $response->assertCreated();
+    }
+
+    public function test_stock_deducted_on_pending_to_completed_transition(): void
+    {
+        $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
+        $initialStock = $variant->stock_quantity;
+
+        $order = Order::create([
+            'user_id' => User::where('role', 'admin')->first()->id,
+            'order_number' => 'ORD-PEND-001',
+            'total_amount' => 100,
+            'status' => 'pending',
+            'notes' => null,
+        ]);
+        $order->items()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 2,
+            'unit_price' => 50,
+            'subtotal' => 100,
+        ]);
+
+        $this->patchJson("/api/orders/{$order->id}/status", ['status' => 'completed'], $this->adminHeaders);
+
+        $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
+
+        $movement = StockMovement::where('reference_id', $order->id)
+            ->where('reason', 'completed')
+            ->first();
+        $this->assertNotNull($movement);
+        $this->assertEquals(-2, $movement->quantity_change);
     }
 }

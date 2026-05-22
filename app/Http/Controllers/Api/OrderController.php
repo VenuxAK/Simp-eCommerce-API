@@ -58,7 +58,7 @@ class OrderController extends Controller
             }
 
             if ($variant->stock_quantity < $item['quantity']) {
-                $errors[] = "Insufficient stock for variant SKU: {$variant->sku} (available: {$variant->stock_quantity})";
+                $errors[] = 'Insufficient stock for variant (available: ' . $variant->stock_quantity . ')';
                 continue;
             }
 
@@ -119,62 +119,72 @@ class OrderController extends Controller
             return response()->json(['message' => implode(' ', $errors)], 422);
         }
 
-        $order = DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel) {
-            $notes = $data['notes'] ?? null;
-            if ($discountAmount > 0) {
-                $notes = ($notes ? $notes . "\n" : '') . "Discount: {$discountLabel}";
-            }
+        try {
+            $order = DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel) {
+                $notes = $data['notes'] ?? null;
+                if ($discountAmount > 0) {
+                    $notes = ($notes ? $notes . "\n" : '') . "Discount: {$discountLabel}";
+                }
 
-            $order = Order::create([
-                'user_id' => request()->user()->id,
-                'customer_id' => $data['customer_id'] ?? null,
-                'order_number' => InvoiceNumberGenerator::generateOrderNumber(),
-                'total_amount' => $finalAmount,
-                'status' => 'completed',
-                'notes' => $notes,
-            ]);
-
-            foreach ($orderItems as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_variant_id' => $item['variant_id'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => $item['subtotal'],
-                ]);
-
-                ProductVariant::find($item['variant_id'])->decrement('stock_quantity', $item['quantity']);
-
-                StockMovement::create([
-                    'product_variant_id' => $item['variant_id'],
-                    'quantity_change' => -$item['quantity'],
-                    'reason' => 'sale',
-                    'reference_type' => 'order',
-                    'reference_id' => $order->id,
+                $order = Order::create([
                     'user_id' => request()->user()->id,
+                    'customer_id' => $data['customer_id'] ?? null,
+                    'order_number' => InvoiceNumberGenerator::generateOrderNumber(),
+                    'total_amount' => $finalAmount,
+                    'status' => 'completed',
+                    'notes' => $notes,
                 ]);
-            }
 
-            $order->payment()->create([
-                'method' => $data['payment']['method'],
-                'amount' => $paidAmount,
-                'paid_at' => now(),
-            ]);
+                foreach ($orderItems as $item) {
+                    $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
 
-            $generator = app(InvoiceNumberGenerator::class);
-            $order->invoice()->create([
-                'invoice_number' => $generator->generate(),
-                'issued_date' => now(),
-                'due_date' => now()->addDays(30),
-                'status' => 'issued',
-            ]);
+                    if (!$variant || $variant->stock_quantity < $item['quantity']) {
+                        throw new \RuntimeException("Insufficient stock for variant SKU: {$item['variant']['sku']}");
+                    }
 
-            if ($data['customer_id'] ?? null) {
-                $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
-            }
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_variant_id' => $variant->id,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'subtotal' => $item['subtotal'],
+                    ]);
 
-            return $order;
-        });
+                    $variant->decrement('stock_quantity', $item['quantity']);
+
+                    StockMovement::create([
+                        'product_variant_id' => $variant->id,
+                        'quantity_change' => -$item['quantity'],
+                        'reason' => 'sale',
+                        'reference_type' => 'order',
+                        'reference_id' => $order->id,
+                        'user_id' => request()->user()->id,
+                    ]);
+                }
+
+                $order->payment()->create([
+                    'method' => $data['payment']['method'],
+                    'amount' => $paidAmount,
+                    'paid_at' => now(),
+                ]);
+
+                $generator = app(InvoiceNumberGenerator::class);
+                $order->invoice()->create([
+                    'invoice_number' => $generator->generate(),
+                    'issued_date' => now(),
+                    'due_date' => now()->addDays(30),
+                    'status' => 'issued',
+                ]);
+
+                if ($data['customer_id'] ?? null) {
+                    $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
+                }
+
+                return $order;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice']))->response()->setStatusCode(201);
     }
@@ -198,15 +208,24 @@ class OrderController extends Controller
             foreach ($data['items'] as $returnItem) {
                 $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
 
-                if ($returnItem['quantity'] > $orderItem->quantity) {
-                    abort(422, "Return quantity exceeds ordered quantity for item #{$orderItem->id}.");
+                $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
+                    ->where('reference_type', 'order')
+                    ->where('reference_id', $order->id)
+                    ->where('reason', 'refunded')
+                    ->sum('quantity_change');
+
+                $returnableQty = $orderItem->quantity - $alreadyReturned;
+
+                if ($returnItem['quantity'] > $returnableQty) {
+                    abort(422, "Return quantity exceeds remaining returnable quantity for item #{$orderItem->id} (max: {$returnableQty}).");
                 }
 
                 $unitPrice = $orderItem->unit_price;
                 $subtotal = $unitPrice * $returnItem['quantity'];
                 $totalReturn += $subtotal;
 
-                $orderItem->variant->increment('stock_quantity', $returnItem['quantity']);
+                $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
+                $variant->increment('stock_quantity', $returnItem['quantity']);
 
                 StockMovement::create([
                     'product_variant_id' => $orderItem->product_variant_id,
@@ -269,6 +288,21 @@ class OrderController extends Controller
                     StockMovement::create([
                         'product_variant_id' => $item->product_variant_id,
                         'quantity_change' => $item->quantity,
+                        'reason' => $newStatus,
+                        'reference_type' => 'order',
+                        'reference_id' => $order->id,
+                        'user_id' => request()->user()->id,
+                    ]);
+                }
+            }
+
+            if ($newStatus === 'completed' && $currentStatus === 'pending') {
+                foreach ($order->items as $item) {
+                    $item->variant->decrement('stock_quantity', $item->quantity);
+
+                    StockMovement::create([
+                        'product_variant_id' => $item->product_variant_id,
+                        'quantity_change' => -$item->quantity,
                         'reason' => $newStatus,
                         'reference_type' => 'order',
                         'reference_id' => $order->id,

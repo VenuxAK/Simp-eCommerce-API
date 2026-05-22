@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreSupplierRequest;
+use App\Http\Requests\Api\UpdateSupplierRequest;
 use App\Http\Resources\SupplierResource;
 use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SupplierController extends Controller
@@ -17,18 +18,9 @@ class SupplierController extends Controller
         return SupplierResource::collection($suppliers);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSupplierRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'contact_person' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $supplier = Supplier::create($data);
+        $supplier = Supplier::create($request->validated());
         return new SupplierResource($supplier)->response()->setStatusCode(201);
     }
 
@@ -37,18 +29,9 @@ class SupplierController extends Controller
         return new SupplierResource($supplier->loadCount('products'));
     }
 
-    public function update(Request $request, Supplier $supplier): SupplierResource
+    public function update(UpdateSupplierRequest $request, Supplier $supplier): SupplierResource
     {
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'contact_person' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $supplier->update($data);
+        $supplier->update($request->validated());
         return new SupplierResource($supplier);
     }
 

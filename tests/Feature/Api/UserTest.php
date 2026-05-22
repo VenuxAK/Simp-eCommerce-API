@@ -36,8 +36,15 @@ class UserTest extends TestCase
     public function test_admin_can_create_user(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'New User', 'email' => 'new@test.com', 'password' => 'password', 'role' => 'staff',
+            'name' => 'New User', 'email' => 'new@test.com', 'password' => 'Pass1234', 'role' => 'staff',
         ], $this->adminHeaders)->assertCreated();
+    }
+
+    public function test_staff_cannot_create_user(): void
+    {
+        $this->postJson('/api/users', [
+            'name' => 'Hacker', 'email' => 'hacker@test.com', 'password' => 'Pass1234', 'role' => 'admin',
+        ], $this->staffHeaders)->assertForbidden();
     }
 
     public function test_admin_can_update_user(): void
@@ -46,10 +53,24 @@ class UserTest extends TestCase
         $this->putJson("/api/users/{$user->id}", ['name' => 'Updated'], $this->adminHeaders)->assertOk();
     }
 
+    public function test_staff_cannot_update_user(): void
+    {
+        $user = User::factory()->create();
+        $this->putJson("/api/users/{$user->id}", ['name' => 'Hacked'], $this->staffHeaders)->assertForbidden();
+    }
+
     public function test_admin_cannot_delete_self(): void
     {
         $admin = User::where('role', 'admin')->first();
         $this->deleteJson("/api/users/{$admin->id}", [], $this->adminHeaders)->assertUnprocessable();
+    }
+
+    public function test_admin_cannot_delete_another_admin(): void
+    {
+        $admin2 = User::factory()->create(['role' => 'admin']);
+        $response = $this->deleteJson("/api/users/{$admin2->id}", [], $this->adminHeaders);
+        $response->assertUnprocessable();
+        $this->assertDatabaseHas('users', ['id' => $admin2->id]);
     }
 
     public function test_admin_cannot_delete_user_with_orders(): void
@@ -66,5 +87,39 @@ class UserTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $this->deleteJson("/api/users/{$staff->id}", [], $this->adminHeaders)->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $staff->id]);
+    }
+
+    public function test_staff_cannot_delete_user(): void
+    {
+        $user = User::factory()->create();
+        $this->deleteJson("/api/users/{$user->id}", [], $this->staffHeaders)->assertForbidden();
+    }
+
+    public function test_create_user_rejects_password_without_uppercase(): void
+    {
+        $this->postJson('/api/users', [
+            'name' => 'Test', 'email' => 'test@test.com', 'password' => 'alllowercase1', 'role' => 'staff',
+        ], $this->adminHeaders)->assertUnprocessable();
+    }
+
+    public function test_create_user_rejects_password_without_lowercase(): void
+    {
+        $this->postJson('/api/users', [
+            'name' => 'Test', 'email' => 'test2@test.com', 'password' => 'ALLUPPERCASE1', 'role' => 'staff',
+        ], $this->adminHeaders)->assertUnprocessable();
+    }
+
+    public function test_create_user_rejects_password_without_digit(): void
+    {
+        $this->postJson('/api/users', [
+            'name' => 'Test', 'email' => 'test3@test.com', 'password' => 'NoDigitsHere', 'role' => 'staff',
+        ], $this->adminHeaders)->assertUnprocessable();
+    }
+
+    public function test_create_user_rejects_short_password(): void
+    {
+        $this->postJson('/api/users', [
+            'name' => 'Test', 'email' => 'test4@test.com', 'password' => 'Ab1', 'role' => 'staff',
+        ], $this->adminHeaders)->assertUnprocessable();
     }
 }

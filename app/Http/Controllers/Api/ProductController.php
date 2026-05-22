@@ -151,6 +151,21 @@ class ProductController extends Controller
         DB::transaction(function () use ($handle, $header, &$created, &$errors) {
             while (($row = fgetcsv($handle)) !== false) {
                 $data = array_combine($header, $row);
+
+                $rowValidator = \Illuminate\Support\Facades\Validator::make($data, [
+                    'name' => ['required', 'string', 'max:255'],
+                    'sku' => ['required', 'string', 'max:100'],
+                    'base_price' => ['nullable', 'numeric', 'min:0'],
+                    'price_adjustment' => ['nullable', 'numeric', 'min:0'],
+                    'stock' => ['nullable', 'integer', 'min:0'],
+                    'purchase_price' => ['nullable', 'numeric', 'min:0'],
+                ]);
+
+                if ($rowValidator->fails()) {
+                    $errors[] = "Row " . ($created + 1) . ": " . implode('; ', $rowValidator->errors()->all());
+                    continue;
+                }
+
                 $category = \App\Models\Category::firstOrCreate(['name' => $data['category'] ?? 'Uncategorized'], ['slug' => Str::slug($data['category'] ?? 'Uncategorized')]);
                 $supplier = null;
                 if (!empty($data['supplier'])) {
@@ -217,7 +232,7 @@ class ProductController extends Controller
 
         if ($orderCount > 0) {
             return response()->json([
-                'message' => "Cannot delete '{$product->name}': {$orderCount} order item(s) reference this product.",
+                'message' => "Cannot delete product: {$orderCount} order item(s) reference it.",
             ], 422);
         }
 

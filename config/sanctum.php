@@ -22,7 +22,6 @@ return [
         '%s%s',
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
     ))),
 
     /*
@@ -50,7 +49,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 1440,
 
     /*
     |--------------------------------------------------------------------------

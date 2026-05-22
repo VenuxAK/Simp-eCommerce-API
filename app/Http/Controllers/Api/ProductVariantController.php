@@ -54,7 +54,7 @@ class ProductVariantController extends Controller
             ->first();
 
         if (!$variant) {
-            return response()->json(['message' => 'Variant not found for SKU: ' . $sku], 404);
+            return response()->json(['message' => 'Variant not found for the given SKU.'], 404);
         }
 
         return response()->json([

@@ -44,10 +44,10 @@ class ProfileTest extends TestCase
         $this->putJson('/api/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
-            'password' => 'new-password',
+            'password' => 'NewPass1!',
         ], $this->headers)->assertOk();
 
-        $this->assertTrue(Hash::check('new-password', $this->user->fresh()->password));
+        $this->assertTrue(Hash::check('NewPass1!', $this->user->fresh()->password));
     }
 
     public function test_profile_email_must_be_unique(): void
@@ -56,6 +56,42 @@ class ProfileTest extends TestCase
 
         $this->putJson('/api/profile', [
             'name' => 'Test', 'email' => 'other@test.com',
+        ], $this->headers)->assertUnprocessable();
+    }
+
+    public function test_profile_rejects_password_without_uppercase(): void
+    {
+        $this->putJson('/api/profile', [
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'password' => 'alllowercase1',
+        ], $this->headers)->assertUnprocessable();
+    }
+
+    public function test_profile_rejects_password_without_lowercase(): void
+    {
+        $this->putJson('/api/profile', [
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'password' => 'ALLUPPERCASE1',
+        ], $this->headers)->assertUnprocessable();
+    }
+
+    public function test_profile_rejects_password_without_digit(): void
+    {
+        $this->putJson('/api/profile', [
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'password' => 'NoDigitsHere',
+        ], $this->headers)->assertUnprocessable();
+    }
+
+    public function test_profile_rejects_short_password(): void
+    {
+        $this->putJson('/api/profile', [
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'password' => 'Ab1',
         ], $this->headers)->assertUnprocessable();
     }
 }

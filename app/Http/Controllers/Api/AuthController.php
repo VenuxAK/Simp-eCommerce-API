@@ -26,7 +26,8 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('pos-token')->plainTextToken;
+        $user->tokens()->delete();
+        $token = $user->createToken('pos-token', ['*'], now()->addHours(24))->plainTextToken;
 
         return response()->json([
             'token' => $token,

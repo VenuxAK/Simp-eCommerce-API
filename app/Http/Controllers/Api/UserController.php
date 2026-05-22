@@ -54,15 +54,21 @@ class UserController extends Controller
 
     public function destroy(User $user): JsonResponse
     {
-        if ($user->id === request()->user()->id) {
+        $currentUser = request()->user();
+
+        if ($user->id === $currentUser->id) {
             return response()->json(['message' => 'Cannot delete yourself.'], 422);
+        }
+
+        if ($user->isAdmin() && $currentUser->isAdmin()) {
+            return response()->json(['message' => 'Cannot delete another admin user.'], 422);
         }
 
         $orderCount = Order::where('user_id', $user->id)->count();
 
         if ($orderCount > 0) {
             return response()->json([
-                'message' => "Cannot delete '{$user->name}': {$orderCount} order(s) are linked to this user.",
+                'message' => "Cannot delete user: {$orderCount} order(s) are linked to this user.",
             ], 422);
         }
 

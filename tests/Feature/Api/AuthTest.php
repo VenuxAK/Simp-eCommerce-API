@@ -99,4 +99,23 @@ class AuthTest extends TestCase
 
         $response->assertStatus(429);
     }
+
+    public function test_old_token_invalid_after_re_login(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('Pass1234')]);
+
+        $login1 = $this->postJson('/api/auth/login', [
+            'email' => $user->email, 'password' => 'Pass1234',
+        ]);
+        $oldToken = $login1->json('token');
+
+        $this->postJson('/api/auth/login', [
+            'email' => $user->email, 'password' => 'Pass1234',
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$oldToken}")
+            ->getJson('/api/auth/me');
+
+        $response->assertUnauthorized();
+    }
 }
