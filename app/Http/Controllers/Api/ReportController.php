@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Models\Order;
-use App\Models\OrderItem;
+use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Models\OrderItem;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 

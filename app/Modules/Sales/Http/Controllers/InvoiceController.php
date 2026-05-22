@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Sales\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
-use App\Http\Resources\InvoiceResource;
-use App\Models\Invoice;
+use App\Modules\Sales\Http\Resources\InvoiceResource;
+use App\Modules\Sales\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
     use ApiResponse, QueryFilter;
+
     public function index(): AnonymousResourceCollection
     {
         $invoices = $this->applyFilters(

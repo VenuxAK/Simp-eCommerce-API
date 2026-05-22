@@ -39,7 +39,7 @@ class User extends Authenticatable
     // TODO: Replace with contract calls when Sales/Cash/Inventory/Audit modules are extracted.
     public function orders(): HasMany
     {
-        return $this->hasMany(\App\Models\Order::class);
+        return $this->hasMany(\App\Modules\Sales\Models\Order::class);
     }
 
     public function cashSessions(): HasMany

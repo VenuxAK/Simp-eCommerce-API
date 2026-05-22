@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Sales\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
-use App\Http\Requests\Api\ReturnOrderRequest;
-use App\Http\Requests\Api\StoreOrderRequest;
-use App\Http\Requests\Api\UpdateOrderStatusRequest;
-use App\Http\Resources\OrderResource;
-use App\Models\Order;
-use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Sales\Http\Requests\ReturnOrderRequest;
+use App\Modules\Sales\Http\Requests\StoreOrderRequest;
+use App\Modules\Sales\Http\Requests\UpdateOrderStatusRequest;
+use App\Modules\Sales\Http\Resources\OrderResource;
+use App\Modules\Sales\Models\Order;
 use App\Models\StockMovement;
 use App\Services\DiscountService;
-use App\Services\OrderService;
+use App\Modules\Sales\Services\OrderService;
 use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Order;
+use App\Modules\Sales\Models\Order;
 use App\Modules\Identity\Models\User;
 use Tests\ApiTestCase;
 

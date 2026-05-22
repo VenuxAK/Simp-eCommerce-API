@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Sales\Models;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use Database\Factories\OrderItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,11 @@ class OrderItem extends Model
             'unit_price' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
+    }
+
+    protected static function newFactory(): OrderItemFactory
+    {
+        return OrderItemFactory::new();
     }
 
     public function order(): BelongsTo

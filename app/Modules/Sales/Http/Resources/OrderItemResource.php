@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Modules\Sales\Http\Resources;
 
 use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use Illuminate\Http\Request;
@@ -12,6 +12,7 @@ class OrderItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'order_id' => $this->order_id,
             'product_variant_id' => $this->product_variant_id,
             'variant' => new ProductVariantResource($this->whenLoaded('variant')),
             'quantity' => $this->quantity,

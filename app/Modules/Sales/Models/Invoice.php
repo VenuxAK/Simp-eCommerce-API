@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Sales\Models;
 
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +23,11 @@ class Invoice extends Model
             'issued_date' => 'date',
             'due_date' => 'date',
         ];
+    }
+
+    protected static function newFactory(): InvoiceFactory
+    {
+        return InvoiceFactory::new();
     }
 
     public function order(): BelongsTo

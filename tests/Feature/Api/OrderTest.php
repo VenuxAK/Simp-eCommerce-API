@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Customer\Models\Customer;
-use App\Models\Order;
+use App\Modules\Sales\Models\Order;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Models\StockMovement;

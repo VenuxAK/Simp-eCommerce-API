@@ -33,17 +33,17 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/variants/by-sku/{sku}', [App\Modules\Catalog\Http\Controllers\ProductVariantController::class, 'bySku']);
     Route::post('/variants/{variant}/image', [App\Modules\Catalog\Http\Controllers\ProductVariantController::class, 'uploadImage']);
 
-    Route::get('/orders', [App\Http\Controllers\Api\OrderController::class, 'index']);
-    Route::get('/orders/{order}', [App\Http\Controllers\Api\OrderController::class, 'show']);
-    Route::post('/orders', [App\Http\Controllers\Api\OrderController::class, 'store']);
-    Route::patch('/orders/{order}/status', [App\Http\Controllers\Api\OrderController::class, 'updateStatus'])->middleware('admin');
-    Route::post('/orders/{order}/return', [App\Http\Controllers\Api\OrderController::class, 'returnItems'])->middleware('admin');
+    Route::get('/orders', [App\Modules\Sales\Http\Controllers\OrderController::class, 'index']);
+    Route::get('/orders/{order}', [App\Modules\Sales\Http\Controllers\OrderController::class, 'show']);
+    Route::post('/orders', [App\Modules\Sales\Http\Controllers\OrderController::class, 'store']);
+    Route::patch('/orders/{order}/status', [App\Modules\Sales\Http\Controllers\OrderController::class, 'updateStatus'])->middleware('admin');
+    Route::post('/orders/{order}/return', [App\Modules\Sales\Http\Controllers\OrderController::class, 'returnItems'])->middleware('admin');
 
-    Route::get('/invoices', [App\Http\Controllers\Api\InvoiceController::class, 'index']);
-    Route::get('/invoices/{invoice}', [App\Http\Controllers\Api\InvoiceController::class, 'show']);
-    Route::get('/invoices/{invoice}/print', [App\Http\Controllers\Api\InvoiceController::class, 'print']);
-    Route::get('/invoices/{invoice}/pdf', [App\Http\Controllers\Api\InvoiceController::class, 'pdf']);
-    Route::get('/invoices/{invoice}/receipt', [App\Http\Controllers\Api\InvoiceController::class, 'receipt']);
+    Route::get('/invoices', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'index']);
+    Route::get('/invoices/{invoice}', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'show']);
+    Route::get('/invoices/{invoice}/print', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'print']);
+    Route::get('/invoices/{invoice}/pdf', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'pdf']);
+    Route::get('/invoices/{invoice}/receipt', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'receipt']);
 
     Route::get('/reports/sales', [App\Http\Controllers\Api\ReportController::class, 'sales']);
     Route::get('/reports/best-sellers', [App\Http\Controllers\Api\ReportController::class, 'bestSellers']);

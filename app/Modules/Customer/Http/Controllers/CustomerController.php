@@ -3,7 +3,7 @@
 namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\OrderResource;
+use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Customer\Http\Requests\StoreCustomerRequest;
 use App\Modules\Customer\Http\Requests\UpdateCustomerRequest;

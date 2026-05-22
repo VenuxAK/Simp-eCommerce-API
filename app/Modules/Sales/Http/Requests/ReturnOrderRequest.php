@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Api;
+namespace App\Modules\Sales\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -13,13 +13,10 @@ class ReturnOrderRequest extends FormRequest
 
     public function rules(): array
     {
-        $orderId = $this->route('order')?->id;
-
         return [
             'items' => ['required', 'array', 'min:1'],
-            'items.*.order_item_id' => ['required', \Illuminate\Validation\Rule::exists('order_items', 'id')->where('order_id', $orderId)],
+            'items.*.order_item_id' => ['required', 'exists:order_items,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.reason' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

@@ -3,8 +3,8 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\Category;
-use App\Models\Order;
-use App\Models\OrderItem;
+use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Http\UploadedFile;

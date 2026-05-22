@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Http\Resources\CashSessionResource;
 use App\Models\CashSession;
-use App\Models\Order;
+use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

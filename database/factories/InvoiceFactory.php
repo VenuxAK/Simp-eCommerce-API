@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Invoice;
-use App\Models\Order;
+use App\Modules\Sales\Models\Invoice;
+use App\Modules\Sales\Models\Order;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class InvoiceFactory extends Factory

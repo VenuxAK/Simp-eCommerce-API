@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Sales\Models;
 
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Identity\Models\User;
@@ -26,6 +26,11 @@ class Order extends Model
         return [
             'total_amount' => 'decimal:2',
         ];
+    }
+
+    protected static function newFactory(): OrderFactory
+    {
+        return OrderFactory::new();
     }
 
     public function user(): BelongsTo

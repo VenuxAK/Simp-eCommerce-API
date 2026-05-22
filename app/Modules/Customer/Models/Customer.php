@@ -2,7 +2,7 @@
 
 namespace App\Modules\Customer\Models;
 
-use App\Models\Order;
+use App\Modules\Sales\Models\Order;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

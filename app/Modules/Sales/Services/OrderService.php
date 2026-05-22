@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Sales\Services;
 
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Modules\Catalog\Models\ProductVariant;
-use App\Models\StockMovement;
+use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Models\OrderItem;
+use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
 
 class OrderService

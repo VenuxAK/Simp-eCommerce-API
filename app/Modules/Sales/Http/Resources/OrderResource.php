@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Modules\Sales\Http\Resources;
 
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Identity\Http\Resources\UserResource;

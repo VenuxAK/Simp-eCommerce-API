@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Sales\Services;
 
-use App\Models\Invoice;
-use App\Models\Order;
+use App\Modules\Sales\Models\Invoice;
+use App\Modules\Sales\Models\Order;
 
 class InvoiceNumberGenerator
 {

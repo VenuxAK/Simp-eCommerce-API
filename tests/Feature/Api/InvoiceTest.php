@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\Category;
-use App\Models\Invoice;
+use App\Modules\Sales\Models\Invoice;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
