@@ -1,15 +1,15 @@
-# SimpPOS — Project Specification
+# SimpCommerce — Project Specification
 
 ## 1. Overview
 
-**SimpPOS** is a home-use Point of Sale system for clothing products with full invoice management, bilingual support (English / Burmese), and production-ready features. It uses a split architecture: **Laravel 13 API backend** with Sanctum token auth, and a **Vue 3 + TypeScript + Shadcn/vue SPA frontend**, backed by SQLite for zero-setup local storage.
+**SimpCommerce** is a home-use Point of Sale system for clothing products with full invoice management, bilingual support (English / Burmese), and production-ready features. It uses a split architecture: **Laravel 13 API backend** with Sanctum token auth, and a **Vue 3 + TypeScript + Shadcn/vue SPA frontend**, backed by SQLite for zero-setup local storage.
 
 ---
 
 ## 2. Architecture
 
 ```
-SimpPOS/
+SimpCommerce/
 ├── api/                    # Laravel 13 REST API
 │   ├── app/
 │   │   ├── Enums/                 # PHP enums

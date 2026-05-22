@@ -1,14 +1,20 @@
 # SimpCommerce — Modular Monolith Architecture
 
-> **Status**: Draft Plan
+> **Status**: Active — Phase 0 in progress
 > **Target Branch**: `arch/modular-monolith`
 > **Migration**: Incremental (module by module)
+
+**Repositories**:
+- `simpcommerce-api` — Laravel API backend (this repo)
+- `simpcommerce-dashboard` — Vue 3 dashboard SPA (separate repo)
+
+Storefronts will be built as separate repos in a later phase.
 
 ---
 
 ## 1. Motivation
 
-The current codebase (`SimpPOS`) was built as a straightforward monolithic Laravel app with a flat directory structure. While this worked for a single POS + one storefront, the system now needs to support:
+The current codebase (`SimpCommerce`) was built as a straightforward monolithic Laravel app with a flat directory structure. While this worked for a single POS + one storefront, the system now needs to support:
 
 - **Multiple storefronts** — clothing, electronics, home appliances, each with their own public website
 - **Multiple sales channels** — POS (in-store), online storefronts, future channels (WhatsApp, Facebook Shop)
@@ -21,35 +27,35 @@ A **Modular Monolith** gives us clean separation within a single deployable unit
 ## 2. Vision: Unified Commerce Platform
 
 ```
-                         ┌─────────────────────────────────────┐
-                         │         SimpCommerce API            │
-                         │         (Modular Monolith)          │
-                         │                                     │
-                         │  ┌──────┐ ┌──────┐ ┌──────┐       │
-┌──────────────┐         │  │Catalog│ │Sales │ │ Iden-│  ...  │
-│  Storefront  │─────────┼─▶│Module │ │Module│ │tity  │       │
-│  (Clothing)  │         │  └──────┘ └──────┘ └Module│       │
-└──────────────┘         │  ┌──────┐ ┌──────┐ └──────┘       │
-                         │  │Store  │ │Inven-│                 │
-┌──────────────┐         │  │Module │ │tory  │                 │
-│  Storefront  │─────────┼─▶│       │ │Module│                 │
-│ (Electronics)│         │  └──────┘ └──────┘                 │
-└──────────────┘         │         ┌──────────┐               │
-                         │         │  Core/   │               │
-┌──────────────┐         │         │ Shared   │               │
-│  Storefront  │─────────┼─▶       │ Kernel   │               │
-│(Home Appl.)  │         │         └──────────┘               │
-└──────────────┘         └──────────┬──────────────────────────┘
-                                    │
-                         ┌──────────▼──────────┐
-                         │    PostgreSQL        │
-                         │   (single database)  │
-                         └─────────────────────┘
-
-                      ┌──────────────────────┐
-                      │   Vue 3 Dashboard    │
-                      │   (staff/admin UI)   │
-                      └──────────────────────┘
+┌────────────────────────────────────────────────ᢌ
+│             simpcommerce-api                    │
+│           (Laravel Modular Monolith)            │
+│                                                  │
+│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ │
+│  │Catalog│ │Sales │ │ Iden-│ │Store │ │Cus-  │ │
+│  │Module │ │Module│ │tity  │ │Module│ │tomer │ │
+│  └──────┘ └──────┘ └Module│ └──────┘ │Module│ │
+│  ┌──────┐ ┌──────┐ └──────┘ ┌──────┐ └──────┘ │
+│  │Inven-│ │Promo-│ ┌──────┐ │System│ ┌──────┐ │
+│  │tory  │ │tion  │ │Audit │ │Module│ │Report│ │
+│  │Module│ │Module│ │Module│ └──────┘ │Module│ │
+│  └──────┘ └──────┘ └──────┘         └──────┘ │
+│                    ┌──────────┐                │
+│                    │  Core/   │                │
+│                    │  Shared  │                │
+│                    │  Kernel  │                │
+│                    └──────────┘                │
+└──────────────────────┬──────────────────────────ᢖ
+                       │ REST API
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+  ┌────────────┐ ┌────────────┐ ┌──────────────────┐
+  │  Dashboard  │ │ Storefront │ │ Storefront       │
+  │ (staff/admin)│ │ (Clothing) │ │ (Electronics)    │
+  │ Vue 3 SPA   │ │ Nuxt 3 SSR │ │ Nuxt 3 SSR       │
+  │ separate    │ │ future     │ │ future           │
+  │ repo        │ │ phase      │ │ phase            │
+  └────────────┘ └────────────┘ └──────────────────┘
 ```
 
 ### Key Principles
@@ -65,34 +71,20 @@ A **Modular Monolith** gives us clean separation within a single deployable unit
 
 ---
 
-## 3. Project Rename
+## 3. Project Rename: SimpPOS → SimpCommerce
 
-The current name **SimpPOS** reflects only the Point-of-Sale use case. Since the system is evolving into a multi-storefront commerce platform, I suggest renaming to something broader.
+The project has been renamed to **SimpCommerce** to reflect its evolution from a simple POS into a multi-storefront commerce platform.
 
-### Candidates
+### What Changed
 
-| Name | Rationale |
-|------|-----------|
-| **SimpCommerce** | "Simple Commerce" — covers POS, e-commerce, multi-store. Keeps the "Simp" brand. Most descriptive. |
-| **SimpMerch** | "Simple Merchandise" — shorter, but less obvious |
-| **Merx** | Latin for "goods/commerce" — short, memorable, brandable |
-| **SimpCore** | Emphasizes it's the core engine for multiple frontends |
-
-> **My recommendation**: **SimpCommerce** — it keeps the existing brand recognition while accurately describing what the system has grown into.
-
-### What Changes
-
-| Artifact | Current | New |
-|----------|---------|-----|
-| Root directory | `SimpPOS` | `simpcommerce` |
-| API directory | `SimpPOS/api` | `simpcommerce/api` |
-| Frontend dir | `SimpPOS/frontend` | `simpcommerce/dashboard` |
-| Storefront dir | — | `simpcommerce/storefront-{name}` |
-| Docker images | simppos-* | simpcommerce-* |
-| App name | SimpPOS | SimpCommerce |
-| DB name | simppos | simpcommerce |
-
-> **Decision needed**: Confirm if/when to rename. Can happen at any point — no rush.
+| Artifact | Before | After |
+|----------|--------|-------|
+| Name | SimpPOS | SimpCommerce |
+| API repo | SimpPOS/api | simpcommerce-api |
+| Dashboard repo | SimpPOS/frontend | simpcommerce-dashboard |
+| App name in .env | SimpPOS | SimpCommerce |
+| Frontend title | SimpPOS | SimpCommerce |
+| All documentation | SimpPOS | SimpCommerce |
 
 ---
 
@@ -178,10 +170,10 @@ The current name **SimpPOS** reflects only the Point-of-Sale use case. Since the
 
 ## 5. Directory Structure
 
-### Target Module Layout
+### Target Module Layout (Within `simpcommerce-api`)
 
 ```
-api/
+simpcommerce-api/
 ├── app/
 │   ├── Modules/
 │   │   ├── Core/                          # Shared Kernel
@@ -196,70 +188,39 @@ api/
 │   │   │       └── helpers.php
 │   │   │
 │   │   ├── Identity/                      # Auth, Users, Roles
-│   │   │   ├── Config/
-│   │   │   │   └── permissions.php
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── 0001_01_01_000000_create_users_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   ├── AuthController.php
-│   │   │   │   │   ├── UserController.php
-│   │   │   │   │   └── ProfileController.php
-│   │   │   │   ├── Middleware/
-│   │   │   │   │   └── AdminMiddleware.php
-│   │   │   │   ├── Requests/
-│   │   │   │   │   ├── LoginRequest.php
-│   │   │   │   │   ├── StoreUserRequest.php
-│   │   │   │   │   └── UpdateUserRequest.php
-│   │   │   │   └── Resources/
-│   │   │   │       └── UserResource.php
-│   │   │   ├── Models/
-│   │   │   │   └── User.php
-│   │   │   ├── Providers/
-│   │   │   │   └── IdentityServiceProvider.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/
+│   │   │   │   ├── AuthController.php
+│   │   │   │   ├── UserController.php
+│   │   │   │   └── ProfileController.php
+│   │   │   ├── Http/Middleware/AdminMiddleware.php
+│   │   │   ├── Http/Requests/
+│   │   │   ├── Http/Resources/UserResource.php
+│   │   │   ├── Models/User.php
+│   │   │   ├── Providers/IdentityServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       ├── AuthTest.php
-│   │   │       ├── UserTest.php
-│   │   │       └── ProfileTest.php
 │   │   │
 │   │   ├── Store/                         # Multi-Store Management
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_stores_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── StoreController.php
-│   │   │   │   ├── Middleware/
-│   │   │   │   │   └── ResolveStore.php
-│   │   │   │   └── Resources/
-│   │   │   │       └── StoreResource.php
-│   │   │   ├── Models/
-│   │   │   │   └── Store.php
-│   │   │   ├── Providers/
-│   │   │   │   └── StoreServiceProvider.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/StoreController.php
+│   │   │   ├── Http/Middleware/ResolveStore.php
+│   │   │   ├── Http/Resources/StoreResource.php
+│   │   │   ├── Models/Store.php
+│   │   │   ├── Providers/StoreServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── StoreTest.php
 │   │   │
 │   │   ├── Catalog/                       # Products, Categories, Variants
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       ├── xxxx_create_categories_table.php
-│   │   │   │       ├── xxxx_create_products_table.php
-│   │   │   │       └── xxxx_create_product_variants_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   ├── ProductController.php
-│   │   │   │   │   ├── ProductVariantController.php
-│   │   │   │   │   ├── CategoryController.php
-│   │   │   │   │   ├── PublicProductController.php  # (storefront-facing)
-│   │   │   │   │   └── PublicCategoryController.php
-│   │   │   │   ├── Requests/
-│   │   │   │   ├── Resources/
-│   │   │   │   └── Middleware/
-│   │   │   │       └── CatalogScopedByStore.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/
+│   │   │   │   ├── ProductController.php
+│   │   │   │   ├── ProductVariantController.php
+│   │   │   │   ├── CategoryController.php
+│   │   │   │   ├── PublicProductController.php  # (storefront-facing)
+│   │   │   │   └── PublicCategoryController.php
+│   │   │   ├── Http/Requests/
+│   │   │   ├── Http/Resources/
 │   │   │   ├── Models/
 │   │   │   │   ├── Product.php
 │   │   │   │   ├── Category.php
@@ -268,52 +229,31 @@ api/
 │   │   │   │   ├── ProductImportService.php
 │   │   │   │   ├── ProductExportService.php
 │   │   │   │   └── MediaService.php
-│   │   │   ├── Providers/
-│   │   │   │   └── CatalogServiceProvider.php
+│   │   │   ├── Providers/CatalogServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       ├── ProductTest.php
-│   │   │       ├── CategoryTest.php
-│   │   │       └── VariantTest.php
 │   │   │
-│   │   ├── Customer/                      # Customers, Addresses, Cart
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       ├── xxxx_create_customers_table.php
-│   │   │   │       └── xxxx_create_addresses_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   ├── CustomerController.php
-│   │   │   │   │   ├── CustomerAuthController.php
-│   │   │   │   │   ├── AddressController.php
-│   │   │   │   │   └── CartController.php
-│   │   │   │   ├── Requests/
-│   │   │   │   └── Resources/
+│   │   ├── Customer/                      # Customers, Addresses
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/
+│   │   │   │   ├── CustomerController.php
+│   │   │   │   └── CustomerAuthController.php
+│   │   │   ├── Http/Requests/
+│   │   │   ├── Http/Resources/
 │   │   │   ├── Models/
 │   │   │   │   ├── Customer.php
 │   │   │   │   └── Address.php
-│   │   │   ├── Providers/
-│   │   │   │   └── CustomerServiceProvider.php
+│   │   │   ├── Providers/CustomerServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       ├── CustomerTest.php
-│   │   │       ├── CartTest.php
-│   │   │       └── AddressTest.php
 │   │   │
 │   │   ├── Sales/                         # Orders, Invoices, Payments
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       ├── xxxx_create_orders_table.php
-│   │   │   │       ├── xxxx_create_order_items_table.php
-│   │   │   │       ├── xxxx_create_payments_table.php
-│   │   │   │       └── xxxx_create_invoices_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   ├── OrderController.php
-│   │   │   │   │   ├── InvoiceController.php
-│   │   │   │   │   └── MyOrderController.php
-│   │   │   │   ├── Requests/
-│   │   │   │   └── Resources/
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/
+│   │   │   │   ├── OrderController.php
+│   │   │   │   └── InvoiceController.php
+│   │   │   ├── Http/Requests/
+│   │   │   ├── Http/Resources/
 │   │   │   ├── Models/
 │   │   │   │   ├── Order.php
 │   │   │   │   ├── OrderItem.php
@@ -322,162 +262,92 @@ api/
 │   │   │   ├── Services/
 │   │   │   │   ├── OrderService.php
 │   │   │   │   └── InvoiceNumberGenerator.php
-│   │   │   ├── Providers/
-│   │   │   │   └── SalesServiceProvider.php
+│   │   │   ├── Providers/SalesServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       ├── OrderTest.php
-│   │   │       ├── InvoiceTest.php
-│   │   │       └── ReturnOrderTest.php
 │   │   │
 │   │   ├── Inventory/                     # Stock, Warehouses
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_stock_movements_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── StockMovementController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Models/
-│   │   │   │   └── StockMovement.php
-│   │   │   ├── Providers/
-│   │   │   │   └── InventoryServiceProvider.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/StockMovementController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Models/StockMovement.php
+│   │   │   ├── Providers/InventoryServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── StockMovementTest.php
 │   │   │
-│   │   ├── Promotion/                     # Discounts, Coupons
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_discounts_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── DiscountController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Models/
-│   │   │   │   └── Discount.php
-│   │   │   ├── Services/
-│   │   │   │   └── DiscountService.php
-│   │   │   ├── Providers/
-│   │   │   │   └── PromotionServiceProvider.php
+│   │   ├── Promotion/                     # Discounts
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/DiscountController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Models/Discount.php
+│   │   │   ├── Services/DiscountService.php
+│   │   │   ├── Providers/PromotionServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── DiscountTest.php
 │   │   │
-│   │   ├── Supplier/                      # Vendors & Suppliers
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_suppliers_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── SupplierController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Models/
-│   │   │   │   └── Supplier.php
-│   │   │   ├── Providers/
-│   │   │   │   └── SupplierServiceProvider.php
+│   │   ├── Supplier/                      # Vendors
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/SupplierController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Models/Supplier.php
+│   │   │   ├── Providers/SupplierServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── SupplierTest.php
 │   │   │
 │   │   ├── Cash/                          # Cash Drawer Sessions
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_cash_sessions_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── CashSessionController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Models/
-│   │   │   │   └── CashSession.php
-│   │   │   ├── Providers/
-│   │   │   │   └── CashServiceProvider.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/CashSessionController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Models/CashSession.php
+│   │   │   ├── Providers/CashServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── CashSessionTest.php
 │   │   │
 │   │   ├── Audit/                         # Activity Logging
-│   │   │   ├── Database/
-│   │   │   │   └── Migrations/
-│   │   │   │       └── xxxx_create_audit_logs_table.php
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── AuditLogController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Models/
-│   │   │   │   └── AuditLog.php
-│   │   │   ├── Providers/
-│   │   │   │   └── AuditServiceProvider.php
+│   │   │   ├── Database/Migrations/
+│   │   │   ├── Http/Controllers/AuditLogController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Models/AuditLog.php
+│   │   │   ├── Providers/AuditServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── AuditLogTest.php
 │   │   │
-│   │   ├── Report/                        # Analytics & Dashboards
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   ├── DashboardController.php
-│   │   │   │   │   └── ReportController.php
-│   │   │   │   └── Resources/
-│   │   │   ├── Services/
-│   │   │   │   └── ReportService.php
-│   │   │   ├── Providers/
-│   │   │   │   └── ReportServiceProvider.php
+│   │   ├── Report/                        # Analytics & Dashboard
+│   │   │   ├── Http/Controllers/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   └── ReportController.php
+│   │   │   ├── Http/Resources/
+│   │   │   ├── Services/ReportService.php
+│   │   │   ├── Providers/ReportServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       ├── DashboardTest.php
-│   │   │       └── ReportTest.php
 │   │   │
 │   │   ├── System/                        # Backups, Config
-│   │   │   ├── Http/
-│   │   │   │   ├── Controllers/
-│   │   │   │   │   └── BackupController.php
-│   │   │   │   └── Requests/
-│   │   │   ├── Providers/
-│   │   │   │   └── SystemServiceProvider.php
+│   │   │   ├── Http/Controllers/BackupController.php
+│   │   │   ├── Providers/SystemServiceProvider.php
 │   │   │   ├── routes.php
 │   │   │   └── tests/
-│   │   │       └── BackupTest.php
 │   │   │
-│   │   └── ECommerce/                     # Online Storefront Features
-│   │       ├── Database/
-│   │       │   └── Migrations/
-│   │       │       ├── xxxx_create_cart_items_table.php
-│   │       │       ├── xxxx_create_shipments_table.php
-│   │       │       └── xxxx_create_payment_transactions_table.php
-│   │       ├── Http/
-│   │       │   ├── Controllers/
-│   │       │   │   ├── CheckoutController.php
-│   │       │   │   └── PaymentWebhookController.php
-│   │       │   ├── Requests/
-│   │       │   └── Resources/
+│   │   └── ECommerce/                     # Cart, Checkout, Payments (future)
+│   │       ├── Database/Migrations/
+│   │       ├── Http/Controllers/
 │   │       ├── Models/
-│   │       │   ├── CartItem.php
-│   │       │   ├── Shipment.php
-│   │       │   └── PaymentTransaction.php
 │   │       ├── Services/
-│   │       │   ├── KbzPayService.php
-│   │       │   ├── WaveMoneyService.php
-│   │       │   └── OnlineOrderService.php
-│   │       ├── Providers/
-│   │       │   └── ECommerceServiceProvider.php
+│   │       ├── Providers/ECommerceServiceProvider.php
 │   │       ├── routes.php
 │   │       └── tests/
 │   │
-│   ├── Providers/                         # Global app providers (module registration)
-│   └── Exceptions/
-│       └── Handler.php
+│   └── ... (existing app/ files remain during migration)
 │
 ├── config/
 │   └── modules.php                        # Module enable/disable config
 │
-├── database/
-│   └── migrations/                        # Only global migrations here
-│       ├── 0001_01_01_000001_create_cache_table.php
-│       └── 0001_01_01_000002_create_jobs_table.php
-│
-└── routes/
-    ├── api.php                            # Master route file → delegates to modules
-    └── console.php
+├── database/migrations/                   # Only non-module migrations
+├── routes/
+│   ├── api.php                            # Master route file → delegates to modules
+│   └── console.php
+├── ARCHITECTURE.md
+└── tests/                                 # Global integration tests
 ```
 
 ### Route File Architecture
@@ -861,7 +731,11 @@ Phase 4: Migrate Sales module (orders, invoices)
 Phase 5: Migrate Inventory, Promotion, Supplier modules
 Phase 6: Migrate Cash, Audit, Report, System modules
 Phase 7: Add Store module + multi-store scoping
-Phase 8: Build ECommerce module
+       ──────────────────────────────────
+       (Storefront development begins here
+        in separate Nuxt repos)
+       ──────────────────────────────────
+Phase 8: Build ECommerce module (cart, checkout, payment gateways)
 ```
 
 ### Phase 0 — Foundation
@@ -909,85 +783,29 @@ For each module:
 
 ---
 
-## 12. Directory Scaffold (Starting Point)
+## 12. Directory Scaffold (Current State — Committed)
+
+The module directory structure is already in place on the `arch/modular-monolith` branch:
 
 ```
 app/Modules/
-├── Core/
-│   ├── Traits/
-│   │   ├── .gitkeep
-│   │   └── (ApiResponse.php, QueryFilter.php will be moved here)
-│   ├── Enums/
-│   │   └── .gitkeep
-│   └── Helpers/
-│       └── .gitkeep
-├── Identity/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Catalog/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   ├── Models/
-│   │   └── .gitkeep
-│   └── Services/
-│       └── .gitkeep
-├── Customer/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Sales/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   ├── Models/
-│   │   └── .gitkeep
-│   └── Services/
-│       └── .gitkeep
-├── Inventory/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Promotion/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   ├── Models/
-│   │   └── .gitkeep
-│   └── Services/
-│       └── .gitkeep
-├── Supplier/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Cash/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Audit/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Models/
-│       └── .gitkeep
-├── Report/
-│   ├── Http/Controllers/
-│   │   └── .gitkeep
-│   └── Services/
-│       └── .gitkeep
-├── System/
-│   └── Http/Controllers/
-│       └── .gitkeep
-└── ECommerce/
-    ├── Http/Controllers/
-    │   └── .gitkeep
-    ├── Models/
-    │   └── .gitkeep
-    └── Services/
-        └── .gitkeep
+├── Core/          # Traits/, Enums/, Helpers/
+├── Identity/      # Controllers/, Models/, Providers/, tests/
+├── Store/         # Controllers/, Middleware/, Models/, Providers/, tests/
+├── Catalog/       # Controllers/, Models/, Services/, Providers/, tests/
+├── Customer/      # Controllers/, Models/, Providers/, tests/
+├── Sales/         # Controllers/, Models/, Services/, Providers/, tests/
+├── Inventory/     # Controllers/, Models/, Providers/, tests/
+├── Promotion/     # Controllers/, Models/, Services/, Providers/, tests/
+├── Supplier/      # Controllers/, Models/, Providers/, tests/
+├── Cash/          # Controllers/, Models/, Providers/, tests/
+├── Audit/         # Controllers/, Models/, Providers/, tests/
+├── Report/        # Controllers/, Services/, Providers/, tests/
+├── System/        # Controllers/, Providers/, tests/
+└── ECommerce/     # Controllers/, Models/, Services/, Providers/, tests/
 ```
+
+Each directory contains all subfolders (Http/Controllers/, Http/Requests/, Http/Resources/, Database/Migrations/, Models/, Providers/, Services/, tests/) with `.gitkeep` files. Ready for Phase 0.
 
 ---
 
@@ -1040,12 +858,23 @@ php artisan test tests/Feature/Integration
 
 ---
 
-## 15. Next Steps
+## 15. Current Status & Next Steps
 
-1. ✅ **Decide on project rename** (SimpCommerce vs others)
-2. **Phase 0**: Create module scaffold directories + Core module
-3. **Phase 1**: Migrate Identity module
-4. **Phase 2**: Migrate Catalog module
-5. Continue phase by phase...
+### ✅ Completed
 
-Each phase is a separate commit, and the system remains functional after each one. The `arch/modular-monolith` branch will hold all migration work until complete, then merged into `master`.
+- [x] **Project renamed**: SimpPOS → SimpCommerce (across api/ and dashboard/ repos)
+- [x] **Separate repos**: `simpcommerce-api` and `simpcommerce-dashboard` independent
+- [x] **Architecture plan**: Written in this document
+- [x] **Module scaffold**: 14 module directories created with subfolder structure
+
+### ⏳ Next — Phase 0: Establish Foundation
+
+1. Move Core traits + enums into `app/Modules/Core/` (ApiResponse, QueryFilter, InvoiceStatus, OrderStatus, PaymentMethod)
+2. Configure PSR-4 autoloading in `composer.json`
+3. Create a base `ModuleServiceProvider` pattern
+4. Update namespaces in moved files
+5. Verify all 136 existing tests still pass
+
+Then Phase 1-6 migrate each module one by one.
+
+Each phase is a separate commit, and the system remains functional after each one. The `arch/modular-module` branch holds all migration work until complete, then merged into `master`.

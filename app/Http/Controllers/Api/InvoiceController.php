@@ -38,7 +38,7 @@ class InvoiceController extends Controller
 
         return $this->respond([
             'invoice' => new InvoiceResource($invoice),
-            'shop_name' => 'SimpPOS',
+            'shop_name' => 'SimpCommerce',
             'shop_address' => 'Home Store',
             'shop_phone' => 'N/A',
         ]);
@@ -50,7 +50,7 @@ class InvoiceController extends Controller
 
         return view('pdf.receipt-thermal', [
             'invoice' => $invoice,
-            'shop_name' => 'SimpPOS',
+            'shop_name' => 'SimpCommerce',
             'shop_address' => 'Home Store',
             'shop_phone' => 'N/A',
         ]);
@@ -62,7 +62,7 @@ class InvoiceController extends Controller
 
         $pdf = Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
-            'shop_name' => 'SimpPOS',
+            'shop_name' => 'SimpCommerce',
             'shop_address' => 'Home Store',
             'shop_phone' => 'N/A',
         ]);

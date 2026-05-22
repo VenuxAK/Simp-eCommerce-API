@@ -1,6 +1,6 @@
-# SimpPOS API
+# SimpCommerce API
 
-Laravel 13 REST API backend for SimpPOS — a home-use Point of Sale system for clothing stores.
+Laravel 13 REST API backend for SimpCommerce — a home-use Point of Sale system for clothing stores.
 
 ## Requirements
 

@@ -1,8 +1,8 @@
-# SimpPOS User Manual
+# SimpCommerce User Manual
 
 ## Overview
 
-SimpPOS is a Point of Sale system designed for home-use clothing stores. It supports **English** and **Burmese (မြန်မာ)** languages, works on desktop and mobile, and includes dark mode.
+SimpCommerce is a Point of Sale system designed for home-use clothing stores. It supports **English** and **Burmese (မြန်မာ)** languages, works on desktop and mobile, and includes dark mode.
 
 ### Quick Start
 
@@ -58,7 +58,7 @@ The main checkout screen for ringing up customers.
 
 - **Point a barcode scanner** at the label and scan
 - The scanner types the SKU rapidly + presses Enter
-- SimpPOS detects this (fast keystrokes) and auto-adds the item to cart
+- SimpCommerce detects this (fast keystrokes) and auto-adds the item to cart
 - A green pulse indicator shows in the search bar during active scanning
 - If the SKU is not found, a "SKU not found" toast appears
 
@@ -253,7 +253,7 @@ Manage daily cash register sessions.
 1. Count the cash in the drawer
 2. Click **Close Register**
 3. Enter the **closing balance** (actual cash counted)
-4. SimpPOS calculates:
+4. SimpCommerce calculates:
    - **Expected balance** = opening balance + cash orders during session
    - **Difference** = closing balance − expected balance
 5. A non-zero difference means over/under in the drawer
