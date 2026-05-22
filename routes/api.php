@@ -13,12 +13,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::get('/dashboard/summary', [App\Http\Controllers\Api\DashboardController::class, 'summary']);
 
-    Route::get('/customers', [App\Http\Controllers\Api\CustomerController::class, 'index']);
-    Route::get('/customers/{customer}', [App\Http\Controllers\Api\CustomerController::class, 'show']);
-    Route::get('/customers/{customer}/orders', [App\Http\Controllers\Api\CustomerController::class, 'orders']);
-    Route::post('/customers', [App\Http\Controllers\Api\CustomerController::class, 'store']);
-    Route::put('/customers/{customer}', [App\Http\Controllers\Api\CustomerController::class, 'update'])->middleware('admin');
-    Route::delete('/customers/{customer}', [App\Http\Controllers\Api\CustomerController::class, 'destroy'])->middleware('admin');
+    Route::get('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'index']);
+    Route::get('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'show']);
+    Route::get('/customers/{customer}/orders', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'orders']);
+    Route::post('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'store']);
+    Route::put('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'update'])->middleware('admin');
+    Route::delete('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'destroy'])->middleware('admin');
 
     Route::get('/products', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'index']);
     Route::get('/products/{product}', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'show']);

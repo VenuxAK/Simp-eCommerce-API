@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Modules\Catalog\Models\Category;
-use App\Models\Customer;
+use App\Modules\Customer\Models\Customer;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;

@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\StoreCustomerRequest;
-use App\Http\Requests\Api\UpdateCustomerRequest;
-use App\Http\Resources\CustomerResource;
 use App\Http\Resources\OrderResource;
-use App\Models\Customer;
+use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Customer\Http\Requests\StoreCustomerRequest;
+use App\Modules\Customer\Http\Requests\UpdateCustomerRequest;
+use App\Modules\Customer\Http\Resources\CustomerResource;
+use App\Modules\Customer\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CustomerController extends Controller
 {
     use ApiResponse;
+
     public function index(): AnonymousResourceCollection
     {
         $customers = Customer::withCount('orders')

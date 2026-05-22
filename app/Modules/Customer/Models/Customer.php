@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Customer\Models;
 
+use App\Models\Order;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,12 @@ class Customer extends Model
         ];
     }
 
+    protected static function newFactory(): CustomerFactory
+    {
+        return CustomerFactory::new();
+    }
+
+    // TODO: Replace with contract when Sales module is extracted.
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);

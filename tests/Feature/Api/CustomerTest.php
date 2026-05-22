@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Customer;
+use App\Modules\Customer\Models\Customer;
 use Tests\ApiTestCase;
 
 class CustomerTest extends ApiTestCase
