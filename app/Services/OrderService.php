@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 

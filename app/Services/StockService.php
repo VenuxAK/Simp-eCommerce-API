@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Models\StockMovement;
 
 class StockService

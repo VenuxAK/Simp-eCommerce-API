@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Catalog\Models;
 
+use App\Models\OrderItem;
+use App\Models\StockMovement;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,16 +26,23 @@ class ProductVariant extends Model
         ];
     }
 
+    protected static function newFactory(): ProductVariantFactory
+    {
+        return ProductVariantFactory::new();
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    // TODO: Replace with contract when Sales module is extracted.
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    // TODO: Replace with contract when Inventory module is extracted.
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'product_variant_id');

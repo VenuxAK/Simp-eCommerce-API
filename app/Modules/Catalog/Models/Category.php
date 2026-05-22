@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Catalog\Models;
 
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +13,11 @@ class Category extends Model
     use HasFactory;
 
     protected $fillable = ['name', 'slug', 'description'];
+
+    protected static function newFactory(): CategoryFactory
+    {
+        return CategoryFactory::new();
+    }
 
     public function products(): HasMany
     {

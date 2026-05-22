@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Catalog\Services;
 
-use App\Models\Category;
-use App\Models\Product;
+use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;

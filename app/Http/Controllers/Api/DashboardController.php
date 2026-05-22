@@ -8,8 +8,8 @@ use App\Http\Resources\CashSessionResource;
 use App\Http\Resources\OrderResource;
 use App\Models\CashSession;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller

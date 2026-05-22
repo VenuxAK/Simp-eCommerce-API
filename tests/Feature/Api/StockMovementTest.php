@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\ProductVariant;
 use Tests\ApiTestCase;
 
 class StockMovementTest extends ApiTestCase

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Catalog\Models;
 
+use App\Models\Supplier;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,11 +23,17 @@ class Product extends Model
         ];
     }
 
+    protected static function newFactory(): ProductFactory
+    {
+        return ProductFactory::new();
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    // TODO: Replace with contract when Supplier module is extracted.
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);

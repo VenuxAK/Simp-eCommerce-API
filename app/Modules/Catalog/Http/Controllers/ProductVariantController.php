@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Catalog\Http\Requests\UpdateStockRequest;
+use App\Modules\Catalog\Http\Resources\ProductResource;
+use App\Modules\Catalog\Http\Resources\ProductVariantResource;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\UpdateStockRequest;
-use App\Http\Resources\ProductVariantResource;
-use App\Models\ProductVariant;
-use App\Services\MediaService;
+use App\Modules\Catalog\Services\MediaService;
 use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,7 +58,7 @@ class ProductVariantController extends Controller
 
         return $this->respond([
             'variant' => new ProductVariantResource($variant),
-            'product' => new \App\Http\Resources\ProductResource($variant->product),
+            'product' => new ProductResource($variant->product),
         ]);
     }
 }

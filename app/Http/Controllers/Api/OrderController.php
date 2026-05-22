@@ -10,7 +10,7 @@ use App\Http\Requests\Api\StoreOrderRequest;
 use App\Http\Requests\Api\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\DiscountService;
 use App\Services\OrderService;

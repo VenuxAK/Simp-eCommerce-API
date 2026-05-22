@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Category;
+use App\Modules\Catalog\Models\Category;
 use Tests\ApiTestCase;
 
 class CategoryTest extends ApiTestCase

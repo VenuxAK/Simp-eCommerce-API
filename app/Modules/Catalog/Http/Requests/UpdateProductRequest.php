@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Requests\Api;
+namespace App\Modules\Catalog\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -23,7 +24,7 @@ class UpdateProductRequest extends FormRequest
             'variants' => ['sometimes', 'array'],
             'variants.*.id' => ['sometimes', 'exists:product_variants,id'],
             'variants.*.sku' => ['required_with:variants', 'string', 'max:100',
-                \Illuminate\Validation\Rule::unique('product_variants', 'sku')->ignore($this->route('product')?->id, 'product_id'),
+                Rule::unique('product_variants', 'sku')->ignore($this->route('product')?->id, 'product_id'),
             ],
             'variants.*.size' => ['nullable', 'string', 'max:50'],
             'variants.*.color' => ['nullable', 'string', 'max:50'],

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\OrderItemFactory;
+use App\Modules\Catalog\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

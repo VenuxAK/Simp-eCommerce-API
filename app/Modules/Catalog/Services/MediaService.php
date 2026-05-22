@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Catalog\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;

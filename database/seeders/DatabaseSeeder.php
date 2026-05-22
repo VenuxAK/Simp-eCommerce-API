@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
+use App\Modules\Catalog\Models\Category;
 use App\Models\Customer;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\Seeder;
 

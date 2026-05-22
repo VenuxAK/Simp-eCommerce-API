@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Modules\Catalog\Http\Resources;
 
+use App\Http\Resources\SupplierResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
@@ -20,7 +22,7 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'base_price' => (float) $this->base_price,
             'image' => $this->image,
-            'image_url' => $this->image ? \Illuminate\Support\Facades\Storage::url($this->image) : null,
+            'image_url' => $this->image ? Storage::url($this->image) : null,
             'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

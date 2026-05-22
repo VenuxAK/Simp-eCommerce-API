@@ -20,18 +20,18 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/customers/{customer}', [App\Http\Controllers\Api\CustomerController::class, 'update'])->middleware('admin');
     Route::delete('/customers/{customer}', [App\Http\Controllers\Api\CustomerController::class, 'destroy'])->middleware('admin');
 
-    Route::get('/products', [App\Http\Controllers\Api\ProductController::class, 'index']);
-    Route::get('/products/{product}', [App\Http\Controllers\Api\ProductController::class, 'show']);
-    Route::get('/products/export/csv', [App\Http\Controllers\Api\ProductController::class, 'exportCsv']);
-    Route::get('/products/{product}/labels', [App\Http\Controllers\Api\ProductController::class, 'labels']);
-    Route::post('/products', [App\Http\Controllers\Api\ProductController::class, 'store'])->middleware('admin');
-    Route::put('/products/{product}', [App\Http\Controllers\Api\ProductController::class, 'update'])->middleware('admin');
-    Route::delete('/products/{product}', [App\Http\Controllers\Api\ProductController::class, 'destroy'])->middleware('admin');
-    Route::post('/products/import/csv', [App\Http\Controllers\Api\ProductController::class, 'importCsv'])->middleware('admin');
-    Route::post('/products/{product}/image', [App\Http\Controllers\Api\ProductController::class, 'uploadImage']);
-    Route::patch('/variants/{variant}/stock', [App\Http\Controllers\Api\ProductVariantController::class, 'updateStock']);
-    Route::get('/variants/by-sku/{sku}', [App\Http\Controllers\Api\ProductVariantController::class, 'bySku']);
-    Route::post('/variants/{variant}/image', [App\Http\Controllers\Api\ProductVariantController::class, 'uploadImage']);
+    Route::get('/products', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'index']);
+    Route::get('/products/{product}', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'show']);
+    Route::get('/products/export/csv', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'exportCsv']);
+    Route::get('/products/{product}/labels', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'labels']);
+    Route::post('/products', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'store'])->middleware('admin');
+    Route::put('/products/{product}', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'update'])->middleware('admin');
+    Route::delete('/products/{product}', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'destroy'])->middleware('admin');
+    Route::post('/products/import/csv', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'importCsv'])->middleware('admin');
+    Route::post('/products/{product}/image', [App\Modules\Catalog\Http\Controllers\ProductController::class, 'uploadImage']);
+    Route::patch('/variants/{variant}/stock', [App\Modules\Catalog\Http\Controllers\ProductVariantController::class, 'updateStock']);
+    Route::get('/variants/by-sku/{sku}', [App\Modules\Catalog\Http\Controllers\ProductVariantController::class, 'bySku']);
+    Route::post('/variants/{variant}/image', [App\Modules\Catalog\Http\Controllers\ProductVariantController::class, 'uploadImage']);
 
     Route::get('/orders', [App\Http\Controllers\Api\OrderController::class, 'index']);
     Route::get('/orders/{order}', [App\Http\Controllers\Api\OrderController::class, 'show']);
@@ -56,11 +56,11 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/discounts/{discount}', [App\Http\Controllers\Api\DiscountController::class, 'update'])->middleware('admin');
     Route::delete('/discounts/{discount}', [App\Http\Controllers\Api\DiscountController::class, 'destroy'])->middleware('admin');
 
-    Route::get('/categories', [App\Http\Controllers\Api\CategoryController::class, 'index']);
-    Route::get('/categories/{category}', [App\Http\Controllers\Api\CategoryController::class, 'show']);
-    Route::post('/categories', [App\Http\Controllers\Api\CategoryController::class, 'store'])->middleware('admin');
-    Route::put('/categories/{category}', [App\Http\Controllers\Api\CategoryController::class, 'update'])->middleware('admin');
-    Route::delete('/categories/{category}', [App\Http\Controllers\Api\CategoryController::class, 'destroy'])->middleware('admin');
+    Route::get('/categories', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'index']);
+    Route::get('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'show']);
+    Route::post('/categories', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'store'])->middleware('admin');
+    Route::put('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'update'])->middleware('admin');
+    Route::delete('/categories/{category}', [App\Modules\Catalog\Http\Controllers\CategoryController::class, 'destroy'])->middleware('admin');
 
     Route::get('/suppliers', [App\Http\Controllers\Api\SupplierController::class, 'index']);
     Route::get('/suppliers/{supplier}', [App\Http\Controllers\Api\SupplierController::class, 'show']);

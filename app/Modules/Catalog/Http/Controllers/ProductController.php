@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Requests\Api\StoreProductRequest;
-use App\Http\Requests\Api\UpdateProductRequest;
-use App\Http\Resources\ProductResource;
 use App\Models\OrderItem;
-use App\Models\Product;
-use App\Services\MediaService;
-use App\Services\ProductExportService;
-use App\Services\ProductImportService;
+use App\Modules\Catalog\Http\Requests\StoreProductRequest;
+use App\Modules\Catalog\Http\Requests\UpdateProductRequest;
+use App\Modules\Catalog\Http\Resources\ProductResource;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Catalog\Services\MediaService;
+use App\Modules\Catalog\Services\ProductExportService;
+use App\Modules\Catalog\Services\ProductImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
