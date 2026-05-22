@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\System\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -13,6 +12,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class BackupController extends Controller
 {
     use ApiResponse;
+
     public function create(): JsonResponse
     {
         $dbPath = database_path('database.sqlite');

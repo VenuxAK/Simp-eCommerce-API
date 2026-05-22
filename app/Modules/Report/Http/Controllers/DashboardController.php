@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Report\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Core\Traits\ApiResponse;
-use App\Http\Resources\CashSessionResource;
-use App\Modules\Sales\Http\Resources\OrderResource;
-use App\Models\CashSession;
-use App\Modules\Sales\Models\Order;
+use App\Modules\Cash\Http\Resources\CashSessionResource;
+use App\Modules\Cash\Models\CashSession;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Sales\Http\Resources\OrderResource;
+use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
     use ApiResponse;
+
     public function summary(): JsonResponse
     {
         $today = now()->startOfDay();

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Report\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 class ReportController extends Controller
 {
     use ApiResponse;
+
     public function sales(): JsonResponse
     {
         $dateFrom = request('date_from', now()->startOfMonth()->toDateString());

@@ -11,7 +11,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/profile', [App\Modules\Identity\Http\Controllers\ProfileController::class, 'show']);
     Route::put('/profile', [App\Modules\Identity\Http\Controllers\ProfileController::class, 'update']);
 
-    Route::get('/dashboard/summary', [App\Http\Controllers\Api\DashboardController::class, 'summary']);
+    Route::get('/dashboard/summary', [App\Modules\Report\Http\Controllers\DashboardController::class, 'summary']);
 
     Route::get('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'index']);
     Route::get('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'show']);
@@ -45,9 +45,9 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/invoices/{invoice}/pdf', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'pdf']);
     Route::get('/invoices/{invoice}/receipt', [App\Modules\Sales\Http\Controllers\InvoiceController::class, 'receipt']);
 
-    Route::get('/reports/sales', [App\Http\Controllers\Api\ReportController::class, 'sales']);
-    Route::get('/reports/best-sellers', [App\Http\Controllers\Api\ReportController::class, 'bestSellers']);
-    Route::get('/reports/payment-methods', [App\Http\Controllers\Api\ReportController::class, 'paymentMethods']);
+    Route::get('/reports/sales', [App\Modules\Report\Http\Controllers\ReportController::class, 'sales']);
+    Route::get('/reports/best-sellers', [App\Modules\Report\Http\Controllers\ReportController::class, 'bestSellers']);
+    Route::get('/reports/payment-methods', [App\Modules\Report\Http\Controllers\ReportController::class, 'paymentMethods']);
 
     Route::get('/discounts/active', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'active']);
     Route::get('/discounts', [App\Modules\Promotion\Http\Controllers\DiscountController::class, 'index']);
@@ -68,18 +68,18 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/suppliers/{supplier}', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'update'])->middleware('admin');
     Route::delete('/suppliers/{supplier}', [App\Modules\Supplier\Http\Controllers\SupplierController::class, 'destroy'])->middleware('admin');
 
-    Route::get('/cash-sessions', [App\Http\Controllers\Api\CashSessionController::class, 'index']);
-    Route::get('/cash-sessions/active', [App\Http\Controllers\Api\CashSessionController::class, 'active']);
-    Route::post('/cash-sessions/open', [App\Http\Controllers\Api\CashSessionController::class, 'open']);
-    Route::post('/cash-sessions/close', [App\Http\Controllers\Api\CashSessionController::class, 'close']);
+    Route::get('/cash-sessions', [App\Modules\Cash\Http\Controllers\CashSessionController::class, 'index']);
+    Route::get('/cash-sessions/active', [App\Modules\Cash\Http\Controllers\CashSessionController::class, 'active']);
+    Route::post('/cash-sessions/open', [App\Modules\Cash\Http\Controllers\CashSessionController::class, 'open']);
+    Route::post('/cash-sessions/close', [App\Modules\Cash\Http\Controllers\CashSessionController::class, 'close']);
 
     Route::get('/stock-movements', [App\Modules\Inventory\Http\Controllers\StockMovementController::class, 'index'])->middleware('admin');
 
-    Route::post('/backups', [App\Http\Controllers\Api\BackupController::class, 'create'])->middleware('admin');
-    Route::get('/backups', [App\Http\Controllers\Api\BackupController::class, 'list'])->middleware('admin');
-    Route::get('/backups/{filename}/download', [App\Http\Controllers\Api\BackupController::class, 'download'])->middleware('admin')->where('filename', '[A-Za-z0-9._-]+');
+    Route::post('/backups', [App\Modules\System\Http\Controllers\BackupController::class, 'create'])->middleware('admin');
+    Route::get('/backups', [App\Modules\System\Http\Controllers\BackupController::class, 'list'])->middleware('admin');
+    Route::get('/backups/{filename}/download', [App\Modules\System\Http\Controllers\BackupController::class, 'download'])->middleware('admin')->where('filename', '[A-Za-z0-9._-]+');
 
-    Route::get('/audit-logs', [App\Http\Controllers\Api\AuditLogController::class, 'index'])->middleware('admin');
+    Route::get('/audit-logs', [App\Modules\Audit\Http\Controllers\AuditLogController::class, 'index'])->middleware('admin');
 
     Route::middleware('admin')->group(function () {
         Route::apiResource('users', App\Modules\Identity\Http\Controllers\UserController::class);

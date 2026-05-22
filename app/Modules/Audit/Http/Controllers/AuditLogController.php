@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\Audit\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Audit\Http\Resources\AuditLogResource;
+use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Core\Traits\QueryFilter;
-use App\Http\Resources\AuditLogResource;
-use App\Models\AuditLog;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class AuditLogController extends Controller
