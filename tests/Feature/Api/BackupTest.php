@@ -57,7 +57,7 @@ class BackupTest extends ApiTestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
-        $response = $this->postJson('/api/backup', [], $staffHeaders);
+        $response = $this->postJson('/api/backups', [], $staffHeaders);
         $response->assertForbidden();
     }
 

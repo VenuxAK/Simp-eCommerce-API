@@ -52,7 +52,7 @@ class CustomerController extends Controller
     {
         $customer->delete();
 
-        return $this->respondMessage('Customer deleted successfully.');
+        return $this->respondMessage('Customer deleted.');
     }
 
     public function orders(Customer $customer): AnonymousResourceCollection

@@ -75,7 +75,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::get('/stock-movements', [App\Http\Controllers\Api\StockMovementController::class, 'index'])->middleware('admin');
 
-    Route::post('/backup', [App\Http\Controllers\Api\BackupController::class, 'create'])->middleware('admin');
+    Route::post('/backups', [App\Http\Controllers\Api\BackupController::class, 'create'])->middleware('admin');
     Route::get('/backups', [App\Http\Controllers\Api\BackupController::class, 'list'])->middleware('admin');
     Route::get('/backups/{filename}/download', [App\Http\Controllers\Api\BackupController::class, 'download'])->middleware('admin')->where('filename', '[A-Za-z0-9._-]+');
 

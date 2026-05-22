@@ -53,6 +53,6 @@ class CategoryController extends Controller
     {
         $category->delete();
 
-        return $this->respondMessage('Category deleted successfully.');
+        return $this->respondMessage('Category deleted.');
     }
 }

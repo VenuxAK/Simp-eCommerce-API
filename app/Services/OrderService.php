@@ -22,7 +22,9 @@ class OrderService
         float $discountAmount,
         string $discountLabel,
     ): Order {
-        return DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel) {
+        $generator = app(InvoiceNumberGenerator::class);
+
+        return DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel, $generator) {
             $notes = $data['notes'] ?? null;
             if ($discountAmount > 0) {
                 $notes = ($notes ? $notes . "\n" : '') . "Discount: {$discountLabel}";
@@ -31,7 +33,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => request()->user()->id,
                 'customer_id' => $data['customer_id'] ?? null,
-                'order_number' => InvoiceNumberGenerator::generateOrderNumber(),
+                'order_number' => $generator->generateOrderNumber(),
                 'total_amount' => $finalAmount,
                 'status' => 'completed',
                 'notes' => $notes,
@@ -65,7 +67,6 @@ class OrderService
                 'paid_at' => now(),
             ]);
 
-            $generator = app(InvoiceNumberGenerator::class);
             $order->invoice()->create([
                 'invoice_number' => $generator->generate(),
                 'issued_date' => now(),

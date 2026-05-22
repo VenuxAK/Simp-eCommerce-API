@@ -25,6 +25,7 @@ class AuditLogResource extends JsonResource
             'new_values' => $newValues,
             'ip_address' => $this->ip_address,
             'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 

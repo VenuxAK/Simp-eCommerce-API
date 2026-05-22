@@ -165,6 +165,6 @@ class ProductController extends Controller
 
         $product->delete();
 
-        return $this->respondMessage('Product deleted successfully.');
+        return $this->respondMessage('Product deleted.');
     }
 }

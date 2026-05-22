@@ -3,34 +3,31 @@
 namespace App\Services;
 
 use App\Models\Invoice;
-use Illuminate\Support\Facades\DB;
+use App\Models\Order;
 
 class InvoiceNumberGenerator
 {
     public function generate(): string
     {
-        $date = now()->format('Ymd');
-
-        $lastInvoice = Invoice::where('invoice_number', 'like', "INV-{$date}-%")
-            ->orderBy('invoice_number', 'desc')
-            ->first();
-
-        $newNumber = $lastInvoice ? ((int) substr($lastInvoice->invoice_number, -4)) + 1 : 1;
-
-        return 'INV-' . $date . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return $this->generateNumber(Invoice::class, 'invoice_number', 'INV');
     }
 
-    public static function generateOrderNumber(): string
+    public function generateOrderNumber(): string
+    {
+        return $this->generateNumber(Order::class, 'order_number', 'ORD');
+    }
+
+    private function generateNumber(string $modelClass, string $column, string $prefix): string
     {
         $date = now()->format('Ymd');
+        $pattern = "{$prefix}-{$date}-%";
 
-        $lastOrder = DB::table('orders')
-            ->where('order_number', 'like', "ORD-{$date}-%")
-            ->orderBy('order_number', 'desc')
+        $last = $modelClass::where($column, 'like', $pattern)
+            ->orderBy($column, 'desc')
             ->first();
 
-        $newNumber = $lastOrder ? ((int) substr($lastOrder->order_number, -4)) + 1 : 1;
+        $newNumber = $last ? ((int) substr($last->$column, -4)) + 1 : 1;
 
-        return 'ORD-' . $date . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return "{$prefix}-{$date}-" . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

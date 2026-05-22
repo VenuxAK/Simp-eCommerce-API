@@ -19,6 +19,7 @@ class SupplierResource extends JsonResource
             'notes' => $this->notes,
             'products_count' => $this->whenCounted('products'),
             'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

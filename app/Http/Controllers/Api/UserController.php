@@ -74,6 +74,6 @@ class UserController extends Controller
 
         $user->delete();
 
-        return $this->respondMessage('User deleted successfully.');
+        return $this->respondMessage('User deleted.');
     }
 }
