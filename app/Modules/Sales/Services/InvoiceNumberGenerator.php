@@ -5,6 +5,9 @@ namespace App\Modules\Sales\Services;
 use App\Modules\Sales\Models\Invoice;
 use App\Modules\Sales\Models\Order;
 
+/**
+ * Business logic for InvoiceNumberGenerator operations.
+ */
 class InvoiceNumberGenerator
 {
     public function generate(): string
@@ -17,6 +20,13 @@ class InvoiceNumberGenerator
         return $this->generateNumber(Order::class, 'order_number', 'ORD');
     }
 
+    /**
+     * Generate a sequential number with date prefix.
+     *
+     * Format: {PREFIX}-{YYYYMMDD}-{XXXX}
+     * Resets the counter daily by deriving the next number from the
+     * last record created on the same date.
+     */
     private function generateNumber(string $modelClass, string $column, string $prefix): string
     {
         $date = now()->format('Ymd');

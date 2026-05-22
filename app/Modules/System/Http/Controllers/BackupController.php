@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
+/**
+ * Handles Backup-related API requests.
+ */
 class BackupController extends Controller
 {
     use ApiResponse;
@@ -43,6 +46,12 @@ class BackupController extends Controller
         return $this->respond(['data' => $files]);
     }
 
+    /**
+     * Download a backup file.
+     *
+     * Uses basename() to strip directory traversal characters,
+     * preventing unauthorized access outside the backups directory.
+     */
     public function download(string $filename): BinaryFileResponse|JsonResponse
     {
         $filename = basename($filename);

@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Represents a OrderItem in the system.
+ */
 class OrderItem extends Model
 {
     /** @use HasFactory<OrderItemFactory> */
@@ -15,6 +18,9 @@ class OrderItem extends Model
 
     protected $fillable = ['order_id', 'product_variant_id', 'quantity', 'unit_price', 'subtotal'];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

@@ -19,6 +19,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Handles Order-related API requests.
+ */
 class OrderController extends Controller
 {
     use ApiResponse, QueryFilter;
@@ -41,6 +44,12 @@ class OrderController extends Controller
         return OrderResource::collection($orders);
     }
 
+    /**
+     * Create an order from POS checkout.
+     *
+     * Validates stock, calculates totals, applies discounts,
+     * checks payment sufficiency, and delegates to OrderService.
+     */
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -115,6 +124,12 @@ class OrderController extends Controller
         return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice']));
     }
 
+    /**
+     * Process item-level returns with stock restoration.
+     *
+     * Validates returnable quantities by checking prior returns,
+     * restocks inventory, and marks the order as refunded.
+     */
     public function returnItems(ReturnOrderRequest $request, Order $order): JsonResponse
     {
         if (!in_array($order->status, ['completed', 'refunded'])) {
@@ -130,6 +145,7 @@ class OrderController extends Controller
                 foreach ($data['items'] as $returnItem) {
                     $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
 
+                    // Calculate already returned quantity for this variant on this order.
                     $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
                         ->where('reference_type', 'order')
                         ->where('reference_id', $order->id)
@@ -176,11 +192,18 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * Transition an order through its allowed statuses.
+     *
+     * Restores or deducts stock on cancel/refund/complete transitions.
+     * Only valid transitions defined in the state machine are permitted.
+     */
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): OrderResource|JsonResponse
     {
         $newStatus = $request->status;
         $currentStatus = $order->status;
 
+        // Define allowed transitions: current => [allowed next statuses].
         $allowedFrom = [
             'completed' => ['cancelled', 'refunded'],
             'pending' => ['completed', 'cancelled'],

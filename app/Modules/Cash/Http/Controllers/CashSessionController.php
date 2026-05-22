@@ -11,6 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles CashSession-related API requests.
+ */
 class CashSessionController extends Controller
 {
     use ApiResponse;

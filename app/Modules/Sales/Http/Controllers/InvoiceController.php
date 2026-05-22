@@ -11,6 +11,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Invoice-related API requests.
+ */
 class InvoiceController extends Controller
 {
     use ApiResponse, QueryFilter;

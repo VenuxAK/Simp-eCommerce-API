@@ -7,6 +7,9 @@ use App\Modules\Identity\Http\Requests\UpdateProfileRequest;
 use App\Modules\Identity\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 
+/**
+ * Handles Profile-related API requests.
+ */
 class ProfileController extends Controller
 {
     public function show(Request $request): UserResource

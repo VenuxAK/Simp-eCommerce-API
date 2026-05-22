@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Represents a ProductVariant in the system.
+ */
 class ProductVariant extends Model
 {
     /** @use HasFactory<ProductVariantFactory> */
@@ -17,6 +20,9 @@ class ProductVariant extends Model
 
     protected $fillable = ['product_id', 'sku', 'size', 'color', 'image', 'price_adjustment', 'purchase_price', 'stock_quantity'];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

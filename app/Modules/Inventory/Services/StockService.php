@@ -5,6 +5,9 @@ namespace App\Modules\Inventory\Services;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Inventory\Models\StockMovement;
 
+/**
+ * Business logic for Stock operations.
+ */
 class StockService
 {
     public function recordMovement(

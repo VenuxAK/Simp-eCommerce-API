@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Represents a Payment in the system.
+ */
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -14,6 +17,9 @@ class Payment extends Model
 
     protected $fillable = ['order_id', 'method', 'amount', 'paid_at'];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

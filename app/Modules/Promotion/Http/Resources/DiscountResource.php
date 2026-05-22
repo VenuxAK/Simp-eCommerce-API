@@ -5,6 +5,9 @@ namespace App\Modules\Promotion\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Discount model into a JSON response.
+ */
 class DiscountResource extends JsonResource
 {
     public function toArray(Request $request): array

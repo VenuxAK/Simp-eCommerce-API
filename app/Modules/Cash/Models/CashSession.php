@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Represents a CashSession in the system.
+ */
 class CashSession extends Model
 {
     /** @use HasFactory<CashSessionFactory> */
@@ -24,6 +27,9 @@ class CashSession extends Model
         return CashSessionFactory::new();
     }
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

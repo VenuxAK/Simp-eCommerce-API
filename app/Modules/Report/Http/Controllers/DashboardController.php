@@ -12,6 +12,9 @@ use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Handles Dashboard-related API requests.
+ */
 class DashboardController extends Controller
 {
     use ApiResponse;

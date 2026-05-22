@@ -4,6 +4,9 @@ namespace App\Modules\Core\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * QueryFilter helper methods.
+ */
 trait QueryFilter
 {
     protected function applyFilters(Builder $query, array $filters): Builder

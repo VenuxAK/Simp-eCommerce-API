@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Represents a Invoice in the system.
+ */
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
@@ -17,6 +20,9 @@ class Invoice extends Model
         'due_date', 'status', 'notes', 'terms',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

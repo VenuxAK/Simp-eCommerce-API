@@ -4,8 +4,19 @@ namespace App\Modules\Promotion\Services;
 
 use App\Modules\Promotion\Models\Discount;
 
+/**
+ * Business logic for Discount operations.
+ */
 class DiscountService
 {
+    /**
+     * Calculate discount amount and return a human-readable label.
+     *
+     * Supports percentage and fixed discounts scoped to all items,
+     * a specific category, or a specific product.
+     *
+     * @return array{0: float, 1: string} [discountAmount, discountLabel]
+     */
     public function apply(?int $discountId, array $orderItems, float $totalAmount): array
     {
         $discountAmount = 0;
@@ -20,6 +31,7 @@ class DiscountService
             return [$discountAmount, $discountLabel];
         }
 
+        // Sum the subtotals of eligible items based on discount scope.
         $discountableTotal = match ($discount->applies_to) {
             'all' => $totalAmount,
             'category' => collect($orderItems)
@@ -35,6 +47,7 @@ class DiscountService
             $discountAmount = round($discountableTotal * $discount->value / 100, 2);
             $discountLabel = "{$discount->name} ({$discount->value}%)";
         } else {
+            // Fixed discount capped at the eligible total.
             $discountAmount = min($discount->value, $discountableTotal);
             $discountLabel = "{$discount->name} (-{$discount->value} Ks)";
         }

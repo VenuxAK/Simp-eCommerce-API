@@ -6,6 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * ApiResponse helper methods.
+ */
 trait ApiResponse
 {
     protected function respond(mixed $data, int $status = 200, array $headers = []): JsonResponse

@@ -8,12 +8,28 @@ use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Inventory\Services\StockService;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Business logic for Order operations.
+ */
 class OrderService
 {
     public function __construct(
         private readonly StockService $stockService,
     ) {}
 
+    /**
+     * Create an order within a database transaction.
+     *
+     * Validates stock levels, creates order items, deducts inventory,
+     * records payment and invoice, and awards loyalty points.
+     *
+     * @param  array  $orderItems  Items with variant_id, quantity, unit_price, subtotal
+     * @param  array  $data        Raw request data (customer_id, payment, notes, etc.)
+     * @param  float  $finalAmount Total after discount
+     * @param  float  $paidAmount  Amount tendered by customer
+     * @param  float  $discountAmount  Discount applied
+     * @param  string $discountLabel   Human-readable discount description
+     */
     public function createOrder(
         array $orderItems,
         array $data,
@@ -39,6 +55,7 @@ class OrderService
                 'notes' => $notes,
             ]);
 
+            // Lock each variant row and decrement stock atomically.
             foreach ($orderItems as $item) {
                 $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
 
@@ -74,6 +91,7 @@ class OrderService
                 'status' => 'issued',
             ]);
 
+            // Award 1 loyalty point per 10 currency units spent.
             if ($data['customer_id'] ?? null) {
                 $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
             }

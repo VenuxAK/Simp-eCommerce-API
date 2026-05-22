@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Represents a Customer in the system.
+ */
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
@@ -15,6 +18,9 @@ class Customer extends Model
 
     protected $fillable = ['name', 'email', 'phone', 'address', 'loyalty_points'];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

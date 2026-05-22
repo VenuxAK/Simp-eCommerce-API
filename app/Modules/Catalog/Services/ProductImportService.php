@@ -10,8 +10,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+/**
+ * Business logic for ProductImport operations.
+ */
 class ProductImportService
 {
+    /**
+     * Import products and variants from a CSV file.
+     *
+     * Creates or updates categories, suppliers, products, and variants
+     * within a single database transaction. Returns a count of created
+     * records and any row-level validation errors.
+     */
     public function importFromFile(UploadedFile $file): array
     {
         $handle = fopen($file->getPathname(), 'r');

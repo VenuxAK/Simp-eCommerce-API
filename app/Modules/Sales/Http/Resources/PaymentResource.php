@@ -5,6 +5,9 @@ namespace App\Modules\Sales\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Payment model into a JSON response.
+ */
 class PaymentResource extends JsonResource
 {
     public function toArray(Request $request): array

@@ -4,6 +4,9 @@ namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\Product;
 
+/**
+ * Business logic for ProductExport operations.
+ */
 class ProductExportService
 {
     public function exportToCsv(): string

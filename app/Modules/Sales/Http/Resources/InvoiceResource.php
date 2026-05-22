@@ -5,6 +5,9 @@ namespace App\Modules\Sales\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Invoice model into a JSON response.
+ */
 class InvoiceResource extends JsonResource
 {
     public function toArray(Request $request): array

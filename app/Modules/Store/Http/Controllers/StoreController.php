@@ -11,6 +11,9 @@ use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Store-related API requests.
+ */
 class StoreController extends Controller
 {
     use ApiResponse;

@@ -8,6 +8,9 @@ use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Core\Traits\QueryFilter;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles AuditLog-related API requests.
+ */
 class AuditLogController extends Controller
 {
     use QueryFilter;

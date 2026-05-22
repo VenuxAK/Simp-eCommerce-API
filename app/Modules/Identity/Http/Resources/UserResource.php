@@ -5,6 +5,9 @@ namespace App\Modules\Identity\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a User model into a JSON response.
+ */
 class UserResource extends JsonResource
 {
     public function toArray(Request $request): array

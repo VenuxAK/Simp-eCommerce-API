@@ -11,6 +11,9 @@ use App\Modules\Supplier\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Supplier-related API requests.
+ */
 class SupplierController extends Controller
 {
     use ApiResponse;

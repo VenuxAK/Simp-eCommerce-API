@@ -11,6 +11,9 @@ use App\Modules\Core\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Category-related API requests.
+ */
 class CategoryController extends Controller
 {
     use ApiResponse;

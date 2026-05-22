@@ -8,6 +8,9 @@ use App\Modules\Inventory\Http\Resources\StockMovementResource;
 use App\Modules\Inventory\Models\StockMovement;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles StockMovement-related API requests.
+ */
 class StockMovementController extends Controller
 {
     use QueryFilter;

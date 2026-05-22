@@ -17,6 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
+/**
+ * Handles Product-related API requests.
+ */
 class ProductController extends Controller
 {
     use ApiResponse;

@@ -6,6 +6,9 @@ use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a StockMovement model into a JSON response.
+ */
 class StockMovementResource extends JsonResource
 {
     public function toArray(Request $request): array

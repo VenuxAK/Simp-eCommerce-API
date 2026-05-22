@@ -5,6 +5,9 @@ namespace App\Modules\Customer\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Customer model into a JSON response.
+ */
 class CustomerResource extends JsonResource
 {
     public function toArray(Request $request): array

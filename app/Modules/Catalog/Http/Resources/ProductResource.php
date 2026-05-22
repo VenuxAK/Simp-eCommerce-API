@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Transforms a Product model into a JSON response.
+ */
 class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array

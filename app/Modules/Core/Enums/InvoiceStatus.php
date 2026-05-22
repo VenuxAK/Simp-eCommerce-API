@@ -2,6 +2,9 @@
 
 namespace App\Modules\Core\Enums;
 
+/**
+ * Represents possible InvoiceStatus values.
+ */
 enum InvoiceStatus: string
 {
     case Draft = 'draft';

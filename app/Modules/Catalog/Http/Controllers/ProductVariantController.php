@@ -13,6 +13,9 @@ use App\Modules\Inventory\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Handles ProductVariant-related API requests.
+ */
 class ProductVariantController extends Controller
 {
     use ApiResponse;

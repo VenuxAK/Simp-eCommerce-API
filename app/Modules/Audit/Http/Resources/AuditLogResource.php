@@ -6,6 +6,9 @@ use App\Modules\Identity\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a AuditLog model into a JSON response.
+ */
 class AuditLogResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -30,6 +33,12 @@ class AuditLogResource extends JsonResource
         ];
     }
 
+    /**
+     * Replace sensitive field values with [REDACTED] placeholder.
+     *
+     * Accepts both arrays and JSON strings. Used before persisting
+     * audit logs to avoid storing credentials or payment data.
+     */
     private function redactSensitive(mixed $values, array $sensitiveFields): mixed
     {
         if (!is_array($values)) {

@@ -11,6 +11,9 @@ use App\Modules\Promotion\Models\Discount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Discount-related API requests.
+ */
 class DiscountController extends Controller
 {
     use ApiResponse;

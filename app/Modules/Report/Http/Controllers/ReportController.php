@@ -9,6 +9,9 @@ use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Sales\Models\Payment;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Handles Report-related API requests.
+ */
 class ReportController extends Controller
 {
     use ApiResponse;

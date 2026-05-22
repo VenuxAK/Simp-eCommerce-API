@@ -5,6 +5,9 @@ namespace App\Modules\Catalog\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Category model into a JSON response.
+ */
 class CategoryResource extends JsonResource
 {
     public function toArray(Request $request): array

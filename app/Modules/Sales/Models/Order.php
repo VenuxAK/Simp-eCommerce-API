@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * Represents a Order in the system.
+ */
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -21,6 +24,9 @@ class Order extends Model
         'total_amount', 'status', 'notes',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

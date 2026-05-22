@@ -12,6 +12,9 @@ use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles User-related API requests.
+ */
 class UserController extends Controller
 {
     use ApiResponse;

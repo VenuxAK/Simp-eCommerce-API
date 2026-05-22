@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * Represents a StockMovement in the system.
+ */
 class StockMovement extends Model
 {
     protected $fillable = [
@@ -15,6 +18,9 @@ class StockMovement extends Model
         'reference_type', 'reference_id', 'user_id',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

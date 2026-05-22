@@ -12,6 +12,9 @@ use App\Modules\Customer\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Handles Customer-related API requests.
+ */
 class CustomerController extends Controller
 {
     use ApiResponse;

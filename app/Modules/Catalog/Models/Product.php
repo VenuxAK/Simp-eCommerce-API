@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Represents a Product in the system.
+ */
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -16,6 +19,9 @@ class Product extends Model
 
     protected $fillable = ['category_id', 'supplier_id', 'name', 'slug', 'description', 'base_price', 'image'];
 
+    /**
+     * Get the attributes that should be cast.
+     */
     protected function casts(): array
     {
         return [

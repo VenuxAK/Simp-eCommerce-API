@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Business logic for Media operations.
+ */
 class MediaService
 {
     public function uploadImage(Model $model, UploadedFile $file, string $field = 'image', string $disk = 'public'): string

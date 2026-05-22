@@ -5,6 +5,9 @@ namespace App\Modules\Store\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Store model into a JSON response.
+ */
 class StoreResource extends JsonResource
 {
     public function toArray(Request $request): array

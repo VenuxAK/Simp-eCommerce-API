@@ -7,6 +7,9 @@ use App\Modules\Identity\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Transforms a Order model into a JSON response.
+ */
 class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
