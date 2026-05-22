@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Traits\ApiResponse;
+use App\Http\Controllers\Api\Traits\QueryFilter;
 use App\Http\Requests\Api\ReturnOrderRequest;
 use App\Http\Requests\Api\StoreOrderRequest;
 use App\Http\Requests\Api\UpdateOrderStatusRequest;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, QueryFilter;
 
     public function __construct(
         private readonly OrderService $orderService,
@@ -30,13 +31,12 @@ class OrderController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $orders = Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice'])
-            ->when(request('status'), fn($q) => $q->where('status', request('status')))
-            ->when(request('customer_id'), fn($q) => $q->where('customer_id', request('customer_id')))
-            ->when(request('date_from'), fn($q) => $q->whereDate('created_at', '>=', request('date_from')))
-            ->when(request('date_to'), fn($q) => $q->whereDate('created_at', '<=', request('date_to')))
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $orders = $this->applyFilters(
+            Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice']),
+            ['status' => 'status', 'customer_id' => 'customer_id'],
+        );
+        $orders = $this->applyDateRange($orders);
+        $orders = $this->latestPaginated($orders);
 
         return OrderResource::collection($orders);
     }

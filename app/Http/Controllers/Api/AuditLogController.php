@@ -3,19 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Traits\QueryFilter;
+use App\Http\Resources\AuditLogResource;
 use App\Models\AuditLog;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class AuditLogController extends Controller
 {
+    use QueryFilter;
+
     public function index(): AnonymousResourceCollection
     {
-        $logs = AuditLog::with('user')
-            ->when(request('action'), fn($q) => $q->where('action', request('action')))
-            ->when(request('model'), fn($q) => $q->where('model_type', request('model')))
-            ->orderBy('created_at', 'desc')
-            ->paginate(50);
+        $logs = $this->applyFilters(
+            AuditLog::with('user'),
+            ['action' => 'action', 'model' => 'model_type'],
+        );
+        $logs = $this->latestPaginated($logs, 50);
 
-        return \App\Http\Resources\AuditLogResource::collection($logs);
+        return AuditLogResource::collection($logs);
     }
 }
