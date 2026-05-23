@@ -203,12 +203,15 @@ class OrderController extends Controller
         $newStatus = $request->status;
         $currentStatus = $order->status;
 
-        // Define allowed transitions: current => [allowed next statuses].
+        // Allowed transitions: current => [next]. Online statuses extend the POS state machine.
         $allowedFrom = [
             'completed' => ['cancelled', 'refunded'],
             'pending' => ['completed', 'cancelled'],
             'cancelled' => [],
             'refunded' => [],
+            'processing' => ['shipped', 'cancelled'],        // Online: pay → ship or cancel.
+            'shipped' => ['delivered'],                       // Online: ship → deliver.
+            'delivered' => [],                                // Terminal.
         ];
 
         if (!isset($allowedFrom[$currentStatus]) || !in_array($newStatus, $allowedFrom[$currentStatus])) {
@@ -218,8 +221,18 @@ class OrderController extends Controller
         $order = DB::transaction(function () use ($order, $newStatus, $currentStatus) {
             $order->update(['status' => $newStatus]);
 
-            if ($order->invoice) {
+            // Mirror order status on invoice only for valid invoice statuses.
+            $validInvoiceStatuses = ['issued', 'paid', 'cancelled', 'refunded'];
+            if ($order->invoice && in_array($newStatus, $validInvoiceStatuses)) {
                 $order->invoice->update(['status' => $newStatus]);
+            }
+
+            // Update shipment tracking when order ships.
+            if ($newStatus === 'shipped' && $order->shipment) {
+                $order->shipment->update(['shipped_at' => now()]);
+            }
+            if ($newStatus === 'delivered' && $order->shipment) {
+                $order->shipment->update(['delivered_at' => now()]);
             }
 
             if (in_array($newStatus, ['cancelled', 'refunded'])) {

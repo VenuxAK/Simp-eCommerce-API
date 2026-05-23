@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Customer\Models\Customer;
 use App\Modules\Identity\Models\User;
 
 return [
@@ -46,6 +47,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        'customer' => [
+            'driver' => 'sanctum',
+            'provider' => 'customers',
+        ],
     ],
 
     /*
@@ -69,6 +74,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => Customer::class,
         ],
 
         // 'users' => [

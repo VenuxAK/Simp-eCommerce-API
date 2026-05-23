@@ -3,6 +3,7 @@
 namespace App\Modules\Sales\Models;
 
 use App\Modules\Customer\Models\Customer;
+use App\Modules\ECommerce\Models\Shipment;
 use App\Modules\Identity\Models\User;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * Represents a Order in the system.
+ * A sales transaction, either POS (in-store) or online (storefront).
+ *
+ * POS orders are created with status=completed and stock deducted immediately.
+ * Online COD orders start at status=processing and progress through shipped/delivered.
  */
 class Order extends Model
 {
@@ -21,12 +25,9 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'customer_id', 'order_number',
-        'total_amount', 'status', 'notes',
+        'total_amount', 'status', 'source', 'notes',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [
@@ -62,5 +63,10 @@ class Order extends Model
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class);
+    }
+
+    public function shipment(): HasOne
+    {
+        return $this->hasOne(Shipment::class);
     }
 }

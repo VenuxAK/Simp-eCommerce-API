@@ -5,26 +5,37 @@ namespace App\Modules\Customer\Models;
 use App\Modules\Sales\Models\Order;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
- * Represents a Customer in the system.
+ * CRM entity that doubles as an e-commerce customer account.
+ *
+ * password is nullable: walk-in POS customers don't need accounts.
+ * Only customers who register through a storefront are authenticatable.
  */
-class Customer extends Model
+class Customer extends Authenticatable
 {
     /** @use HasFactory<CustomerFactory> */
-    use HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone', 'address', 'loyalty_points'];
+    protected $fillable = [
+        'name', 'email', 'phone', 'address',
+        'loyalty_points', 'password',
+    ];
 
-    /**
-     * Get the attributes that should be cast.
-     */
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
     protected function casts(): array
     {
         return [
             'loyalty_points' => 'integer',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 
@@ -33,9 +44,13 @@ class Customer extends Model
         return CustomerFactory::new();
     }
 
-    // TODO: Replace with contract when Sales module is extracted.
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
     }
 }

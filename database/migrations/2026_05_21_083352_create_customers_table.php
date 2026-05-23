@@ -15,6 +15,9 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
             $table->integer('loyalty_points')->default(0);
+            $table->string('password')->nullable();               // Nullable until customer registers an account.
+            $table->timestamp('email_verified_at')->nullable();
+            $table->rememberToken();
             $table->timestamps();
         });
     }

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('order_number')->unique();
             $table->decimal('total_amount', 10, 2);
             $table->string('status')->default('pending');
+            $table->string('source')->default('pos');          // 'pos' for in-store, 'online' for storefront orders.
             $table->text('notes')->nullable();
             $table->timestamps();
         });
