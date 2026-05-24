@@ -3,7 +3,6 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Identity\Models\User;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Tests\ApiTestCase;
 
@@ -15,7 +14,7 @@ class BackupTest extends ApiTestCase
 
         Storage::disk('local')->deleteDirectory('backups');
         Storage::disk('local')->makeDirectory('backups');
-        File::copy(database_path('database.sqlite'), Storage::disk('local')->path('backups/test-backup.sqlite'));
+        Storage::disk('local')->put('backups/backup-test.sqlite', 'dummy backup content');
     }
 
     public function test_can_list_backups(): void
@@ -27,7 +26,7 @@ class BackupTest extends ApiTestCase
 
     public function test_can_download_backup(): void
     {
-        $response = $this->getJson('/api/backups/test-backup.sqlite/download', $this->adminHeaders);
+        $response = $this->getJson('/api/backups/backup-test.sqlite/download', $this->adminHeaders);
         $response->assertOk();
     }
 
@@ -66,7 +65,7 @@ class BackupTest extends ApiTestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
-        $response = $this->getJson('/api/backups/test-backup.sqlite/download', $staffHeaders);
+        $response = $this->getJson('/api/backups/backup-test.sqlite/download', $staffHeaders);
         $response->assertForbidden();
     }
 }

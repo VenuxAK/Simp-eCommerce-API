@@ -34,7 +34,7 @@ class ProductController extends Controller
     {
         $products = Product::with(['category', 'supplier', 'variants'])
             ->when(request('category_id'), fn($q) => $q->where('category_id', request('category_id')))
-            ->when(request('search'), fn($q) => $q->where('name', 'like', '%' . request('search') . '%'))
+            ->when(request('search'), fn($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%']))
             ->orderBy('name')
             ->paginate(20);
 
@@ -71,7 +71,7 @@ class ProductController extends Controller
         return new ProductResource($product->load(['category', 'variants']));
     }
 
-    public function update(UpdateProductRequest $request, Product $product): ProductResource
+    public function update(UpdateProductRequest $request, Product $product): ProductResource|JsonResponse
     {
         $product->update([
             'category_id' => $request->category_id ?? $product->category_id,

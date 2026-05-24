@@ -23,9 +23,9 @@ class CustomerController extends Controller
     {
         $customers = Customer::withCount('orders')
             ->when(request('search'), fn($q) => $q->where(function ($q) {
-                $q->where('name', 'like', '%' . request('search') . '%')
-                    ->orWhere('email', 'like', '%' . request('search') . '%')
-                    ->orWhere('phone', 'like', '%' . request('search') . '%');
+                $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%'])
+                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%' . request('search') . '%'])
+                    ->orWhereRaw('LOWER(phone) LIKE LOWER(?)', ['%' . request('search') . '%']);
             }))
             ->orderBy('name')
             ->paginate(20);
