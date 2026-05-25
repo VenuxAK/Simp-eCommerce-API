@@ -17,13 +17,15 @@ class StockService
         ?string $referenceType = null,
         ?int $referenceId = null,
     ): StockMovement {
+        $user = request()->user();
+
         return StockMovement::create([
             'product_variant_id' => $variant->id,
             'quantity_change' => $quantity,
             'reason' => $reason,
             'reference_type' => $referenceType,
             'reference_id' => $referenceId,
-            'user_id' => request()->user()->id,
+            'user_id' => $user instanceof \App\Modules\Identity\Models\User ? $user->id : null,
         ]);
     }
 }

@@ -8,12 +8,10 @@ use App\Modules\Identity\Http\Resources\UserResource;
 use App\Modules\Identity\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Handles Auth-related API requests.
- */
 class AuthController extends Controller
 {
     use ApiResponse;
@@ -33,25 +31,25 @@ class AuthController extends Controller
             ]);
         }
 
-        // Revoke old tokens, issue new one with 24 hour expiry.
-        $user->tokens()->delete();
-        $token = $user->createToken('pos-token', ['*'], now()->addHours(24))->plainTextToken;
+        if ($request->hasSession()) {
+            Auth::guard('web')->login($user);
+            $request->session()->regenerate();
+        }
 
         return $this->respond([
-            'token' => $token,
             'user' => new UserResource($user),
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $token = $request->user()->currentAccessToken();
-
-        if ($token) {
-            $token->delete();
+        if ($request->hasSession()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
 
-        return $this->respondMessage('Logged out successfully.');
+        return $this->respondMessage('Logged out.');
     }
 
     public function me(Request $request): UserResource

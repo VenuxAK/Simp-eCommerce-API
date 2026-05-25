@@ -11,22 +11,24 @@ use Illuminate\Support\Facades\Route;
  * │                                                                │
  * │  Middleware inheritance:                                        │
  * │    • Public       — no auth (login, register)                   │
- * │    • Customer     — auth:customer (Sanctum, Customer guard)     │
- * │    • Staff        — auth:sanctum (Sanctum, User guard)          │
- * │    • Admin        — auth:sanctum + admin middleware             │
+ * │    • Stateful     — session cookie (for login)                  │
+ * │    • Customer     — stateful + auth:customer guard              │
+ * │    • Staff        — auth:sanctum (cookie or Bearer via stateful)│
+ * │    • Admin        — staff + admin middleware                    │
  * └──────────────────────────────────────────────────────────────────┘
  */
 
 // ── 1. Public — no authentication required ───────────────────────
 require __DIR__ . '/modules/auth.php';
 
-// ── 2. Customer portal — Sanctum with Customer guard ────────────
-Route::middleware(['auth:customer', 'throttle:60,1'])->group(function () {
+// ── 2. Customer portal — stateful session + Customer guard ──────
+Route::middleware(['stateful', 'auth:customer', 'throttle:60,1'])->group(function () {
     require __DIR__ . '/modules/customer-portal.php';
 });
 
-// ── 3. Staff dashboard — Sanctum with User guard ────────────────
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+// ── 3. Staff dashboard — stateful session + User guard ──────────
+// Stateful enables cookie auth; Bearer tokens also work via Sanctum fallback.
+Route::middleware(['stateful', 'auth:sanctum', 'throttle:60,1'])->group(function () {
     require __DIR__ . '/modules/identity.php';
     require __DIR__ . '/modules/catalog.php';
     require __DIR__ . '/modules/sales.php';
