@@ -8,7 +8,6 @@ use App\Modules\Identity\Http\Resources\UserResource;
 use App\Modules\Identity\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -31,22 +30,21 @@ class AuthController extends Controller
             ]);
         }
 
-        if ($request->hasSession()) {
-            Auth::guard('web')->login($user);
-            $request->session()->regenerate();
-        }
+        $user->tokens()->delete();
+        $token = $user->createToken('pos-token', ['*'], now()->addHours(24))->plainTextToken;
 
         return $this->respond([
+            'token' => $token,
             'user' => new UserResource($user),
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        if ($request->hasSession()) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        $token = $request->user()->currentAccessToken();
+
+        if ($token) {
+            $token->delete();
         }
 
         return $this->respondMessage('Logged out.');

@@ -14,20 +14,20 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
 
-        $response = $this->withSession([])->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
         $response->assertOk()
-            ->assertJsonStructure(['user' => ['id', 'name', 'email', 'role']]);
+            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email', 'role']]);
     }
 
     public function test_cannot_login_with_invalid_password(): void
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
 
-        $response = $this->withSession([])->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -37,7 +37,7 @@ class AuthTest extends TestCase
 
     public function test_cannot_login_with_nonexistent_email(): void
     {
-        $response = $this->withSession([])->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'nobody@test.com',
             'password' => 'password',
         ]);
@@ -47,7 +47,7 @@ class AuthTest extends TestCase
 
     public function test_requires_email_and_password(): void
     {
-        $response = $this->withSession([])->postJson('/api/auth/login', []);
+        $response = $this->postJson('/api/auth/login', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
@@ -62,6 +62,7 @@ class AuthTest extends TestCase
             ->postJson('/api/auth/logout');
 
         $response->assertOk();
+        $this->assertCount(0, $user->fresh()->tokens);
     }
 
     public function test_can_get_authenticated_user(): void
@@ -85,13 +86,13 @@ class AuthTest extends TestCase
     public function test_login_is_rate_limited(): void
     {
         for ($i = 0; $i < 10; $i++) {
-            $this->withSession([])->postJson('/api/auth/login', [
+            $this->postJson('/api/auth/login', [
                 'email' => 'test@test.com',
                 'password' => 'password',
             ]);
         }
 
-        $response = $this->withSession([])->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'test@test.com',
             'password' => 'password',
         ]);
@@ -99,16 +100,22 @@ class AuthTest extends TestCase
         $response->assertStatus(429);
     }
 
-    public function test_login_returns_user_data(): void
+    public function test_old_token_invalid_after_re_login(): void
     {
         $user = User::factory()->create(['password' => bcrypt('Pass1234')]);
 
-        $response = $this->withSession([])->postJson('/api/auth/login', [
+        $login1 = $this->postJson('/api/auth/login', [
+            'email' => $user->email, 'password' => 'Pass1234',
+        ]);
+        $oldToken = $login1->json('token');
+
+        $this->postJson('/api/auth/login', [
             'email' => $user->email, 'password' => 'Pass1234',
         ]);
 
-        $response->assertOk();
-        $this->assertArrayHasKey('user', $response->json());
-        $this->assertEquals($user->email, $response->json('user.email'));
+        $response = $this->withHeader('Authorization', "Bearer {$oldToken}")
+            ->getJson('/api/auth/me');
+
+        $response->assertUnauthorized();
     }
 }
