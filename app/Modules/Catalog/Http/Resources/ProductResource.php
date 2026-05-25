@@ -26,6 +26,7 @@ class ProductResource extends JsonResource
             'base_price' => (float) $this->base_price,
             'image' => $this->image,
             'image_url' => $this->image ? Storage::url($this->image) : null,
+            'total_stock' => $this->whenLoaded('variants', fn() => (int) $this->variants->sum('stock_quantity')),
             'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
