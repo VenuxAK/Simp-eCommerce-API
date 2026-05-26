@@ -17,7 +17,7 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['category_id', 'supplier_id', 'name', 'slug', 'description', 'base_price', 'image'];
+    protected $fillable = ['category_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image'];
 
     /**
      * Get the attributes that should be cast.

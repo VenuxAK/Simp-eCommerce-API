@@ -27,12 +27,19 @@ class DatabaseSeeder extends Seeder
             'role' => 'staff',
         ]);
 
-        $categories = Category::factory(6)->create();
+        $store = \App\Modules\Store\Models\Store::first();
 
-        $categories->each(function (Category $category) {
+        $categories = Category::factory(6)->create(
+            $store ? ['store_id' => $store->id] : []
+        );
+
+        $categories->each(function (Category $category) use ($store) {
             Product::factory(3)
                 ->has(ProductVariant::factory(4), 'variants')
-                ->create(['category_id' => $category->id]);
+                ->create([
+                    'category_id' => $category->id,
+                    'store_id' => $store?->id,
+                ]);
         });
 
         Customer::factory(15)->create();

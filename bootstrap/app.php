@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Modules\Identity\Http\Middleware\AdminMiddleware::class,
+            'store' => \App\Modules\Store\Http\Middleware\ResolveStore::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

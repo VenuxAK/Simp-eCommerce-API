@@ -20,7 +20,12 @@ use Illuminate\Support\Facades\Route;
 // ── 1. Public — no authentication required ───────────────────────
 require __DIR__ . '/modules/auth.php';
 
-// ── 2. Customer portal — Sanctum with Customer guard ────────────
+// ── 2. Storefront — public, scoped by X-Store header ────────────
+Route::middleware(['store', 'throttle:60,1'])->prefix('storefront')->group(function () {
+    require __DIR__ . '/modules/storefront.php';
+});
+
+// ── 3. Customer portal — Sanctum with Customer guard ────────────
 Route::middleware(['auth:customer', 'throttle:60,1'])->group(function () {
     require __DIR__ . '/modules/customer-portal.php';
 });

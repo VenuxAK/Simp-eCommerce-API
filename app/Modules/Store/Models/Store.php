@@ -2,23 +2,27 @@
 
 namespace App\Modules\Store\Models;
 
+use Database\Factories\StoreFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Represents a Store in the system.
- */
 class Store extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'is_active', 'settings'];
+    /** @use HasFactory<StoreFactory> */
+    use HasFactory;
 
-    /**
-     * Get the attributes that should be cast.
-     */
+    protected $fillable = ['name', 'slug', 'domain', 'description', 'logo', 'phone', 'email', 'is_active', 'settings'];
+
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
             'settings' => 'array',
         ];
+    }
+
+    protected static function newFactory(): StoreFactory
+    {
+        return StoreFactory::new();
     }
 }
