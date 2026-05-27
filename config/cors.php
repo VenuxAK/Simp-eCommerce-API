@@ -6,7 +6,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://localhost:5173'),
+        env('STOREFRONT_URL', 'http://localhost:3000'),
+    ],
 
     'allowed_origins_patterns' => [],
 
