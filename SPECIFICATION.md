@@ -92,6 +92,8 @@ Order         ──1:1──> Payment, Invoice, Shipment
 |---|---|---|
 | POST | `/api/customer/register` | Register (rate-limited: 10/min) |
 | POST | `/api/customer/login` | Login (rate-limited: 10/min) |
+| GET | `/api/auth/oauth/{provider}/redirect` | OAuth redirect URL (Google) |
+| GET | `/api/auth/oauth/{provider}/callback?code=` | OAuth callback — creates/logs in customer, returns Sanctum token |
 
 ### Customer Portal (auth:customer)
 
