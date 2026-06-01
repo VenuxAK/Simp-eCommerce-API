@@ -20,7 +20,7 @@ class InvoiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $user = User::factory()->create();
+        $user = User::factory()->root()->create();
         $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
 
         $category = Category::factory()->create();

@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Modules\Identity\Http\Middleware\AdminMiddleware::class,
+            'admin' => \App\Modules\Identity\Http\Middleware\RoleMiddleware::class,
+            'role' => \App\Modules\Identity\Http\Middleware\RoleMiddleware::class,
             'store' => \App\Modules\Store\Http\Middleware\ResolveStore::class,
             'stateful' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);

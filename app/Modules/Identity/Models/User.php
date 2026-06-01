@@ -2,33 +2,26 @@
 
 namespace App\Modules\Identity\Models;
 
+use App\Modules\Store\Models\Store;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-/**
- * Represents a User in the system.
- */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role'];
+    protected static string $factory = UserFactory::class;
 
-    protected static function newFactory(): UserFactory
-    {
-        return UserFactory::new();
-    }
+    protected $fillable = ['name', 'email', 'password', 'role', 'store_id'];
 
     protected $hidden = ['password', 'remember_token'];
 
-    /**
-     * Get the attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [
@@ -37,9 +30,24 @@ class User extends Authenticatable
         ];
     }
 
-    public function isAdmin(): bool
+    public function isRoot(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'root';
+    }
+
+    public function isStoreAdmin(): bool
+    {
+        return $this->role === 'store_admin';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 
     // TODO: Replace with contract calls when Sales/Cash/Inventory/Audit modules are extracted.
@@ -50,16 +58,16 @@ class User extends Authenticatable
 
     public function cashSessions(): HasMany
     {
-        return $this->hasMany(\App\Models\CashSession::class);
+        return $this->hasMany(\App\Modules\Cash\Models\CashSession::class);
     }
 
     public function stockMovements(): HasMany
     {
-        return $this->hasMany(\App\Models\StockMovement::class);
+        return $this->hasMany(\App\Modules\Inventory\Models\StockMovement::class);
     }
 
     public function auditLogs(): HasMany
     {
-        return $this->hasMany(\App\Models\AuditLog::class);
+        return $this->hasMany(\App\Modules\Audit\Models\AuditLog::class);
     }
 }

@@ -14,7 +14,7 @@ class StoreSupplierRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isAdmin();
+        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
     }
 
     /**

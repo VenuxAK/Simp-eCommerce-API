@@ -20,8 +20,8 @@ abstract class ApiTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->adminUser = User::factory()->create(['role' => 'admin']);
-        $this->staffUser = User::factory()->create(['role' => 'staff']);
+        $this->adminUser = User::factory()->root()->create();
+        $this->staffUser = User::factory()->staff()->create();
         $this->adminHeaders = ['Authorization' => "Bearer {$this->adminUser->createToken('test')->plainTextToken}"];
         $this->staffHeaders = ['Authorization' => "Bearer {$this->staffUser->createToken('test')->plainTextToken}"];
     }

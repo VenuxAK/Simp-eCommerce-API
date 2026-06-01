@@ -29,7 +29,7 @@ class UserTest extends ApiTestCase
     public function test_staff_cannot_create_user(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'Hacker', 'email' => 'hacker@test.com', 'password' => 'Pass1234', 'role' => 'admin',
+            'name' => 'Hacker', 'email' => 'hacker@test.com', 'password' => 'Pass1234', 'role' => 'root',
         ], $this->staffHeaders)->assertForbidden();
     }
 
@@ -47,13 +47,13 @@ class UserTest extends ApiTestCase
 
     public function test_admin_cannot_delete_self(): void
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'root')->first();
         $this->deleteJson("/api/users/{$admin->id}", [], $this->adminHeaders)->assertUnprocessable();
     }
 
     public function test_admin_cannot_delete_another_admin(): void
     {
-        $admin2 = User::factory()->create(['role' => 'admin']);
+        $admin2 = User::factory()->root()->create();
         $response = $this->deleteJson("/api/users/{$admin2->id}", [], $this->adminHeaders);
         $response->assertUnprocessable();
         $this->assertDatabaseHas('users', ['id' => $admin2->id]);

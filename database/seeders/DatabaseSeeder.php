@@ -13,18 +13,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
+        User::factory()->root()->create([
             'name' => 'Admin',
             'email' => 'admin@simppos.test',
             'password' => bcrypt('Pass1234'),
-            'role' => 'admin',
         ]);
 
-        User::factory()->create([
+        User::factory()->staff()->create([
             'name' => 'Staff',
             'email' => 'staff@simppos.test',
             'password' => bcrypt('Pass1234'),
-            'role' => 'staff',
         ]);
 
         $store = \App\Modules\Store\Models\Store::first();

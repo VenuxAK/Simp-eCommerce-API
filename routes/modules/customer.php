@@ -12,5 +12,5 @@ Route::get('/customers', [App\Modules\Customer\Http\Controllers\CustomerControll
 Route::get('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'show']);
 Route::get('/customers/{customer}/orders', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'orders']);
 Route::post('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'store']);
-Route::put('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'update'])->middleware('admin');
-Route::delete('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'destroy'])->middleware('admin');
+Route::put('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'update'])->middleware('role:root');
+Route::delete('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'destroy'])->middleware('role:root');

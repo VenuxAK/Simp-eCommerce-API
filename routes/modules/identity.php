@@ -11,6 +11,6 @@ Route::get('/profile', [App\Modules\Identity\Http\Controllers\ProfileController:
 Route::put('/profile', [App\Modules\Identity\Http\Controllers\ProfileController::class, 'update']);
 
 // ─── User management (admin only) ──────────────────────────────
-Route::middleware('admin')->group(function () {
+Route::middleware('role:root')->group(function () {
     Route::apiResource('users', App\Modules\Identity\Http\Controllers\UserController::class);
 });

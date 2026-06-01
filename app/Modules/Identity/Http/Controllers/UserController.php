@@ -66,8 +66,8 @@ class UserController extends Controller
             return $this->respondError('Cannot delete yourself.');
         }
 
-        if ($user->isAdmin() && $currentUser->isAdmin()) {
-            return $this->respondError('Cannot delete another admin user.');
+        if ($user->isRoot() && $currentUser->isRoot()) {
+            return $this->respondError('Cannot delete another root user.');
         }
 
         // Check for orders linked to this user before allowing deletion.
