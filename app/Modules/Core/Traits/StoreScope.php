@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Traits;
 
+use App\Modules\Store\Models\Store;
 use Illuminate\Database\Eloquent\Builder;
 
 trait StoreScope
@@ -12,6 +13,11 @@ trait StoreScope
 
         if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
             $query->where('store_id', $user->store_id);
+        } elseif ($user && $user->isRoot() && request()->header('X-Store')) {
+            $store = Store::where('slug', request()->header('X-Store'))->first();
+            if ($store) {
+                $query->where('store_id', $store->id);
+            }
         }
 
         return $query;
@@ -23,6 +29,11 @@ trait StoreScope
 
         if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
             $data['store_id'] = $user->store_id;
+        } elseif ($user && $user->isRoot() && request()->header('X-Store')) {
+            $store = Store::where('slug', request()->header('X-Store'))->first();
+            if ($store) {
+                $data['store_id'] = $store->id;
+            }
         }
 
         return $data;

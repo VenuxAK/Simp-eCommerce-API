@@ -221,7 +221,7 @@ class OrderController extends Controller
             return $this->respondError("Cannot transition from '{$currentStatus}' to '{$newStatus}'.");
         }
 
-        $order = DB::transaction(function () use ($order, $newStatus, $currentStatus) {
+        $order = DB::transaction(function () use ($order, $newStatus, $currentStatus, $request) {
             $order->update(['status' => $newStatus]);
 
             // Mirror order status on invoice only for valid invoice statuses.
