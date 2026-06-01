@@ -8,47 +8,55 @@ use App\Modules\Cash\Models\CashSession;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 
-/**
- * Handles Dashboard-related API requests.
- */
 class DashboardController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function summary(): JsonResponse
     {
         $today = now()->startOfDay();
 
-        $todayOrders = Order::where('created_at', '>=', $today);
+        $orderQuery = Order::where('created_at', '>=', $today);
+        $this->scopeByStore($orderQuery);
+        $todayOrders = $orderQuery;
         $todaySales = (float) $todayOrders->sum('total_amount');
         $todayOrderCount = $todayOrders->count();
 
         $recentOrders = Order::with(['user', 'customer', 'items.variant', 'payment'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+            ->orderBy('created_at', 'desc');
+        $this->scopeByStore($recentOrders);
+        $recentOrders = $recentOrders->limit(10)->get();
+
+        $productIds = Product::query();
+        $this->scopeByStore($productIds);
+        $productIds = $productIds->pluck('id');
 
         $lowStockVariants = ProductVariant::with('product')
+            ->whereIn('product_id', $productIds)
             ->where('stock_quantity', '<=', 5)
             ->where('stock_quantity', '>', 0)
             ->get();
 
         $outOfStockVariants = ProductVariant::with('product')
+            ->whereIn('product_id', $productIds)
             ->where('stock_quantity', 0)
             ->get();
 
-        $activeSession = CashSession::whereNull('closed_at')->first();
+        $activeSession = CashSession::whereNull('closed_at');
+        $this->scopeByStore($activeSession);
+        $activeSession = $activeSession->first();
 
         return $this->respond([
             'today_sales' => $todaySales,
             'today_orders_count' => $todayOrderCount,
             'active_session' => $activeSession ? new CashSessionResource($activeSession) : null,
-            'total_products' => Product::count(),
-            'total_variants' => ProductVariant::count(),
+            'total_products' => $productIds->count(),
+            'total_variants' => $lowStockVariants->count() + $outOfStockVariants->count() + ProductVariant::whereIn('product_id', $productIds)->where('stock_quantity', '>', 5)->count(),
             'low_stock_count' => $lowStockVariants->count(),
             'out_of_stock_count' => $outOfStockVariants->count(),
             'low_stock_variants' => $lowStockVariants->map(fn($v) => [
