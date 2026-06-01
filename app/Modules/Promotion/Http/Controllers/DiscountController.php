@@ -4,6 +4,7 @@ namespace App\Modules\Promotion\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Promotion\Http\Requests\StoreDiscountRequest;
 use App\Modules\Promotion\Http\Requests\UpdateDiscountRequest;
 use App\Modules\Promotion\Http\Resources\DiscountResource;
@@ -16,11 +17,11 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class DiscountController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function index(): AnonymousResourceCollection
     {
-        $discounts = Discount::orderBy('name')->paginate(20);
+        $discounts = Discount::when(fn($q) => $this->scopeByStore($q))->orderBy('name')->paginate(20);
         return DiscountResource::collection($discounts);
     }
 
@@ -41,7 +42,7 @@ class DiscountController extends Controller
 
     public function store(StoreDiscountRequest $request): JsonResponse
     {
-        $discount = Discount::create($request->validated());
+        $discount = Discount::create($this->mergeStoreId($request->validated()));
         return new DiscountResource($discount)->response()->setStatusCode(201);
     }
 

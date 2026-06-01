@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  */
 class ProductController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, \App\Modules\Core\Traits\StoreScope;
 
     public function __construct(
         private readonly ProductImportService $importService,
@@ -33,6 +33,7 @@ class ProductController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $products = Product::with(['category', 'supplier', 'variants'])
+            ->when(true, fn($q) => $this->scopeByStore($q))
             ->when(request('category_id'), fn($q) => $q->where('category_id', request('category_id')))
             ->when(request('search'), fn($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%']))
             ->orderBy('name')
@@ -43,7 +44,7 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        $product = Product::create([
+        $product = Product::create($this->mergeStoreId([
             'category_id' => $request->category_id,
             'supplier_id' => $request->supplier_id ?? null,
             'name' => $request->name,
@@ -51,7 +52,7 @@ class ProductController extends Controller
             'description' => $request->description,
             'base_price' => $request->base_price,
             'image' => $request->image,
-        ]);
+        ]));
 
         foreach ($request->variants as $variantData) {
             $product->variants()->create([

@@ -8,6 +8,7 @@ use App\Modules\Catalog\Http\Requests\UpdateCategoryRequest;
 use App\Modules\Catalog\Http\Resources\CategoryResource;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -16,22 +17,25 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CategoryController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function index(): AnonymousResourceCollection
     {
-        $categories = Category::withCount('products')->orderBy('name')->paginate(20);
+        $categories = Category::withCount('products')
+            ->when(true, fn($q) => $this->scopeByStore($q))
+            ->orderBy('name')
+            ->paginate(20);
 
         return CategoryResource::collection($categories);
     }
 
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        $category = Category::create([
+        $category = Category::create($this->mergeStoreId([
             'name' => $request->name,
             'slug' => \Illuminate\Support\Str::slug($request->name),
             'description' => $request->description,
-        ]);
+        ]));
 
         return new CategoryResource($category)->response()->setStatusCode(201);
     }

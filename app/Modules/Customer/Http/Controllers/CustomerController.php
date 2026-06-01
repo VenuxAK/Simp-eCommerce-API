@@ -5,6 +5,7 @@ namespace App\Modules\Customer\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Http\Requests\StoreCustomerRequest;
 use App\Modules\Customer\Http\Requests\UpdateCustomerRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
@@ -17,11 +18,12 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CustomerController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function index(): AnonymousResourceCollection
     {
         $customers = Customer::withCount('orders')
+            ->when(true, fn($q) => $this->scopeByStore($q))
             ->when(request('search'), fn($q) => $q->where(function ($q) {
                 $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%'])
                     ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%' . request('search') . '%'])
@@ -35,7 +37,7 @@ class CustomerController extends Controller
 
     public function store(StoreCustomerRequest $request): JsonResponse
     {
-        $customer = Customer::create($request->validated());
+        $customer = Customer::create($this->mergeStoreId($request->validated()));
 
         return new CustomerResource($customer)->response()->setStatusCode(201);
     }

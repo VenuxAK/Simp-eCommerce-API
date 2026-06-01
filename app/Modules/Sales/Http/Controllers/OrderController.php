@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Http\Requests\ReturnOrderRequest;
 use App\Modules\Sales\Http\Requests\StoreOrderRequest;
 use App\Modules\Sales\Http\Requests\UpdateOrderStatusRequest;
@@ -24,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  */
 class OrderController extends Controller
 {
-    use ApiResponse, QueryFilter;
+    use ApiResponse, QueryFilter, StoreScope;
 
     public function __construct(
         private readonly OrderService $orderService,
@@ -34,8 +35,10 @@ class OrderController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
+        $query = Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice']);
+        $this->scopeByStore($query);
         $orders = $this->applyFilters(
-            Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice']),
+            $query,
             ['status' => 'status', 'customer_id' => 'customer_id'],
         );
         $orders = $this->applyDateRange($orders);
@@ -110,7 +113,7 @@ class OrderController extends Controller
 
         try {
             $order = $this->orderService->createOrder(
-                $orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel,
+                $orderItems, $this->mergeStoreId($data), $finalAmount, $paidAmount, $discountAmount, $discountLabel,
             );
         } catch (\RuntimeException $e) {
             return $this->respondError($e->getMessage());

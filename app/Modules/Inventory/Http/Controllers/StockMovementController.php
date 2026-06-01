@@ -4,6 +4,7 @@ namespace App\Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\QueryFilter;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Inventory\Http\Resources\StockMovementResource;
 use App\Modules\Inventory\Models\StockMovement;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -13,12 +14,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class StockMovementController extends Controller
 {
-    use QueryFilter;
+    use QueryFilter, StoreScope;
 
     public function index(): AnonymousResourceCollection
     {
+        $query = StockMovement::with(['variant.product', 'user']);
+        $this->scopeByStore($query);
         $movements = $this->applyFilters(
-            StockMovement::with(['variant.product', 'user']),
+            $query,
             ['variant_id' => 'product_variant_id', 'reason' => 'reason'],
         );
         $movements = $this->applyDateRange($movements);
