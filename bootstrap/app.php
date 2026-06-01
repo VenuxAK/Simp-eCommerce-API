@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Modules\Identity\Http\Middleware\AdminMiddleware::class,
             'store' => \App\Modules\Store\Http\Middleware\ResolveStore::class,
+            'stateful' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

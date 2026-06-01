@@ -4,16 +4,16 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * ┌──────────────────────────────────────────────────────────────────┐
- * │  SimpCommerce API — Master Route File                          │
- * │                                                                │
- * │  Every module registers its own routes in routes/modules/ and   │
- * │  this file delegates to them with the correct middleware groups.│
- * │                                                                │
- * │  Middleware inheritance:                                        │
- * │    • Public       — no auth (login, register)                   │
- * │    • Customer     — auth:customer (Sanctum, Customer guard)     │
- * │    • Staff        — auth:sanctum (Sanctum, User guard)          │
- * │    • Admin        — auth:sanctum + admin middleware             │
+ * │  SimpCommerce API — Master Route File                            │
+ * │                                                                  │
+ * │  Every module registers its own routes in routes/modules/ and    │
+ * │  this file delegates to them with the correct middleware groups. │
+ * │                                                                  │
+ * │  Middleware inheritance:                                         │
+ * │    • Public       — no auth (login, register)                    │
+ * │    • Customer     — auth:customer (Sanctum, Customer guard)      │
+ * │    • Staff        — auth:sanctum (Sanctum, User guard)           │
+ * │    • Admin        — auth:sanctum + admin middleware              │
  * └──────────────────────────────────────────────────────────────────┘
  */
 
@@ -25,8 +25,8 @@ Route::middleware(['store', 'throttle:60,1'])->prefix('storefront')->group(funct
     require __DIR__ . '/modules/storefront.php';
 });
 
-// ── 3. Customer portal — Sanctum with Customer guard ────────────
-Route::middleware(['auth:customer', 'throttle:60,1'])->group(function () {
+// ── 3. Customer portal — stateful session + Customer guard ────
+Route::middleware(['stateful', 'auth:customer', 'throttle:60,1'])->group(function () {
     require __DIR__ . '/modules/customer-portal.php';
 });
 

@@ -9,6 +9,7 @@ use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -20,12 +21,14 @@ class CustomerAuthController extends Controller
     {
         $customer = Customer::create($request->validated());
 
-        $token = $customer->createToken('storefront-token', ['customer:*'], now()->addDays(7))->plainTextToken;
+        if ($request->hasSession()) {
+            Auth::guard('customer')->login($customer);
+            $request->session()->regenerate();
+        }
 
-        return $this->respond([
-            'token' => $token,
-            'customer' => new CustomerResource($customer),
-        ])->setStatusCode(201);
+        return (new CustomerResource($customer))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function login(Request $request): JsonResponse
@@ -43,18 +46,23 @@ class CustomerAuthController extends Controller
             ]);
         }
 
-        $customer->tokens()->delete();
-        $token = $customer->createToken('storefront-token', ['customer:*'], now()->addDays(7))->plainTextToken;
+        if ($request->hasSession()) {
+            Auth::guard('customer')->login($customer);
+            $request->session()->regenerate();
+        }
 
         return $this->respond([
-            'token' => $token,
             'customer' => new CustomerResource($customer),
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        if ($request->hasSession()) {
+            Auth::guard('customer')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return $this->respondMessage('Logged out.');
     }

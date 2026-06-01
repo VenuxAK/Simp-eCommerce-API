@@ -7,6 +7,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Customer\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class OAuthController extends Controller
@@ -52,11 +53,12 @@ class OAuthController extends Controller
             ]);
         }
 
-        $customer->tokens()->delete();
-        $token = $customer->createToken('storefront-token', ['customer:*'], now()->addDays(7))->plainTextToken;
+        if ($request->hasSession()) {
+            Auth::guard('customer')->login($customer);
+            $request->session()->regenerate();
+        }
 
         return $this->respond([
-            'token' => $token,
             'customer' => new \App\Modules\Customer\Http\Resources\CustomerResource($customer),
         ]);
     }

@@ -43,10 +43,10 @@ class OAuthTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->getJson('/api/auth/oauth/google/callback?code=valid_code');
+        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
 
         $response->assertOk()
-            ->assertJsonStructure(['token', 'customer' => ['id', 'name', 'email']]);
+            ->assertJsonStructure(['customer' => ['id', 'name', 'email']]);
 
         $this->assertDatabaseHas('customers', [
             'email' => 'googleuser@example.com',
@@ -73,7 +73,7 @@ class OAuthTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->getJson('/api/auth/oauth/google/callback?code=valid_code');
+        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
 
         $response->assertOk()
             ->assertJsonPath('customer.email', 'existing@example.com');
@@ -83,7 +83,7 @@ class OAuthTest extends TestCase
 
     public function test_callback_fails_without_code(): void
     {
-        $response = $this->getJson('/api/auth/oauth/google/callback');
+        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback');
         $response->assertUnprocessable();
     }
 }
