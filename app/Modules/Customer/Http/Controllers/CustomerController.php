@@ -18,12 +18,11 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CustomerController extends Controller
 {
-    use ApiResponse, StoreScope;
+    use ApiResponse;
 
     public function index(): AnonymousResourceCollection
     {
         $customers = Customer::withCount('orders')
-            ->when(true, fn($q) => $this->scopeByStore($q))
             ->when(request('search'), fn($q) => $q->where(function ($q) {
                 $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%'])
                     ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%' . request('search') . '%'])
@@ -37,7 +36,7 @@ class CustomerController extends Controller
 
     public function store(StoreCustomerRequest $request): JsonResponse
     {
-        $customer = Customer::create($this->mergeStoreId($request->validated()));
+        $customer = Customer::create($request->validated());
 
         return new CustomerResource($customer)->response()->setStatusCode(201);
     }

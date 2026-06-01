@@ -4,22 +4,28 @@ namespace App\Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\QueryFilter;
-use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Inventory\Http\Resources\StockMovementResource;
 use App\Modules\Inventory\Models\StockMovement;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Handles StockMovement-related API requests.
- */
 class StockMovementController extends Controller
 {
-    use QueryFilter, StoreScope;
+    use QueryFilter;
 
     public function index(): AnonymousResourceCollection
     {
         $query = StockMovement::with(['variant.product', 'user']);
-        $this->scopeByStore($query);
+
+        $user = request()->user();
+        if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
+            $query->whereHas('variant.product', fn($q) => $q->where('store_id', $user->store_id));
+        } elseif ($user && $user->isRoot() && request()->header('X-Store')) {
+            $store = \App\Modules\Store\Models\Store::where('slug', request()->header('X-Store'))->first();
+            if ($store) {
+                $query->whereHas('variant.product', fn($q) => $q->where('store_id', $store->id));
+            }
+        }
+
         $movements = $this->applyFilters(
             $query,
             ['variant_id' => 'product_variant_id', 'reason' => 'reason'],
