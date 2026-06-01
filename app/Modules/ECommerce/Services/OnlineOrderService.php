@@ -30,10 +30,11 @@ class OnlineOrderService
         Collection $cartItems,
         Address $address,
         ?string $notes,
+        ?int $storeId = null,
     ): Order {
         $generator = app(InvoiceNumberGenerator::class);
 
-        return DB::transaction(function () use ($customer, $cartItems, $address, $notes, $generator) {
+        return DB::transaction(function () use ($customer, $cartItems, $address, $notes, $generator, $storeId) {
             $totalAmount = 0;
 
             // Lock variant rows to prevent race conditions during checkout.
@@ -48,8 +49,9 @@ class OnlineOrderService
             }
 
             $order = Order::create([
-                'user_id' => null,                                // No staff user for online orders.
+                'user_id' => null,
                 'customer_id' => $customer->id,
+                'store_id' => $storeId,
                 'order_number' => $generator->generateOrderNumber(),
                 'total_amount' => $totalAmount,
                 'status' => 'processing',

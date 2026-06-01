@@ -55,7 +55,17 @@ class CheckoutController extends Controller
             }
         }
 
-        $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes);
+        // Resolve store from X-Store header for online orders.
+        $storeId = null;
+        $storeSlug = $request->header('X-Store');
+        if ($storeSlug) {
+            $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+            if ($store) {
+                $storeId = $store->id;
+            }
+        }
+
+        $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes, $storeId);
 
         return $this->respond([
             'message' => 'Order placed successfully.',
