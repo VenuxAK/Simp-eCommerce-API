@@ -124,7 +124,7 @@ class OrderController extends Controller
 
     public function show(Order $order): OrderResource
     {
-        return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice']));
+        return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice', 'shipment.address']));
     }
 
     /**
@@ -232,7 +232,11 @@ class OrderController extends Controller
 
             // Update shipment tracking when order ships.
             if ($newStatus === 'shipped' && $order->shipment) {
-                $order->shipment->update(['shipped_at' => now()]);
+                $data = ['shipped_at' => now()];
+                if ($request->filled('tracking_number')) {
+                    $data['tracking_number'] = $request->tracking_number;
+                }
+                $order->shipment->update($data);
             }
             if ($newStatus === 'delivered' && $order->shipment) {
                 $order->shipment->update(['delivered_at' => now()]);

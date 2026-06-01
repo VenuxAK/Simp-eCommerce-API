@@ -24,6 +24,7 @@ class UpdateOrderStatusRequest extends FormRequest
     {
         return [
             'status' => ['required', 'string', 'in:pending,completed,cancelled,refunded,processing,shipped,delivered'],
+            'tracking_number' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
