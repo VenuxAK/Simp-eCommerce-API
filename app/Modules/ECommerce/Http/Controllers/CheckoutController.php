@@ -55,7 +55,7 @@ class CheckoutController extends Controller
             }
         }
 
-        // Resolve store from X-Store header for online orders.
+        // Resolve store from X-Store header or fall back to the middleware-resolved store.
         $storeId = null;
         $storeSlug = $request->header('X-Store');
         if ($storeSlug) {
@@ -63,6 +63,9 @@ class CheckoutController extends Controller
             if ($store) {
                 $storeId = $store->id;
             }
+        }
+        if (!$storeId && app()->bound('current_store')) {
+            $storeId = app('current_store')->id;
         }
 
         $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes, $storeId);

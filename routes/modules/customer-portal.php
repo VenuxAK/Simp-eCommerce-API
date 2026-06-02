@@ -35,3 +35,9 @@ Route::get('/checkout/validate', [App\Modules\ECommerce\Http\Controllers\Checkou
 Route::get('/my/orders', [App\Modules\ECommerce\Http\Controllers\MyOrderController::class, 'index']);
 Route::get('/my/orders/{order}', [App\Modules\ECommerce\Http\Controllers\MyOrderController::class, 'show']);
 Route::post('/my/orders/{order}/cancel', [App\Modules\ECommerce\Http\Controllers\MyOrderController::class, 'cancel']);
+
+// Wishlist.
+Route::get('/wishlist', [App\Modules\ECommerce\Http\Controllers\WishlistController::class, 'index']);
+Route::post('/wishlist/toggle', [App\Modules\ECommerce\Http\Controllers\WishlistController::class, 'toggle']);
+Route::delete('/wishlist/{id}', [App\Modules\ECommerce\Http\Controllers\WishlistController::class, 'destroy']);
+Route::delete('/wishlist', [App\Modules\ECommerce\Http\Controllers\WishlistController::class, 'clear']);

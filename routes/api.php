@@ -26,7 +26,7 @@ Route::middleware(['store', 'throttle:60,1'])->prefix('storefront')->group(funct
 });
 
 // ── 3. Customer portal — stateful session + Customer guard ────
-Route::middleware(['stateful', 'auth:customer', 'throttle:60,1'])->group(function () {
+Route::middleware(['store', 'stateful', 'auth:customer', 'throttle:60,1'])->group(function () {
     require __DIR__ . '/modules/customer-portal.php';
 });
 
