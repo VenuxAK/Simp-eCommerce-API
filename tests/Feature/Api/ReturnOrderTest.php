@@ -95,6 +95,7 @@ class ReturnOrderTest extends ApiTestCase
     {
         $order = \App\Modules\Sales\Models\Order::create([
             'user_id' => User::where('role', 'root')->first()->id,
+            'store_id' => 1,
             'order_number' => 'ORD-PEND-RET',
             'total_amount' => 50,
             'status' => 'pending',
