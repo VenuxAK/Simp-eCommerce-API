@@ -168,6 +168,7 @@ class OrderTest extends ApiTestCase
 
         $order = Order::create([
             'user_id' => User::where('role', 'root')->first()->id,
+            'store_id' => 1,
             'order_number' => 'ORD-PEND-001',
             'total_amount' => 100,
             'status' => 'pending',

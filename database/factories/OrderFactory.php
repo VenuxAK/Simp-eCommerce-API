@@ -17,6 +17,7 @@ class OrderFactory extends Factory
             'user_id' => User::factory(),
             'customer_id' => Customer::factory(),
             'order_number' => 'ORD-' . fake()->unique()->numerify('########'),
+            'store_id' => 1,
             'total_amount' => 0,
             'status' => fake()->randomElement(['pending', 'completed', 'cancelled']),
             'notes' => fake()->optional()->sentence(),

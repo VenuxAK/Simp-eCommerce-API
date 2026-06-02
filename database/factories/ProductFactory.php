@@ -26,6 +26,7 @@ class ProductFactory extends Factory
             'slug' => Str::slug($name) . '-' . Str::random(6),
             'description' => fake()->paragraph(),
             'base_price' => fake()->randomFloat(2, 5, 150),
+            'store_id' => 1,
             'image' => null,
         ];
     }

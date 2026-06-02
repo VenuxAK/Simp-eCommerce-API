@@ -49,6 +49,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => request()->user()->id,
                 'customer_id' => $data['customer_id'] ?? null,
+                'store_id' => $data['store_id'],
                 'order_number' => $generator->generateOrderNumber(),
                 'total_amount' => $finalAmount,
                 'status' => 'completed',

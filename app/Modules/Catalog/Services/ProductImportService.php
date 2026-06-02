@@ -57,11 +57,17 @@ class ProductImportService
                 }
 
                 try {
+                    $storeId = app()->bound('current_store') && ($store = app('current_store'))
+                        ? $store->id : request()->header('X-Store')
+                        ? \App\Modules\Store\Models\Store::where('slug', request()->header('X-Store'))->first()?->id
+                        : 1;
+
                     $product = Product::firstOrCreate(
                         ['name' => $data['name']],
                         [
                             'category_id' => $category->id,
                             'supplier_id' => $supplier?->id,
+                            'store_id' => $storeId,
                             'slug' => Str::slug($data['name']) . '-' . Str::random(8),
                             'base_price' => $data['base_price'] ?? 0,
                         ],

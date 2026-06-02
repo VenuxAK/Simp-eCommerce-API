@@ -16,6 +16,7 @@ class CashSessionFactory extends Factory
             'user_id' => User::factory(),
             'opened_at' => now()->subHours(8),
             'opening_balance' => 50000,
+            'store_id' => 1,
         ];
     }
 }

@@ -6,29 +6,39 @@ use App\Http\Controllers\Controller;
 use App\Modules\Cash\Http\Resources\CashSessionResource;
 use App\Modules\Cash\Models\CashSession;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
- * Handles CashSession-related API requests.
+ * Cash drawer session management.
+ *
+ * Each session is scoped to a store so store admins only see
+ * their own register activity. Sessions are created with
+ * the staff user's store_id via mergeStoreId().
  */
 class CashSessionController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function index(): AnonymousResourceCollection
     {
         $sessions = CashSession::with('user')
+            ->when(fn($q) => $this->scopeByStore($q))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
         return CashSessionResource::collection($sessions);
     }
 
     public function active(): JsonResponse|CashSessionResource
     {
-        $session = CashSession::whereNull('closed_at')->first();
+        $query = CashSession::whereNull('closed_at');
+        $this->scopeByStore($query);
+        $session = $query->first();
+
         if (!$session) {
             return $this->respond(['data' => null]);
         }
@@ -37,9 +47,12 @@ class CashSessionController extends Controller
 
     public function open(Request $request): JsonResponse
     {
-        $existing = CashSession::whereNull('closed_at')->first();
+        $existingQuery = CashSession::whereNull('closed_at');
+        $this->scopeByStore($existingQuery);
+        $existing = $existingQuery->first();
+
         if ($existing) {
-            return $this->respondError('A cash session is already open.');
+            return $this->respondError('A cash session is already open for this store.');
         }
 
         $data = $request->validate([
@@ -47,21 +60,24 @@ class CashSessionController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $session = CashSession::create([
+        $session = CashSession::create($this->mergeStoreId([
             'user_id' => $request->user()->id,
             'opened_at' => now(),
             'opening_balance' => $data['opening_balance'],
             'notes' => $data['notes'] ?? null,
-        ]);
+        ]));
 
         return new CashSessionResource($session)->response()->setStatusCode(201);
     }
 
     public function close(Request $request): JsonResponse
     {
-        $session = CashSession::whereNull('closed_at')->first();
+        $sessionQuery = CashSession::whereNull('closed_at');
+        $this->scopeByStore($sessionQuery);
+        $session = $sessionQuery->first();
+
         if (!$session) {
-            return $this->respondError('No open cash session.');
+            return $this->respondError('No open cash session for this store.');
         }
 
         $data = $request->validate([

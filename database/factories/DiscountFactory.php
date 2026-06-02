@@ -15,6 +15,7 @@ class DiscountFactory extends Factory
             'name' => fake()->unique()->words(2, true),
             'type' => fake()->randomElement(['percentage', 'fixed']),
             'value' => fake()->randomFloat(2, 5, 50),
+            'store_id' => 1,
             'applies_to' => 'all',
             'is_active' => true,
         ];

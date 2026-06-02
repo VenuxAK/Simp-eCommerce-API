@@ -21,6 +21,7 @@ class CategoryFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),
+            'store_id' => \App\Modules\Store\Models\Store::inRandomOrder()->first()?->id ?? 1,
         ];
     }
 }

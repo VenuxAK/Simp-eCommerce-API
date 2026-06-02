@@ -46,10 +46,21 @@ class OAuthController extends Controller
         $customer = Customer::where('email', $socialUser->email)->first();
 
         if (!$customer) {
+            // Resolve store_id from X-Store header for the registration.
+            $storeId = null;
+            $storeSlug = $request->header('X-Store');
+            if ($storeSlug) {
+                $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+                if ($store) {
+                    $storeId = $store->id;
+                }
+            }
+
             $customer = Customer::create([
                 'name' => $socialUser->name ?? $socialUser->email,
                 'email' => $socialUser->email,
                 'password' => null,
+                'store_id' => $storeId ?? 1,
             ]);
         }
 

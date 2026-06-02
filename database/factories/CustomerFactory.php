@@ -17,6 +17,7 @@ class CustomerFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),
             'loyalty_points' => fake()->numberBetween(0, 500),
+            'store_id' => \App\Modules\Store\Models\Store::inRandomOrder()->first()?->id ?? 1,
         ];
     }
 }

@@ -14,6 +14,7 @@ class SupplierFactory extends Factory
         return [
             'name' => fake()->company(),
             'contact_person' => fake()->name(),
+            'store_id' => 1,
             'phone' => fake()->phoneNumber(),
             'email' => fake()->companyEmail(),
         ];

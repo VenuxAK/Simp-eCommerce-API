@@ -17,7 +17,7 @@ class Discount extends Model
     use HasFactory;
     protected $fillable = [
         'name', 'type', 'value', 'applies_to',
-        'category_id', 'product_id', 'starts_at', 'ends_at', 'is_active',
+        'category_id', 'product_id', 'store_id', 'starts_at', 'ends_at', 'is_active',
     ];
 
     protected static function newFactory(): DiscountFactory

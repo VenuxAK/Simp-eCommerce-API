@@ -17,7 +17,7 @@ class CashSession extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'opened_at', 'closed_at',
+        'user_id', 'store_id', 'opened_at', 'closed_at',
         'opening_balance', 'closing_balance',
         'expected_balance', 'difference', 'notes',
     ];

@@ -4,17 +4,21 @@ namespace App\Modules\Report\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Sales\Models\Payment;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Handles Report-related API requests.
+ * Sales analytics and reporting.
+ *
+ * All report queries are scoped by the current store
+ * to ensure store admins only see their own data.
  */
 class ReportController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function sales(): JsonResponse
     {
@@ -22,8 +26,9 @@ class ReportController extends Controller
         $dateTo = request('date_to', now()->toDateString());
 
         $orders = Order::whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
-            ->where('status', 'completed')
-            ->get();
+            ->where('status', 'completed');
+        $this->scopeByStore($orders);
+        $orders = $orders->get();
 
         $totalSales = (float) $orders->sum('total_amount');
         $orderCount = $orders->count();
@@ -32,6 +37,7 @@ class ReportController extends Controller
         $itemsSold = OrderItem::whereHas('order', function ($q) use ($dateFrom, $dateTo) {
             $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
                 ->where('status', 'completed');
+            $this->scopeByStore($q);
         })->sum('quantity');
 
         $dailySales = $orders->groupBy(fn($o) => $o->created_at->toDateString())
@@ -67,6 +73,7 @@ class ReportController extends Controller
             ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
                 $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
                     ->where('status', 'completed');
+                $this->scopeByStore($q);
             })
             ->groupBy('product_variant_id')
             ->orderByDesc('total_qty')
@@ -102,6 +109,7 @@ class ReportController extends Controller
             ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
                 $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
                     ->where('status', 'completed');
+                $this->scopeByStore($q);
             })
             ->groupBy('method')
             ->get();

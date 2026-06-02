@@ -19,7 +19,18 @@ class CustomerAuthController extends Controller
 
     public function register(RegisterCustomerRequest $request): JsonResponse
     {
-        $customer = Customer::create($request->validated());
+        $data = $request->validated();
+
+        // Assign store_id from the X-Store header sent by the storefront.
+        $storeSlug = $request->header('X-Store');
+        if ($storeSlug) {
+            $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+            if ($store) {
+                $data['store_id'] = $store->id;
+            }
+        }
+
+        $customer = Customer::create($data);
 
         if ($request->hasSession()) {
             Auth::guard('customer')->login($customer);
