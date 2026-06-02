@@ -17,7 +17,11 @@ class StorefrontController extends Controller
         $store = app('current_store');
 
         $products = Product::where('store_id', $store->id)
-            ->with(['category', 'variants'])
+            ->where(function ($q) {
+                $q->whereDoesntHave('variants')
+                  ->orWhereHas('variants', fn($q) => $q->where('stock_quantity', '>', 0));
+            })
+            ->with(['category', 'variants' => fn($q) => $q->where('stock_quantity', '>', 0)])
             ->when(request('category_id'), fn($q) => $q->where('category_id', request('category_id')))
             ->when(request('search'), fn($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%']))
             ->orderBy('name')
