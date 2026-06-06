@@ -4,18 +4,27 @@ namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
-use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
+/**
+ * Social login via Laravel Socialite — stateless OAuth flow.
+ *
+ * Supports configurable providers (Google, Facebook, etc.).
+ * A new customer is auto-registered on first login; subsequent
+ * logins link to the existing customer record by email.
+ * stateless() is required since SPAs and mobile clients don't
+ * maintain a persistent session during the OAuth redirect chain.
+ */
 class OAuthController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function redirect(string $provider): JsonResponse
     {
@@ -50,21 +59,11 @@ class OAuthController extends Controller
         $customer = Customer::where('email', $socialUser->email)->first();
 
         if (! $customer) {
-            // Resolve store_id from X-Store header for the registration.
-            $storeId = null;
-            $storeSlug = $request->header('X-Store');
-            if ($storeSlug) {
-                $store = Store::where('slug', $storeSlug)->first();
-                if ($store) {
-                    $storeId = $store->id;
-                }
-            }
-
             $customer = Customer::create([
                 'name' => $socialUser->name ?? $socialUser->email,
                 'email' => $socialUser->email,
                 'password' => null,
-                'store_id' => $storeId ?? 1,
+                'store_id' => $this->resolveStoreId() ?? 1,
             ]);
         }
 

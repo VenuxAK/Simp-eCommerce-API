@@ -3,7 +3,9 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible Shipment method values.
+ * Shipping options available to customers at checkout.
+ *
+ * Cod is cash-on-delivery; Standard/Express are prepaid carrier methods.
  */
 enum ShipmentMethod: string
 {

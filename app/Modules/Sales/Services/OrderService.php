@@ -3,6 +3,9 @@
 namespace App\Modules\Sales\Services;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Enums\OrderStatus;
+use App\Modules\Core\Enums\StockMovementReason;
+use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
@@ -95,6 +98,96 @@ class OrderService
             // Award 1 loyalty point per 10 currency units spent.
             if ($data['customer_id'] ?? null) {
                 $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
+            }
+
+            return $order;
+        });
+    }
+
+    public function returnItems(Order $order, array $returnData): Order
+    {
+        return DB::transaction(function () use ($order, $returnData) {
+            $totalReturn = 0;
+
+            foreach ($returnData['items'] as $returnItem) {
+                $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
+
+                $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
+                    ->where('reference_type', 'order')
+                    ->where('reference_id', $order->id)
+                    ->where('reason', StockMovementReason::Refunded->value)
+                    ->sum('quantity_change');
+
+                $returnableQty = $orderItem->quantity - $alreadyReturned;
+
+                if ($returnItem['quantity'] > $returnableQty) {
+                    throw new \RuntimeException("Return quantity exceeds remaining returnable quantity for item #{$orderItem->id} (max: {$returnableQty}).");
+                }
+
+                $unitPrice = $orderItem->unit_price;
+                $subtotal = $unitPrice * $returnItem['quantity'];
+                $totalReturn += $subtotal;
+
+                $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
+                $variant->increment('stock_quantity', $returnItem['quantity']);
+
+                $this->stockService->recordMovement(
+                    $variant, $returnItem['quantity'], StockMovementReason::Refunded->value, 'order', $order->id,
+                );
+            }
+
+            $order->update(['status' => OrderStatus::Refunded]);
+
+            if ($order->invoice) {
+                $order->invoice->update(['status' => 'refunded']);
+            }
+
+            $notes = $order->notes ? $order->notes."\n" : '';
+            $notes .= 'Return: '.now()->toDateString().' - '.$totalReturn.' Ks returned';
+            $order->update(['notes' => $notes]);
+
+            return $order;
+        });
+    }
+
+    public function transitionStatus(Order $order, string $newStatus, string $currentStatus, ?string $trackingNumber = null): Order
+    {
+        return DB::transaction(function () use ($order, $newStatus, $currentStatus, $trackingNumber) {
+            $order->update(['status' => $newStatus]);
+
+            $validInvoiceStatuses = ['issued', 'paid', 'cancelled', 'refunded'];
+            if ($order->invoice && in_array($newStatus, $validInvoiceStatuses)) {
+                $order->invoice->update(['status' => $newStatus]);
+            }
+
+            if ($newStatus === 'shipped' && $order->shipment) {
+                $data = ['shipped_at' => now()];
+                if ($trackingNumber) {
+                    $data['tracking_number'] = $trackingNumber;
+                }
+                $order->shipment->update($data);
+            }
+
+            if ($newStatus === 'delivered' && $order->shipment) {
+                $order->shipment->update(['delivered_at' => now()]);
+            }
+
+            if (in_array($newStatus, ['cancelled', 'refunded'])) {
+                foreach ($order->items as $item) {
+                    $item->variant->increment('stock_quantity', $item->quantity);
+                    $this->stockService->recordMovement(
+                        $item->variant, $item->quantity, StockMovementReason::Return->value, 'order', $order->id,
+                    );
+                }
+            }
+
+            if ($newStatus === 'completed' && $currentStatus === 'pending') {
+                foreach ($order->items as $item) {
+                    $item->variant->decrement('stock_quantity', $item->quantity);
+                    $this->stockService->recordMovement(
+                        $item->variant, -$item->quantity, StockMovementReason::Sale->value, 'order', $order->id,
+                    );
+                }
             }
 
             return $order;

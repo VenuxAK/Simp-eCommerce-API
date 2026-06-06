@@ -11,7 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Represents a Category in the system.
+ * Taxonomy grouping for products within a store.
+ *
+ * Categories are store-scoped and serve as the primary
+ * organizational structure for browsing and filtering products.
  */
 class Category extends Model
 {

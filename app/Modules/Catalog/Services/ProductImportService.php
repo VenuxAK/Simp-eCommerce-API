@@ -4,7 +4,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
-use App\Modules\Store\Models\Store;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Supplier\Models\Supplier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +12,17 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 /**
- * Business logic for ProductImport operations.
+ * Batch CSV import for products and their variants.
+ *
+ * Processes each row within a single database transaction so that
+ * a partial failure rolls back the entire import. Validation errors
+ * on individual rows are collected and reported rather than aborting,
+ * which allows the caller to fix bad rows and re-import only those.
  */
 class ProductImportService
 {
+    use StoreScope;
+
     /**
      * Import products and variants from a CSV file.
      *
@@ -44,16 +51,14 @@ class ProductImportService
                 ]);
 
                 if ($rowValidator->fails()) {
+                    // Collect row-level errors instead of aborting so the caller
+                    // can fix bad rows and re-import only those.
                     $errors[] = 'Row '.($created + 1).': '.implode('; ', $rowValidator->errors()->all());
 
                     continue;
                 }
 
-                $storeId = app()->bound('current_store') && ($store = app('current_store'))
-                    ? $store->id
-                    : (request()->header('X-Store')
-                        ? Store::where('slug', request()->header('X-Store'))->first()?->id
-                        : 1);
+                $storeId = $this->resolveStoreId() ?? 1;
 
                 $category = Category::firstOrCreate(
                     ['name' => $data['category'] ?? 'Uncategorized'],
@@ -68,6 +73,8 @@ class ProductImportService
                 }
 
                 try {
+                    // Use name as the match key so re-importing the same file
+                    // updates existing products rather than creating duplicates.
                     $product = Product::firstOrCreate(
                         ['name' => $data['name']],
                         [
@@ -79,6 +86,7 @@ class ProductImportService
                         ],
                     );
 
+                    // SKU is the unique key for variants within a product.
                     $product->variants()->updateOrCreate(
                         ['sku' => $data['sku']],
                         [

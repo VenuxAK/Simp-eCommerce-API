@@ -3,7 +3,9 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible User role values.
+ * Internal staff role hierarchy — Root (super-admin), StoreAdmin (per-store manager), Staff (operator).
+ *
+ * Root bypasses all store scoping; StoreAdmin and Staff are bound to a specific store.
  */
 enum UserRole: string
 {

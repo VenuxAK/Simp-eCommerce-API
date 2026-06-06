@@ -14,7 +14,10 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
 /**
- * Handles Category-related API requests.
+ * RESTful API controller for category CRUD.
+ *
+ * Categories are store-scoped and include a computed product count
+ * to support navigation UI without an extra query on the client.
  */
 class CategoryController extends Controller
 {
@@ -48,6 +51,7 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
     {
+        // Regenerate the slug whenever the name changes to keep them in sync.
         $category->update([
             'name' => $request->name ?? $category->name,
             'slug' => $request->name ? Str::slug($request->name) : $category->slug,
@@ -57,6 +61,9 @@ class CategoryController extends Controller
         return new CategoryResource($category);
     }
 
+    /**
+     * Only allow deletion if no products reference this category.
+     */
     public function destroy(Category $category): JsonResponse
     {
         $productCount = $category->products()->count();

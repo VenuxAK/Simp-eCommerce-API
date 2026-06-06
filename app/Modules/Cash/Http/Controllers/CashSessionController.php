@@ -5,9 +5,9 @@ namespace App\Modules\Cash\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Cash\Http\Resources\CashSessionResource;
 use App\Modules\Cash\Models\CashSession;
+use App\Modules\Cash\Services\CashSessionService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
-use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,6 +22,10 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class CashSessionController extends Controller
 {
     use ApiResponse, StoreScope;
+
+    public function __construct(
+        private readonly CashSessionService $cashSessionService,
+    ) {}
 
     public function index(): AnonymousResourceCollection
     {
@@ -86,18 +90,13 @@ class CashSessionController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $cashOrdersTotal = (float) Order::whereBetween('created_at', [$session->opened_at, now()])
-            ->where('status', 'completed')
-            ->whereHas('payment', fn ($q) => $q->where('method', 'cash'))
-            ->sum('total_amount');
-
-        $expectedBalance = $session->opening_balance + $cashOrdersTotal;
-        $difference = $data['closing_balance'] - $expectedBalance;
+        $settlement = $this->cashSessionService->calculateSettlement($session, now());
+        $difference = $data['closing_balance'] - $settlement['expected_balance'];
 
         $session->update([
             'closed_at' => now(),
             'closing_balance' => $data['closing_balance'],
-            'expected_balance' => $expectedBalance,
+            'expected_balance' => $settlement['expected_balance'],
             'difference' => $difference,
             'notes' => $data['notes'] ?? $session->notes,
         ]);

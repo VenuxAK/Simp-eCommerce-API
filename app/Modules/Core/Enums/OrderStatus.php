@@ -3,7 +3,10 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible OrderStatus values.
+ * Lifecycle states for an order through fulfillment.
+ *
+ * Flow: Pending → Processing → Shipped → Delivered → Completed.
+ * Cancelled and Refunded are terminal states reachable from most active states.
  */
 enum OrderStatus: string
 {

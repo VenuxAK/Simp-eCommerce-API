@@ -4,12 +4,12 @@ namespace App\Modules\ECommerce\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Models\Address;
 use App\Modules\ECommerce\Http\Requests\PlaceOrderRequest;
 use App\Modules\ECommerce\Models\CartItem;
 use App\Modules\ECommerce\Services\OnlineOrderService;
 use App\Modules\Sales\Http\Resources\OrderResource;
-use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CheckoutController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, StoreScope;
 
     public function __construct(
         private readonly OnlineOrderService $orderService,
@@ -57,20 +57,9 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Resolve store from X-Store header or fall back to the middleware-resolved store.
-            $storeId = null;
-            $storeSlug = $request->header('X-Store');
-            if ($storeSlug) {
-                $store = Store::where('slug', $storeSlug)->first();
-                if ($store) {
-                    $storeId = $store->id;
-                }
-            }
-            if (! $storeId && app()->bound('current_store')) {
-                $storeId = app('current_store')->id;
-            }
-
-            $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes, $storeId);
+            $order = $this->orderService->placeOrder(
+                $customer, $cartItems, $address, $request->notes, $this->resolveStoreId(),
+            );
 
             return $this->respond([
                 'message' => 'Order placed successfully.',

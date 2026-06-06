@@ -3,7 +3,9 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible PaymentMethod values.
+ * How payment was tendered — cash (in-person POS) or bank transfer (online).
+ *
+ * Extensible for additional gateways (card, mobile money) as they're integrated.
  */
 enum PaymentMethod: string
 {

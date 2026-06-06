@@ -5,12 +5,12 @@ namespace App\Modules\ECommerce\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\ECommerce\Services\MyOrderService;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Customer-facing order history.
@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\DB;
 class MyOrderController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(
+        private readonly MyOrderService $myOrderService,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -54,18 +58,7 @@ class MyOrderController extends Controller
             return $this->respondError('Only orders in processing status can be cancelled.', 422);
         }
 
-        DB::transaction(function () use ($order) {
-            // Restock all items.
-            foreach ($order->items as $item) {
-                $item->variant->increment('stock_quantity', $item->quantity);
-            }
-
-            $order->update(['status' => 'cancelled']);
-
-            if ($order->invoice) {
-                $order->invoice->update(['status' => 'cancelled']);
-            }
-        });
+        $this->myOrderService->cancelOrder($order);
 
         return $this->respondMessage('Order cancelled.');
     }

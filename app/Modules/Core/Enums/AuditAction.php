@@ -3,7 +3,9 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible AuditLog action values.
+ * CRUD actions tracked in the audit log for data-change traceability.
+ *
+ * Each log entry records who did what, to which entity, and the before/after snapshot.
  */
 enum AuditAction: string
 {

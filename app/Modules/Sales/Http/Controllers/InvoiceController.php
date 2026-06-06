@@ -7,6 +7,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Sales\Http\Resources\InvoiceResource;
 use App\Modules\Sales\Models\Invoice;
+use App\Modules\Sales\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -19,6 +20,10 @@ use Illuminate\View\View;
 class InvoiceController extends Controller
 {
     use ApiResponse, QueryFilter;
+
+    public function __construct(
+        private readonly InvoiceService $invoiceService,
+    ) {}
 
     public function index(): AnonymousResourceCollection
     {
@@ -39,25 +44,17 @@ class InvoiceController extends Controller
 
     public function print(Invoice $invoice): JsonResponse
     {
-        $invoice->load(['order.user', 'order.customer', 'order.items.variant.product', 'order.payment']);
-
         return $this->respond([
-            'invoice' => new InvoiceResource($invoice),
-            'shop_name' => 'SimpCommerce',
-            'shop_address' => 'Home Store',
-            'shop_phone' => 'N/A',
+            'invoice' => new InvoiceResource($this->invoiceService->loadForPrint($invoice)),
+            ...$this->invoiceService->getShopMetadata(),
         ]);
     }
 
     public function receipt(Invoice $invoice): View
     {
-        $invoice->load(['order.customer', 'order.items.variant.product']);
-
         return view('pdf.receipt-thermal', [
-            'invoice' => $invoice,
-            'shop_name' => 'SimpCommerce',
-            'shop_address' => 'Home Store',
-            'shop_phone' => 'N/A',
+            'invoice' => $this->invoiceService->loadForReceipt($invoice),
+            ...$this->invoiceService->getShopMetadata(),
         ]);
     }
 
@@ -67,9 +64,7 @@ class InvoiceController extends Controller
 
         $pdf = Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
-            'shop_name' => 'SimpCommerce',
-            'shop_address' => 'Home Store',
-            'shop_phone' => 'N/A',
+            ...$this->invoiceService->getShopMetadata(),
         ]);
 
         return $pdf->download("invoice-{$invoice->invoice_number}.pdf");

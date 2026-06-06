@@ -5,10 +5,20 @@ namespace App\Modules\Catalog\Services;
 use App\Modules\Catalog\Models\Product;
 
 /**
- * Business logic for ProductExport operations.
+ * Generates CSV exports of the product catalog flattened by variant.
+ *
+ * Each row represents one variant with its parent product's category,
+ * name, base price, and supplier denormalised into the same line.
  */
 class ProductExportService
 {
+    /**
+     * Build a CSV string with one row per variant.
+     *
+     * Product-level data (category, name, base price, supplier) is
+     * duplicated across each variant row so that the file can be
+     * consumed directly by spreadsheet tools or re-imported.
+     */
     public function exportToCsv(): string
     {
         $products = Product::with(['category', 'variants', 'supplier'])->orderBy('name')->get();

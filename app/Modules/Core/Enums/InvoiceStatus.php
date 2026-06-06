@@ -3,7 +3,10 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible InvoiceStatus values.
+ * Financial lifecycle of an invoice — tracks payment state separately from order fulfillment.
+ *
+ * Issued after order confirmation, transitions to Paid on payment capture.
+ * Refunded reverses a paid invoice; Cancelled voids an unpaid one.
  */
 enum InvoiceStatus: string
 {

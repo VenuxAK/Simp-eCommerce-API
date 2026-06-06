@@ -3,7 +3,10 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible StockMovement reason values.
+ * Why inventory changed — drives accounting entries and audit trails.
+ *
+ * Sale reduces stock; Purchase increases it; Adjustment is for manual corrections;
+ * Return and Refunded restore stock after cancellations.
  */
 enum StockMovementReason: string
 {

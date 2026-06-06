@@ -4,73 +4,66 @@ namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Http\Resources\ProductResource;
-use App\Modules\Catalog\Models\Category;
-use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Services\StorefrontService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+/**
+ * Public (unauthenticated) API endpoints for the storefront.
+ *
+ * Every request resolves the current store from the request context
+ * (subdomain, header, or path prefix) via the current_store macro
+ * registered in the service container, so no endpoint needs to
+ * accept an explicit store identifier from the client.
+ */
 class StorefrontController extends Controller
 {
+    public function __construct(
+        private readonly StorefrontService $storefrontService,
+    ) {}
+
+    /**
+     * Paginated product listing filtered by availability and search.
+     */
     public function products(Request $request): AnonymousResourceCollection
     {
         $store = app('current_store');
 
-        $products = Product::where('store_id', $store->id)
-            ->where(function ($q) {
-                $q->whereDoesntHave('variants')
-                    ->orWhereHas('variants', fn ($q) => $q->where('stock_quantity', '>', 0));
-            })
-            ->with(['category', 'variants' => fn ($q) => $q->where('stock_quantity', '>', 0)])
-            ->when($request->input('category_id'), fn ($q) => $q->where('category_id', $request->input('category_id')))
-            ->when($request->input('search'), fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$request->input('search').'%']))
-            ->orderBy('name')
-            ->paginate(20);
-
-        return ProductResource::collection($products);
+        return ProductResource::collection(
+            $this->storefrontService->products(
+                $store, $request->input('category_id'), $request->input('search'),
+            ),
+        );
     }
 
+    /**
+     * Single product detail page by slug.
+     */
     public function product(string $slug): ProductResource
     {
-        $store = app('current_store');
-
-        $product = Product::where('store_id', $store->id)
-            ->where('slug', $slug)
-            ->with(['category', 'variants'])
-            ->firstOrFail();
-
-        return new ProductResource($product);
+        return new ProductResource(
+            $this->storefrontService->product(app('current_store'), $slug),
+        );
     }
 
+    /**
+     * All categories for the current store with product counts.
+     */
     public function categories(Request $request): JsonResponse
     {
-        $store = app('current_store');
-
-        $categories = Category::where('store_id', $store->id)
-            ->withCount('products')
-            ->orderBy('name')
-            ->get();
-
-        return response()->json(['data' => $categories]);
+        return response()->json([
+            'data' => $this->storefrontService->categories(app('current_store')),
+        ]);
     }
 
+    /**
+     * Store metadata and configuration for the frontend.
+     */
     public function settings(Request $request): JsonResponse
     {
-        $store = app('current_store');
-
         return response()->json([
-            'data' => [
-                'id' => $store->id,
-                'name' => $store->name,
-                'slug' => $store->slug,
-                'description' => $store->description,
-                'logo' => $store->logo ? asset('storage/'.$store->logo) : null,
-                'phone' => $store->phone,
-                'email' => $store->email,
-                'is_active' => $store->is_active,
-                'settings' => $store->settings,
-                'products_count' => Product::where('store_id', $store->id)->count(),
-            ],
+            'data' => $this->storefrontService->settings(app('current_store')),
         ]);
     }
 }

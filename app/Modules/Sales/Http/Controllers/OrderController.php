@@ -5,12 +5,9 @@ namespace App\Modules\Sales\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Enums\OrderStatus;
-use App\Modules\Core\Enums\StockMovementReason;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Core\Traits\StoreScope;
-use App\Modules\Inventory\Models\StockMovement;
-use App\Modules\Inventory\Services\StockService;
 use App\Modules\Promotion\Services\DiscountService;
 use App\Modules\Sales\Http\Requests\ReturnOrderRequest;
 use App\Modules\Sales\Http\Requests\StoreOrderRequest;
@@ -20,7 +17,6 @@ use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Handles Order-related API requests.
@@ -32,7 +28,6 @@ class OrderController extends Controller
     public function __construct(
         private readonly OrderService $orderService,
         private readonly DiscountService $discountService,
-        private readonly StockService $stockService,
     ) {}
 
     public function index(): AnonymousResourceCollection
@@ -144,52 +139,8 @@ class OrderController extends Controller
             return $this->respondError('Order cannot be returned.');
         }
 
-        $data = $request->validated();
-
         try {
-            $order = DB::transaction(function () use ($order, $data) {
-                $totalReturn = 0;
-
-                foreach ($data['items'] as $returnItem) {
-                    $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
-
-                    // Calculate already returned quantity for this variant on this order.
-                    $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
-                        ->where('reference_type', 'order')
-                        ->where('reference_id', $order->id)
-                        ->where('reason', 'refunded')
-                        ->sum('quantity_change');
-
-                    $returnableQty = $orderItem->quantity - $alreadyReturned;
-
-                    if ($returnItem['quantity'] > $returnableQty) {
-                        throw new \RuntimeException("Return quantity exceeds remaining returnable quantity for item #{$orderItem->id} (max: {$returnableQty}).");
-                    }
-
-                    $unitPrice = $orderItem->unit_price;
-                    $subtotal = $unitPrice * $returnItem['quantity'];
-                    $totalReturn += $subtotal;
-
-                    $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
-                    $variant->increment('stock_quantity', $returnItem['quantity']);
-
-                    $this->stockService->recordMovement(
-                        $variant, $returnItem['quantity'], 'refunded', 'order', $order->id,
-                    );
-                }
-
-                $order->update(['status' => 'refunded']);
-
-                if ($order->invoice) {
-                    $order->invoice->update(['status' => 'refunded']);
-                }
-
-                $notes = $order->notes ? $order->notes."\n" : '';
-                $notes .= 'Return: '.now()->toDateString().' - '.$totalReturn.' Ks returned';
-                $order->update(['notes' => $notes]);
-
-                return $order;
-            });
+            $order = $this->orderService->returnItems($order, $request->validated());
         } catch (\RuntimeException $e) {
             return $this->respondError($e->getMessage());
         }
@@ -200,73 +151,32 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Transition an order through its allowed statuses.
-     *
-     * Restores or deducts stock on cancel/refund/complete transitions.
-     * Only valid transitions defined in the state machine are permitted.
-     */
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): OrderResource|JsonResponse
     {
         $newStatus = $request->status;
         $currentStatus = $order->status->value;
 
-        // Allowed transitions: current => [next]. Online statuses extend the POS state machine.
         $allowedFrom = [
             'completed' => ['cancelled', 'refunded'],
             'pending' => ['completed', 'cancelled'],
             'cancelled' => [],
             'refunded' => [],
-            'processing' => ['shipped', 'cancelled'],        // Online: pay → ship or cancel.
-            'shipped' => ['delivered'],                       // Online: ship → deliver.
-            'delivered' => [],                                // Terminal.
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => ['delivered'],
+            'delivered' => [],
         ];
 
         if (! isset($allowedFrom[$currentStatus]) || ! in_array($newStatus, $allowedFrom[$currentStatus])) {
             return $this->respondError("Cannot transition from '{$currentStatus}' to '{$newStatus}'.");
         }
 
-        $order = DB::transaction(function () use ($order, $newStatus, $currentStatus, $request) {
-            $order->update(['status' => $newStatus]);
-
-            // Mirror order status on invoice only for valid invoice statuses.
-            $validInvoiceStatuses = ['issued', 'paid', 'cancelled', 'refunded'];
-            if ($order->invoice && in_array($newStatus, $validInvoiceStatuses)) {
-                $order->invoice->update(['status' => $newStatus]);
-            }
-
-            // Update shipment tracking when order ships.
-            if ($newStatus === 'shipped' && $order->shipment) {
-                $data = ['shipped_at' => now()];
-                if ($request->filled('tracking_number')) {
-                    $data['tracking_number'] = $request->tracking_number;
-                }
-                $order->shipment->update($data);
-            }
-            if ($newStatus === 'delivered' && $order->shipment) {
-                $order->shipment->update(['delivered_at' => now()]);
-            }
-
-            if (in_array($newStatus, ['cancelled', 'refunded'])) {
-                foreach ($order->items as $item) {
-                    $item->variant->increment('stock_quantity', $item->quantity);
-                    $this->stockService->recordMovement(
-                        $item->variant, $item->quantity, StockMovementReason::Return->value, 'order', $order->id,
-                    );
-                }
-            }
-
-            if ($newStatus === 'completed' && $currentStatus === 'pending') {
-                foreach ($order->items as $item) {
-                    $item->variant->decrement('stock_quantity', $item->quantity);
-                    $this->stockService->recordMovement(
-                        $item->variant, -$item->quantity, StockMovementReason::Sale->value, 'order', $order->id,
-                    );
-                }
-            }
-
-            return $order;
-        });
+        try {
+            $order = $this->orderService->transitionStatus(
+                $order, $newStatus, $currentStatus, $request->tracking_number,
+            );
+        } catch (\RuntimeException $e) {
+            return $this->respondError($e->getMessage());
+        }
 
         return new OrderResource($order->load(['items.variant', 'invoice']));
     }

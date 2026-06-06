@@ -14,7 +14,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Handles ProductVariant-related API requests.
+ * API controller for variant-level operations (stock, images, SKU lookup).
+ *
+ * These endpoints operate directly on ProductVariant rather than going
+ * through the parent Product, which is useful for POS/barcode workflows
+ * where the user scans a SKU and expects immediate stock feedback.
  */
 class ProductVariantController extends Controller
 {
@@ -25,6 +29,12 @@ class ProductVariantController extends Controller
         private readonly MediaService $mediaService,
     ) {}
 
+    /**
+     * Overwrite stock quantity and record the resulting movement.
+     *
+     * The diff is computed on the server to prevent the client from
+     * lying about the direction or magnitude of the change.
+     */
     public function updateStock(UpdateStockRequest $request, ProductVariant $variant): ProductVariantResource
     {
         $oldStock = $variant->stock_quantity;
@@ -49,6 +59,12 @@ class ProductVariantController extends Controller
         return $this->respond(new ProductVariantResource($variant));
     }
 
+    /**
+     * Look up a variant by SKU and return it together with its parent product.
+     *
+     * This endpoint is used by barcode scanners and POS integrations
+     * where only the SKU string is available at scan time.
+     */
     public function bySku(string $sku): JsonResponse
     {
         $variant = ProductVariant::with('product.category')

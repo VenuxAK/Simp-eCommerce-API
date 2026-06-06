@@ -11,6 +11,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Staff/internal authentication — uses Sanctum tokens with 24h expiry.
+ *
+ * Separate from the customer auth guard. Tokens are scoped with wildcard
+ * abilities but could be tightened per-route for finer access control.
+ * Previous tokens are invalidated on each login (single-session model).
+ */
 class AuthController extends Controller
 {
     use ApiResponse;
@@ -30,6 +37,7 @@ class AuthController extends Controller
             ]);
         }
 
+        // Revoke all existing tokens to enforce single-session-per-user.
         $user->tokens()->delete();
         $token = $user->createToken('pos-token', ['*'], now()->addHours(24))->plainTextToken;
 
@@ -41,6 +49,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        // currentAccessToken is null when the token was already revoked or never issued.
         $token = $request->user()->currentAccessToken();
 
         if ($token) {

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 trait StoreScope
 {
-    private function resolveStoreId(): ?int
+    public function resolveStoreId(): ?int
     {
         $user = request()->user();
 

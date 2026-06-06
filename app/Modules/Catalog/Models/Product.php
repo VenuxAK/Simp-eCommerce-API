@@ -14,7 +14,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Represents a Product in the system.
+ * Central catalog entity representing a sellable product.
+ *
+ * Products act as containers for one or more SKU-level variants
+ * that carry actual pricing and inventory. A product without variants
+ * is treated as a simple (non-configurable) item.
  */
 class Product extends Model
 {

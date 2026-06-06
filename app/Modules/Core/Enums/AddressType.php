@@ -3,7 +3,8 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents possible Address type values.
+ * Purpose of a customer address — shipping, billing, or both (a single address
+ * can serve both roles depending on how it's used at checkout).
  */
 enum AddressType: string
 {

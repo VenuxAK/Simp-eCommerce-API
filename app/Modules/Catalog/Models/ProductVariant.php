@@ -12,7 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Represents a ProductVariant in the system.
+ * SKU-level variant belonging to a parent product.
+ *
+ * Each variant carries its own price adjustment (delta from base_price),
+ * stock quantity, and optional size/color attributes. This is the entity
+ * that flows through carts, orders, and inventory movements.
  */
 class ProductVariant extends Model
 {

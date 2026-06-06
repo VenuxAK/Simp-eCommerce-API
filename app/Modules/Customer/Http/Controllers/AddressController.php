@@ -32,12 +32,12 @@ class AddressController extends Controller
     {
         $customer = $request->user();
 
-        // First address is auto-default.
         $isFirst = ! $customer->addresses()->exists();
         $data = $request->validated();
+        // Auto-default the first address; otherwise respect the request if set.
         $data['is_default'] = $isFirst || ($data['is_default'] ?? false);
 
-        // Ensure only one default exists.
+        // Demote any existing default before promoting the new one.
         if ($data['is_default']) {
             $customer->addresses()->update(['is_default' => false]);
         }
@@ -60,6 +60,7 @@ class AddressController extends Controller
 
         $data = $request->validated();
 
+        // Demote all other defaults first to maintain the single-default invariant.
         if ($data['is_default'] ?? false) {
             $request->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         }
@@ -89,6 +90,12 @@ class AddressController extends Controller
         return $this->respond(new AddressResource($address));
     }
 
+    /**
+     * Ensure the authenticated customer owns the targeted address.
+     *
+     * Direct comparison on customer_id avoids an extra query to load
+     * the parent relationship simply for ownership verification.
+     */
     private function authorizeOwner(Request $request, Address $address): void
     {
         if ($address->customer_id !== $request->user()->id) {

@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Storefront customer authentication — session-based, distinct from staff auth.
+ *
+ * Uses the 'customer' auth guard (separate session/table from internal users).
+ * Customers can register, log in, and log out via session-based auth.
+ * Walk-in POS customers are created without passwords via the CRM instead.
+ */
 class CustomerAuthController extends Controller
 {
     use ApiResponse;
@@ -33,6 +40,7 @@ class CustomerAuthController extends Controller
 
         $customer = Customer::create($data);
 
+        // Session login for Laravel-based storefronts; API clients skip this.
         if ($request->hasSession()) {
             Auth::guard('customer')->login($customer);
             $request->session()->regenerate();
@@ -52,6 +60,7 @@ class CustomerAuthController extends Controller
 
         $customer = Customer::where('email', $request->email)->first();
 
+        // password is nullable — walk-in customers created via CRM have no password.
         if (! $customer || ! $customer->password || ! Hash::check($request->password, $customer->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],

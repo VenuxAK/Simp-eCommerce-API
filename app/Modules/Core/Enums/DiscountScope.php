@@ -3,7 +3,9 @@
 namespace App\Modules\Core\Enums;
 
 /**
- * Represents the scope a discount applies to.
+ * What a discount applies to — the entire cart, a specific category, or a specific product.
+ *
+ * Determines how the discount engine matches and applies the rule.
  */
 enum DiscountScope: string
 {

@@ -16,6 +16,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Internal staff/auth user — separate from e-commerce customer accounts.
+ *
+ * Supports three roles (Root, StoreAdmin, Staff) and is tied to a store
+ * for multi-tenant scoping. This is NOT the same as Customer, which uses
+ * a independent auth guard.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
