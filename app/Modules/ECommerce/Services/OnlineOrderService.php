@@ -23,6 +23,7 @@ class OnlineOrderService
 {
     public function __construct(
         private readonly StockService $stockService,
+        private readonly InvoiceNumberGenerator $numberGenerator,
     ) {}
 
     public function placeOrder(
@@ -32,9 +33,7 @@ class OnlineOrderService
         ?string $notes,
         ?int $storeId = null,
     ): Order {
-        $generator = app(InvoiceNumberGenerator::class);
-
-        return DB::transaction(function () use ($customer, $cartItems, $address, $notes, $generator, $storeId) {
+        return DB::transaction(function () use ($customer, $cartItems, $address, $notes, $storeId) {
             $totalAmount = 0;
 
             // Lock variant rows to prevent race conditions during checkout.
@@ -52,7 +51,7 @@ class OnlineOrderService
                 'user_id' => null,
                 'customer_id' => $customer->id,
                 'store_id' => $storeId,
-                'order_number' => $generator->generateOrderNumber(),
+                'order_number' => $this->numberGenerator->generateOrderNumber(),
                 'total_amount' => $totalAmount,
                 'status' => 'processing',
                 'source' => 'online',
@@ -80,7 +79,7 @@ class OnlineOrderService
 
             // Auto-generate invoice for online orders.
             $order->invoice()->create([
-                'invoice_number' => $generator->generate(),
+                'invoice_number' => $this->numberGenerator->generate(),
                 'issued_date' => now(),
                 'due_date' => now()->addDays(30),
                 'status' => 'issued',

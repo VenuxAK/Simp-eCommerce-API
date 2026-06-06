@@ -3,6 +3,7 @@
 namespace App\Modules\Inventory\Models;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Enums\StockMovementReason;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class StockMovement extends Model
     {
         return [
             'quantity_change' => 'integer',
+            'reason' => StockMovementReason::class,
         ];
     }
 

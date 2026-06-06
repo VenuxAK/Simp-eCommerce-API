@@ -22,7 +22,7 @@ class AuditLogResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'user' => new UserResource($this->whenLoaded('user')),
-            'action' => $this->action,
+            'action' => $this->action?->value,
             'model_type' => $this->model_type,
             'model_id' => $this->model_id,
             'old_values' => $oldValues,

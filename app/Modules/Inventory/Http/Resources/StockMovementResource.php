@@ -18,7 +18,7 @@ class StockMovementResource extends JsonResource
             'product_variant_id' => $this->product_variant_id,
             'variant' => new ProductVariantResource($this->whenLoaded('variant')),
             'quantity_change' => $this->quantity_change,
-            'reason' => $this->reason,
+            'reason' => $this->reason?->value,
             'reference_type' => $this->reference_type,
             'reference_id' => $this->reference_id,
             'user_id' => $this->user_id,

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Modules\Core\Enums\StockMovementReason;
 use Tests\ApiTestCase;
 
 class StockMovementTest extends ApiTestCase
@@ -52,7 +53,7 @@ class StockMovementTest extends ApiTestCase
 
         $response = $this->getJson('/api/stock-movements', $this->adminHeaders);
         $this->assertEquals(2, $response->json('data.1.quantity_change'));
-        $this->assertEquals('cancelled', $response->json('data.1.reason'));
+        $this->assertEquals(StockMovementReason::Return->value, $response->json('data.1.reason'));
     }
 
     public function test_staff_cannot_list_stock_movements(): void

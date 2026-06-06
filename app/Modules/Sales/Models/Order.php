@@ -2,9 +2,12 @@
 
 namespace App\Modules\Sales\Models;
 
+use App\Modules\Core\Enums\OrderSource;
+use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\ECommerce\Models\Shipment;
 use App\Modules\Identity\Models\User;
+use App\Modules\Store\Models\Store;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,12 +35,19 @@ class Order extends Model
     {
         return [
             'total_amount' => 'decimal:2',
+            'status' => OrderStatus::class,
+            'source' => OrderSource::class,
         ];
     }
 
     protected static function newFactory(): OrderFactory
     {
         return OrderFactory::new();
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function user(): BelongsTo

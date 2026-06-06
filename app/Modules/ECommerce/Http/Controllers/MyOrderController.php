@@ -3,6 +3,7 @@
 namespace App\Modules\ECommerce\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
@@ -49,7 +50,7 @@ class MyOrderController extends Controller
             abort(403);
         }
 
-        if ($order->status !== 'processing') {
+        if ($order->status !== OrderStatus::Processing) {
             return $this->respondError('Only orders in processing status can be cancelled.', 422);
         }
 

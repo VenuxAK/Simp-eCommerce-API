@@ -15,7 +15,7 @@ class ShipmentResource extends JsonResource
             'order_id' => $this->order_id,
             'address_id' => $this->address_id,
             'address' => new AddressResource($this->whenLoaded('address')),
-            'method' => $this->method,
+            'method' => $this->method?->value,
             'tracking_number' => $this->tracking_number,
             'tracking_url' => $this->tracking_url,
             'shipped_at' => $this->shipped_at,

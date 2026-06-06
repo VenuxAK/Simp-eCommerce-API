@@ -7,11 +7,12 @@ use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StorefrontController extends Controller
 {
-    public function products(): AnonymousResourceCollection
+    public function products(Request $request): AnonymousResourceCollection
     {
         $store = app('current_store');
 
@@ -21,8 +22,8 @@ class StorefrontController extends Controller
                     ->orWhereHas('variants', fn ($q) => $q->where('stock_quantity', '>', 0));
             })
             ->with(['category', 'variants' => fn ($q) => $q->where('stock_quantity', '>', 0)])
-            ->when(request('category_id'), fn ($q) => $q->where('category_id', request('category_id')))
-            ->when(request('search'), fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.request('search').'%']))
+            ->when($request->input('category_id'), fn ($q) => $q->where('category_id', $request->input('category_id')))
+            ->when($request->input('search'), fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$request->input('search').'%']))
             ->orderBy('name')
             ->paginate(20);
 
@@ -41,7 +42,7 @@ class StorefrontController extends Controller
         return new ProductResource($product);
     }
 
-    public function categories(): JsonResponse
+    public function categories(Request $request): JsonResponse
     {
         $store = app('current_store');
 
@@ -53,7 +54,7 @@ class StorefrontController extends Controller
         return response()->json(['data' => $categories]);
     }
 
-    public function settings(): JsonResponse
+    public function settings(Request $request): JsonResponse
     {
         $store = app('current_store');
 

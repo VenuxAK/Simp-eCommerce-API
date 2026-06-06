@@ -3,6 +3,7 @@
 namespace App\Modules\Cash\Models;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Store\Models\Store;
 use Database\Factories\CashSessionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +41,11 @@ class CashSession extends Model
             'expected_balance' => 'decimal:2',
             'difference' => 'decimal:2',
         ];
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function user(): BelongsTo

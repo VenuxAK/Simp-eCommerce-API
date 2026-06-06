@@ -2,6 +2,7 @@
 
 namespace App\Modules\ECommerce\Models;
 
+use App\Modules\Core\Enums\ShipmentMethod;
 use App\Modules\Customer\Models\Address;
 use App\Modules\Sales\Models\Order;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,7 @@ class Shipment extends Model
         return [
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
+            'method' => ShipmentMethod::class,
         ];
     }
 

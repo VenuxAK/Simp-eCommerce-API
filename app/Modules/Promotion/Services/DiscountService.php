@@ -2,6 +2,8 @@
 
 namespace App\Modules\Promotion\Services;
 
+use App\Modules\Core\Enums\DiscountScope;
+use App\Modules\Core\Enums\DiscountType;
 use App\Modules\Promotion\Models\Discount;
 
 /**
@@ -33,17 +35,17 @@ class DiscountService
 
         // Sum the subtotals of eligible items based on discount scope.
         $discountableTotal = match ($discount->applies_to) {
-            'all' => $totalAmount,
-            'category' => collect($orderItems)
+            DiscountScope::All => $totalAmount,
+            DiscountScope::Category => collect($orderItems)
                 ->filter(fn ($item) => $item['variant']->product->category_id === $discount->category_id)
                 ->sum('subtotal'),
-            'product' => collect($orderItems)
+            DiscountScope::Product => collect($orderItems)
                 ->filter(fn ($item) => $item['variant']->product_id === $discount->product_id)
                 ->sum('subtotal'),
             default => 0,
         };
 
-        if ($discount->type === 'percentage') {
+        if ($discount->type === DiscountType::Percentage) {
             $discountAmount = round($discountableTotal * $discount->value / 100, 2);
             $discountLabel = "{$discount->name} ({$discount->value}%)";
         } else {

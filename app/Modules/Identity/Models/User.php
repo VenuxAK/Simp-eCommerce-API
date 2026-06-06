@@ -4,6 +4,7 @@ namespace App\Modules\Identity\Models;
 
 use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Cash\Models\CashSession;
+use App\Modules\Core\Enums\UserRole;
 use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Store\Models\Store;
@@ -31,22 +32,23 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 
     public function isRoot(): bool
     {
-        return $this->role === 'root';
+        return $this->role === UserRole::Root;
     }
 
     public function isStoreAdmin(): bool
     {
-        return $this->role === 'store_admin';
+        return $this->role === UserRole::StoreAdmin;
     }
 
     public function isStaff(): bool
     {
-        return $this->role === 'staff';
+        return $this->role === UserRole::Staff;
     }
 
     public function store(): BelongsTo

@@ -2,8 +2,11 @@
 
 namespace App\Modules\Customer\Models;
 
+use App\Modules\Core\Enums\AddressType;
+use App\Modules\ECommerce\Models\Shipment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A physical shipping address belonging to a customer.
@@ -21,11 +24,17 @@ class Address extends Model
     {
         return [
             'is_default' => 'boolean',
+            'type' => AddressType::class,
         ];
     }
 
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
     }
 }

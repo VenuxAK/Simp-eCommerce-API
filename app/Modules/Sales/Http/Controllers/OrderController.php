@@ -4,6 +4,8 @@ namespace App\Modules\Sales\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Enums\OrderStatus;
+use App\Modules\Core\Enums\StockMovementReason;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Core\Traits\StoreScope;
@@ -138,7 +140,7 @@ class OrderController extends Controller
      */
     public function returnItems(ReturnOrderRequest $request, Order $order): JsonResponse
     {
-        if (! in_array($order->status, ['completed', 'refunded'])) {
+        if (! in_array($order->status, [OrderStatus::Completed, OrderStatus::Refunded])) {
             return $this->respondError('Order cannot be returned.');
         }
 
@@ -207,7 +209,7 @@ class OrderController extends Controller
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): OrderResource|JsonResponse
     {
         $newStatus = $request->status;
-        $currentStatus = $order->status;
+        $currentStatus = $order->status->value;
 
         // Allowed transitions: current => [next]. Online statuses extend the POS state machine.
         $allowedFrom = [
@@ -249,7 +251,7 @@ class OrderController extends Controller
                 foreach ($order->items as $item) {
                     $item->variant->increment('stock_quantity', $item->quantity);
                     $this->stockService->recordMovement(
-                        $item->variant, $item->quantity, $newStatus, 'order', $order->id,
+                        $item->variant, $item->quantity, StockMovementReason::Return->value, 'order', $order->id,
                     );
                 }
             }
@@ -258,7 +260,7 @@ class OrderController extends Controller
                 foreach ($order->items as $item) {
                     $item->variant->decrement('stock_quantity', $item->quantity);
                     $this->stockService->recordMovement(
-                        $item->variant, -$item->quantity, $newStatus, 'order', $order->id,
+                        $item->variant, -$item->quantity, StockMovementReason::Sale->value, 'order', $order->id,
                     );
                 }
             }

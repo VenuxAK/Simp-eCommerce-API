@@ -15,6 +15,7 @@ class OrderService
 {
     public function __construct(
         private readonly StockService $stockService,
+        private readonly InvoiceNumberGenerator $numberGenerator,
     ) {}
 
     /**
@@ -38,9 +39,8 @@ class OrderService
         float $discountAmount,
         string $discountLabel,
     ): Order {
-        $generator = app(InvoiceNumberGenerator::class);
 
-        return DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel, $generator) {
+        return DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel) {
             $notes = $data['notes'] ?? null;
             if ($discountAmount > 0) {
                 $notes = ($notes ? $notes."\n" : '')."Discount: {$discountLabel}";
@@ -50,7 +50,7 @@ class OrderService
                 'user_id' => request()->user()->id,
                 'customer_id' => $data['customer_id'] ?? null,
                 'store_id' => $data['store_id'],
-                'order_number' => $generator->generateOrderNumber(),
+                'order_number' => $this->numberGenerator->generateOrderNumber(),
                 'total_amount' => $finalAmount,
                 'status' => 'completed',
                 'notes' => $notes,
@@ -86,7 +86,7 @@ class OrderService
             ]);
 
             $order->invoice()->create([
-                'invoice_number' => $generator->generate(),
+                'invoice_number' => $this->numberGenerator->generate(),
                 'issued_date' => now(),
                 'due_date' => now()->addDays(30),
                 'status' => 'issued',

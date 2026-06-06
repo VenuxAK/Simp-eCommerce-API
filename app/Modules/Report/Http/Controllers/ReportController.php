@@ -9,6 +9,7 @@ use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Sales\Models\Payment;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * Sales analytics and reporting.
@@ -20,10 +21,10 @@ class ReportController extends Controller
 {
     use ApiResponse, StoreScope;
 
-    public function sales(): JsonResponse
+    public function sales(Request $request): JsonResponse
     {
-        $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
-        $dateTo = request('date_to', now()->toDateString());
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->toDateString());
+        $dateTo = $request->input('date_to', now()->toDateString());
 
         $orders = Order::whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
             ->where('status', 'completed');
@@ -59,11 +60,11 @@ class ReportController extends Controller
         ]);
     }
 
-    public function bestSellers(): JsonResponse
+    public function bestSellers(Request $request): JsonResponse
     {
-        $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
-        $dateTo = request('date_to', now()->toDateString());
-        $limit = (int) request('limit', 20);
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->toDateString());
+        $dateTo = $request->input('date_to', now()->toDateString());
+        $limit = (int) $request->input('limit', 20);
 
         $items = OrderItem::selectRaw('
                 product_variant_id,
@@ -100,10 +101,10 @@ class ReportController extends Controller
         ]);
     }
 
-    public function paymentMethods(): JsonResponse
+    public function paymentMethods(Request $request): JsonResponse
     {
-        $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
-        $dateTo = request('date_to', now()->toDateString());
+        $dateFrom = $request->input('date_from', now()->startOfMonth()->toDateString());
+        $dateTo = $request->input('date_to', now()->toDateString());
 
         $methods = Payment::selectRaw('method, COUNT(*) as count, SUM(amount) as total')
             ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {

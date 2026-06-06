@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Enums\InvoiceStatus;
 use App\Modules\Identity\Models\User;
 use App\Modules\Sales\Models\Invoice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +72,6 @@ class InvoiceTest extends TestCase
     {
         $invoice = Invoice::first();
         $this->patchJson("/api/orders/{$this->orderId}/status", ['status' => 'cancelled'], $this->headers);
-        $this->assertEquals('cancelled', $invoice->fresh()->status);
+        $this->assertEquals(InvoiceStatus::Cancelled, $invoice->fresh()->status);
     }
 }

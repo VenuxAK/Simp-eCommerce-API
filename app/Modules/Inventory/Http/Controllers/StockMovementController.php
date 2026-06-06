@@ -7,21 +7,22 @@ use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Inventory\Http\Resources\StockMovementResource;
 use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Store\Models\Store;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StockMovementController extends Controller
 {
     use QueryFilter;
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
         $query = StockMovement::with(['variant.product', 'user']);
 
-        $user = request()->user();
+        $user = $request->user();
         if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
             $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $user->store_id));
-        } elseif ($user && $user->isRoot() && request()->header('X-Store')) {
-            $store = Store::where('slug', request()->header('X-Store'))->first();
+        } elseif ($user && $user->isRoot() && $request->header('X-Store')) {
+            $store = Store::where('slug', $request->header('X-Store'))->first();
             if ($store) {
                 $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $store->id));
             }

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Customer\Models;
 
+use App\Modules\ECommerce\Models\CartItem;
+use App\Modules\ECommerce\Models\WishlistItem;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Store\Models\Store;
 use Database\Factories\CustomerFactory;
@@ -60,5 +62,15 @@ class Customer extends Authenticatable
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
     }
 }

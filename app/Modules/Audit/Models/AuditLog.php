@@ -2,6 +2,7 @@
 
 namespace App\Modules\Audit\Models;
 
+use App\Modules\Core\Enums\AuditAction;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class AuditLog extends Model
         return [
             'old_values' => 'array',
             'new_values' => 'array',
+            'action' => AuditAction::class,
         ];
     }
 

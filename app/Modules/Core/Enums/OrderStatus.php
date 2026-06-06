@@ -8,6 +8,9 @@ namespace App\Modules\Core\Enums;
 enum OrderStatus: string
 {
     case Pending = 'pending';
+    case Processing = 'processing';
+    case Shipped = 'shipped';
+    case Delivered = 'delivered';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
     case Refunded = 'refunded';

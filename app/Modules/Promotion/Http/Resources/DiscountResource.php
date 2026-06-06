@@ -15,9 +15,9 @@ class DiscountResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'type' => $this->type,
+            'type' => $this->type?->value,
             'value' => (float) $this->value,
-            'applies_to' => $this->applies_to,
+            'applies_to' => $this->applies_to?->value,
             'category_id' => $this->category_id,
             'product_id' => $this->product_id,
             'starts_at' => $this->starts_at?->toDateString(),

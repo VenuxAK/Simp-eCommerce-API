@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Core\Enums\StockMovementReason;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Modules\Inventory\Models\StockMovement;
@@ -184,7 +185,7 @@ class OrderTest extends ApiTestCase
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
 
         $movement = StockMovement::where('reference_id', $order->id)
-            ->where('reason', 'completed')
+            ->where('reason', StockMovementReason::Sale->value)
             ->first();
         $this->assertNotNull($movement);
         $this->assertEquals(-2, $movement->quantity_change);

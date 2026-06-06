@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Http\Middleware;
 
+use App\Modules\Core\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +13,7 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles)) {
+        if (! $user || ! in_array($user->role instanceof UserRole ? $user->role->value : $user->role, $roles)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

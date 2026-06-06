@@ -4,6 +4,9 @@ namespace App\Modules\Promotion\Models;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Core\Enums\DiscountScope;
+use App\Modules\Core\Enums\DiscountType;
+use App\Modules\Store\Models\Store;
 use Database\Factories\DiscountFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +39,14 @@ class Discount extends Model
             'starts_at' => 'date',
             'ends_at' => 'date',
             'is_active' => 'boolean',
+            'type' => DiscountType::class,
+            'applies_to' => DiscountScope::class,
         ];
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function category(): BelongsTo

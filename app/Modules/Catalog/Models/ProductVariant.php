@@ -2,6 +2,7 @@
 
 namespace App\Modules\Catalog\Models;
 
+use App\Modules\ECommerce\Models\CartItem;
 use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Sales\Models\OrderItem;
 use Database\Factories\ProductVariantFactory;
@@ -40,6 +41,11 @@ class ProductVariant extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class, 'product_variant_id');
     }
 
     // TODO: Replace with contract when Sales module is extracted.

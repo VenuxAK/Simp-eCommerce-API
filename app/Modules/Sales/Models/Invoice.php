@@ -2,6 +2,7 @@
 
 namespace App\Modules\Sales\Models;
 
+use App\Modules\Core\Enums\InvoiceStatus;
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class Invoice extends Model
         return [
             'issued_date' => 'date',
             'due_date' => 'date',
+            'status' => InvoiceStatus::class,
         ];
     }
 
