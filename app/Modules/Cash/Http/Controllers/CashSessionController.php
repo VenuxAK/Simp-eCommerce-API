@@ -3,13 +3,14 @@
 namespace App\Modules\Cash\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Cash\Http\Requests\CloseCashSessionRequest;
+use App\Modules\Cash\Http\Requests\OpenCashSessionRequest;
 use App\Modules\Cash\Http\Resources\CashSessionResource;
 use App\Modules\Cash\Models\CashSession;
 use App\Modules\Cash\Services\CashSessionService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
@@ -50,7 +51,7 @@ class CashSessionController extends Controller
         return new CashSessionResource($session);
     }
 
-    public function open(Request $request): JsonResponse
+    public function open(OpenCashSessionRequest $request): JsonResponse
     {
         $existingQuery = CashSession::whereNull('closed_at');
         $this->scopeByStore($existingQuery);
@@ -60,10 +61,7 @@ class CashSessionController extends Controller
             return $this->respondError('A cash session is already open for this store.');
         }
 
-        $data = $request->validate([
-            'opening_balance' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
+        $data = $request->validated();
 
         $session = CashSession::create($this->mergeStoreId([
             'user_id' => $request->user()->id,
@@ -75,7 +73,7 @@ class CashSessionController extends Controller
         return (new CashSessionResource($session))->response()->setStatusCode(201);
     }
 
-    public function close(Request $request): JsonResponse
+    public function close(CloseCashSessionRequest $request): JsonResponse
     {
         $sessionQuery = CashSession::whereNull('closed_at');
         $this->scopeByStore($sessionQuery);
@@ -85,10 +83,7 @@ class CashSessionController extends Controller
             return $this->respondError('No open cash session for this store.');
         }
 
-        $data = $request->validate([
-            'closing_balance' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
+        $data = $request->validated();
 
         $settlement = $this->cashSessionService->calculateSettlement($session, now());
         $difference = $data['closing_balance'] - $settlement['expected_balance'];

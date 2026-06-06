@@ -4,6 +4,7 @@ namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Customer\Http\Requests\CustomerLoginRequest;
 use App\Modules\Customer\Http\Requests\RegisterCustomerRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
@@ -51,12 +52,8 @@ class CustomerAuthController extends Controller
             ->setStatusCode(201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(CustomerLoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
 
         $customer = Customer::where('email', $request->email)->first();
 

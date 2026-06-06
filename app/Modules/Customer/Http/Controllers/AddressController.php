@@ -4,6 +4,7 @@ namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\AuthorizesOwnership;
 use App\Modules\Customer\Http\Requests\StoreAddressRequest;
 use App\Modules\Customer\Http\Requests\UpdateAddressRequest;
 use App\Modules\Customer\Http\Resources\AddressResource;
@@ -19,7 +20,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class AddressController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, AuthorizesOwnership;
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -90,16 +91,8 @@ class AddressController extends Controller
         return $this->respond(new AddressResource($address));
     }
 
-    /**
-     * Ensure the authenticated customer owns the targeted address.
-     *
-     * Direct comparison on customer_id avoids an extra query to load
-     * the parent relationship simply for ownership verification.
-     */
     private function authorizeOwner(Request $request, Address $address): void
     {
-        if ($address->customer_id !== $request->user()->id) {
-            abort(403, 'Unauthorized.');
-        }
+        $this->authorizeOwnership($request, $address);
     }
 }

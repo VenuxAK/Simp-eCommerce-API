@@ -3,6 +3,7 @@
 namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Core\Traits\HandlesPasswordUpdate;
 use App\Modules\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
  */
 class CustomerProfileController extends Controller
 {
+    use HandlesPasswordUpdate;
+
     public function show(Request $request): CustomerResource
     {
         return new CustomerResource($request->user());
@@ -20,14 +23,9 @@ class CustomerProfileController extends Controller
     public function update(UpdateCustomerProfileRequest $request): CustomerResource
     {
         $customer = $request->user();
-
         $data = $request->validated();
 
-        if ($request->filled('password')) {
-            $data['password'] = bcrypt($request->password);
-        } else {
-            unset($data['password']);
-        }
+        $this->handlePasswordUpdate($data, $request);
 
         $customer->update($data);
 

@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Core\Traits\HandlesPasswordUpdate;
 use App\Modules\Identity\Http\Requests\UpdateProfileRequest;
 use App\Modules\Identity\Http\Resources\UserResource;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
  */
 class ProfileController extends Controller
 {
+    use HandlesPasswordUpdate;
+
     public function show(Request $request): UserResource
     {
         return new UserResource($request->user());
@@ -20,14 +23,9 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): UserResource
     {
         $user = $request->user();
-
         $data = $request->validated();
 
-        if ($request->filled('password')) {
-            $data['password'] = bcrypt($request->password);
-        } else {
-            unset($data['password']);
-        }
+        $this->handlePasswordUpdate($data, $request);
 
         $user->update($data);
 

@@ -7,6 +7,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Models\Order;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -30,16 +31,15 @@ class DashboardService
         $this->scopeByStore($productIds);
         $productIds = $productIds->pluck('id');
 
-        $lowStockVariants = ProductVariant::with('product')
+        $variants = ProductVariant::with('product')
             ->whereIn('product_id', $productIds)
-            ->where('stock_quantity', '<=', 5)
-            ->where('stock_quantity', '>', 0)
+            ->select('id', 'product_id', 'sku', 'size', 'color', 'stock_quantity',
+                DB::raw("CASE WHEN stock_quantity = 0 THEN 'out' WHEN stock_quantity <= 5 THEN 'low' ELSE 'ok' END as stock_status"))
             ->get();
 
-        $outOfStockVariants = ProductVariant::with('product')
-            ->whereIn('product_id', $productIds)
-            ->where('stock_quantity', 0)
-            ->get();
+        $lowStockVariants = $variants->where('stock_status', 'low');
+        $outOfStockVariants = $variants->where('stock_status', 'out');
+        $wellStockedCount = $variants->where('stock_status', 'ok')->count();
 
         $activeSession = CashSession::whereNull('closed_at');
         $this->scopeByStore($activeSession);
@@ -50,7 +50,7 @@ class DashboardService
             'today_orders_count' => $todayOrderCount,
             'active_session' => $activeSession,
             'total_products' => $productIds->count(),
-            'total_variants' => $lowStockVariants->count() + $outOfStockVariants->count() + ProductVariant::whereIn('product_id', $productIds)->where('stock_quantity', '>', 5)->count(),
+            'total_variants' => $variants->count(),
             'low_stock_count' => $lowStockVariants->count(),
             'out_of_stock_count' => $outOfStockVariants->count(),
             'low_stock_variants' => $lowStockVariants->map(fn ($v) => [

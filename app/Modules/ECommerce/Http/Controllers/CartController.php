@@ -4,6 +4,8 @@ namespace App\Modules\ECommerce\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\ECommerce\Http\Requests\AddCartItemRequest;
+use App\Modules\ECommerce\Http\Requests\UpdateCartItemRequest;
 use App\Modules\ECommerce\Http\Resources\CartItemResource;
 use App\Modules\ECommerce\Models\CartItem;
 use App\Modules\ECommerce\Services\CartService;
@@ -33,13 +35,8 @@ class CartController extends Controller
         );
     }
 
-    public function add(Request $request): JsonResponse
+    public function add(AddCartItemRequest $request): JsonResponse
     {
-        $request->validate([
-            'product_variant_id' => ['required', 'exists:product_variants,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-        ]);
-
         try {
             $item = $this->cartService->addItem(
                 $request->user(), $request->product_variant_id, $request->quantity,
@@ -51,15 +48,11 @@ class CartController extends Controller
         return $this->respond(new CartItemResource($item->load('variant.product')))->setStatusCode(201);
     }
 
-    public function update(Request $request, CartItem $cartItem): JsonResponse
+    public function update(UpdateCartItemRequest $request, CartItem $cartItem): JsonResponse
     {
         if ($cartItem->customer_id !== $request->user()->id) {
             abort(403, 'Unauthorized.');
         }
-
-        $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
-        ]);
 
         try {
             $this->cartService->updateItem($cartItem, $request->quantity);

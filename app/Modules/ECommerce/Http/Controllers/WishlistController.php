@@ -4,6 +4,7 @@ namespace App\Modules\ECommerce\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\ECommerce\Http\Requests\ToggleWishlistRequest;
 use App\Modules\ECommerce\Http\Resources\WishlistItemResource;
 use App\Modules\ECommerce\Services\WishlistService;
 use Illuminate\Http\JsonResponse;
@@ -25,10 +26,9 @@ class WishlistController extends Controller
         );
     }
 
-    public function toggle(Request $request): JsonResponse
+    public function toggle(ToggleWishlistRequest $request): JsonResponse
     {
-        $data = $request->validate(['product_id' => 'required|exists:products,id']);
-        $result = $this->wishlistService->toggle($request->user(), $data['product_id']);
+        $result = $this->wishlistService->toggle($request->user(), $request->product_id);
 
         if (isset($result['item'])) {
             $result['item'] = new WishlistItemResource(

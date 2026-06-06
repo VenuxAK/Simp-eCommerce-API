@@ -39,4 +39,14 @@ class Shipment extends Model
     {
         return $this->belongsTo(Address::class);
     }
+
+    public function isShipped(): bool
+    {
+        return $this->shipped_at !== null;
+    }
+
+    public function isDelivered(): bool
+    {
+        return $this->delivered_at !== null;
+    }
 }

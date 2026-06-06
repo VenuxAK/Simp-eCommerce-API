@@ -5,10 +5,10 @@ namespace App\Modules\Customer\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
+use App\Modules\Customer\Http\Requests\OAuthCallbackRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
@@ -36,12 +36,8 @@ class OAuthController extends Controller
         return $this->respond(['redirect_url' => $redirectUrl]);
     }
 
-    public function callback(Request $request, string $provider): JsonResponse
+    public function callback(OAuthCallbackRequest $request, string $provider): JsonResponse
     {
-        $request->validate([
-            'code' => ['required', 'string'],
-        ]);
-
         try {
             $socialUser = Socialite::driver($provider)
                 ->stateless()

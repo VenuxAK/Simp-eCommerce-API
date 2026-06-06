@@ -52,4 +52,14 @@ class CashSession extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function isOpen(): bool
+    {
+        return $this->closed_at === null;
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->closed_at !== null;
+    }
 }
