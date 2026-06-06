@@ -14,6 +14,7 @@ class StorefrontTest extends TestCase
     use RefreshDatabase;
 
     private Store $store;
+
     private array $storeHeaders;
 
     protected function setUp(): void
@@ -181,7 +182,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?category_id=' . $cat1->id);
+            ->getJson('/api/storefront/products?category_id='.$cat1->id);
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')

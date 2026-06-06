@@ -11,6 +11,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Str;
 
 /**
  * Handles Category-related API requests.
@@ -22,7 +23,7 @@ class CategoryController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $categories = Category::withCount('products')
-            ->when(true, fn($q) => $this->scopeByStore($q))
+            ->when(true, fn ($q) => $this->scopeByStore($q))
             ->orderBy('name')
             ->paginate(20);
 
@@ -33,11 +34,11 @@ class CategoryController extends Controller
     {
         $category = Category::create($this->mergeStoreId([
             'name' => $request->name,
-            'slug' => \Illuminate\Support\Str::slug($request->name),
+            'slug' => Str::slug($request->name),
             'description' => $request->description,
         ]));
 
-        return new CategoryResource($category)->response()->setStatusCode(201);
+        return (new CategoryResource($category))->response()->setStatusCode(201);
     }
 
     public function show(Category $category): CategoryResource
@@ -49,7 +50,7 @@ class CategoryController extends Controller
     {
         $category->update([
             'name' => $request->name ?? $category->name,
-            'slug' => $request->name ? \Illuminate\Support\Str::slug($request->name) : $category->slug,
+            'slug' => $request->name ? Str::slug($request->name) : $category->slug,
             'description' => $request->description ?? $category->description,
         ]);
 

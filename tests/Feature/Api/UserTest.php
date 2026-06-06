@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Api;
 
-use App\Modules\Sales\Models\Order;
 use App\Modules\Identity\Models\User;
+use App\Modules\Sales\Models\Order;
 use Tests\ApiTestCase;
 
 class UserTest extends ApiTestCase
 {
-
     public function test_admin_can_list_users(): void
     {
         $this->getJson('/api/users', $this->adminHeaders)->assertOk();

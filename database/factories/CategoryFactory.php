@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Store\Models\Store;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -21,7 +22,7 @@ class CategoryFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),
-            'store_id' => \App\Modules\Store\Models\Store::inRandomOrder()->first()?->id ?? 1,
+            'store_id' => Store::inRandomOrder()->first()?->id ?? 1,
         ];
     }
 }

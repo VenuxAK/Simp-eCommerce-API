@@ -7,8 +7,8 @@ use App\Modules\Catalog\Http\Requests\UpdateStockRequest;
 use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use App\Modules\Catalog\Models\ProductVariant;
-use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Catalog\Services\MediaService;
+use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Inventory\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,7 +55,7 @@ class ProductVariantController extends Controller
             ->where('sku', $sku)
             ->first();
 
-        if (!$variant) {
+        if (! $variant) {
             return $this->respondError('Variant not found for the given SKU.', 404);
         }
 

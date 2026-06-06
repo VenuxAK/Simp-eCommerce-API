@@ -35,6 +35,7 @@ class WishlistController extends Controller
 
         if ($existing) {
             $existing->delete();
+
             return $this->respond(['wishlisted' => false]);
         }
 

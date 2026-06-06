@@ -26,7 +26,7 @@ class CashSessionController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $sessions = CashSession::with('user')
-            ->when(fn($q) => $this->scopeByStore($q))
+            ->when(fn ($q) => $this->scopeByStore($q))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -39,9 +39,10 @@ class CashSessionController extends Controller
         $this->scopeByStore($query);
         $session = $query->first();
 
-        if (!$session) {
+        if (! $session) {
             return $this->respond(['data' => null]);
         }
+
         return new CashSessionResource($session);
     }
 
@@ -67,7 +68,7 @@ class CashSessionController extends Controller
             'notes' => $data['notes'] ?? null,
         ]));
 
-        return new CashSessionResource($session)->response()->setStatusCode(201);
+        return (new CashSessionResource($session))->response()->setStatusCode(201);
     }
 
     public function close(Request $request): JsonResponse
@@ -76,7 +77,7 @@ class CashSessionController extends Controller
         $this->scopeByStore($sessionQuery);
         $session = $sessionQuery->first();
 
-        if (!$session) {
+        if (! $session) {
             return $this->respondError('No open cash session for this store.');
         }
 
@@ -87,7 +88,7 @@ class CashSessionController extends Controller
 
         $cashOrdersTotal = (float) Order::whereBetween('created_at', [$session->opened_at, now()])
             ->where('status', 'completed')
-            ->whereHas('payment', fn($q) => $q->where('method', 'cash'))
+            ->whereHas('payment', fn ($q) => $q->where('method', 'cash'))
             ->sum('total_amount');
 
         $expectedBalance = $session->opening_balance + $cashOrdersTotal;

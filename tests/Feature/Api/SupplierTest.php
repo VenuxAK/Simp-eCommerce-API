@@ -7,7 +7,6 @@ use Tests\ApiTestCase;
 
 class SupplierTest extends ApiTestCase
 {
-
     public function test_can_create_supplier(): void
     {
         $response = $this->postJson('/api/suppliers', [

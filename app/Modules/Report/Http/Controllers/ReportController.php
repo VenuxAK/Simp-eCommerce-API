@@ -25,7 +25,7 @@ class ReportController extends Controller
         $dateFrom = request('date_from', now()->startOfMonth()->toDateString());
         $dateTo = request('date_to', now()->toDateString());
 
-        $orders = Order::whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+        $orders = Order::whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
             ->where('status', 'completed');
         $this->scopeByStore($orders);
         $orders = $orders->get();
@@ -35,13 +35,13 @@ class ReportController extends Controller
         $averageOrderValue = $orderCount > 0 ? $totalSales / $orderCount : 0;
 
         $itemsSold = OrderItem::whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-            $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+            $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
                 ->where('status', 'completed');
             $this->scopeByStore($q);
         })->sum('quantity');
 
-        $dailySales = $orders->groupBy(fn($o) => $o->created_at->toDateString())
-            ->map(fn($dayOrders) => [
+        $dailySales = $orders->groupBy(fn ($o) => $o->created_at->toDateString())
+            ->map(fn ($dayOrders) => [
                 'date' => $dayOrders->first()->created_at->toDateString(),
                 'total' => (float) $dayOrders->sum('total_amount'),
                 'count' => $dayOrders->count(),
@@ -71,7 +71,7 @@ class ReportController extends Controller
                 SUM(subtotal) as total_revenue
             ')
             ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+                $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
                     ->where('status', 'completed');
                 $this->scopeByStore($q);
             })
@@ -82,7 +82,7 @@ class ReportController extends Controller
 
         $items->load(['variant.product.category']);
 
-        $data = $items->map(fn($item) => [
+        $data = $items->map(fn ($item) => [
             'product_variant_id' => $item->product_variant_id,
             'product_name' => $item->variant?->product?->name ?? 'Deleted',
             'category' => $item->variant?->product?->category?->name ?? '',
@@ -107,7 +107,7 @@ class ReportController extends Controller
 
         $methods = Payment::selectRaw('method, COUNT(*) as count, SUM(amount) as total')
             ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59'])
+                $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
                     ->where('status', 'completed');
                 $this->scopeByStore($q);
             })
@@ -117,7 +117,7 @@ class ReportController extends Controller
         return $this->respond([
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
-            'data' => $methods->map(fn($m) => [
+            'data' => $methods->map(fn ($m) => [
                 'method' => $m->method,
                 'count' => (int) $m->count,
                 'total' => (float) $m->total,

@@ -33,7 +33,7 @@ class AddressController extends Controller
         $customer = $request->user();
 
         // First address is auto-default.
-        $isFirst = !$customer->addresses()->exists();
+        $isFirst = ! $customer->addresses()->exists();
         $data = $request->validated();
         $data['is_default'] = $isFirst || ($data['is_default'] ?? false);
 
@@ -44,7 +44,7 @@ class AddressController extends Controller
 
         $address = $customer->addresses()->create($data);
 
-        return new AddressResource($address)->response()->setStatusCode(201);
+        return (new AddressResource($address))->response()->setStatusCode(201);
     }
 
     public function show(Request $request, Address $address): AddressResource

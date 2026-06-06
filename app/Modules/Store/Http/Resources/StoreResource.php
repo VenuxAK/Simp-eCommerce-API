@@ -18,7 +18,7 @@ class StoreResource extends JsonResource
             'slug' => $this->slug,
             'domain' => $this->domain,
             'description' => $this->description,
-            'logo' => $this->logo ? url('storage/' . $this->logo) : null,
+            'logo' => $this->logo ? url('storage/'.$this->logo) : null,
             'phone' => $this->phone,
             'email' => $this->email,
             'is_active' => $this->is_active,

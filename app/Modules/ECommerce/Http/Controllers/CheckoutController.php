@@ -9,6 +9,7 @@ use App\Modules\ECommerce\Http\Requests\PlaceOrderRequest;
 use App\Modules\ECommerce\Models\CartItem;
 use App\Modules\ECommerce\Services\OnlineOrderService;
 use App\Modules\Sales\Http\Resources\OrderResource;
+use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,7 +43,7 @@ class CheckoutController extends Controller
             ->where('customer_id', $customer->id)
             ->first();
 
-        if (!$address) {
+        if (! $address) {
             return $this->respondError('Invalid shipping address.', 422);
         }
 
@@ -50,8 +51,7 @@ class CheckoutController extends Controller
         foreach ($cartItems as $item) {
             if ($item->variant->stock_quantity < $item->quantity) {
                 return $this->respondError(
-                    "Insufficient stock for '{$item->variant->sku}'. Available: {$item->variant->stock_quantity}."
-                , 422);
+                    "Insufficient stock for '{$item->variant->sku}'. Available: {$item->variant->stock_quantity}.", 422);
             }
         }
 
@@ -59,12 +59,12 @@ class CheckoutController extends Controller
         $storeId = null;
         $storeSlug = $request->header('X-Store');
         if ($storeSlug) {
-            $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+            $store = Store::where('slug', $storeSlug)->first();
             if ($store) {
                 $storeId = $store->id;
             }
         }
-        if (!$storeId && app()->bound('current_store')) {
+        if (! $storeId && app()->bound('current_store')) {
             $storeId = app('current_store')->id;
         }
 
@@ -83,7 +83,7 @@ class CheckoutController extends Controller
         $items = CartItem::where('customer_id', $request->user()->id)
             ->with('variant')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'cart_item_id' => $item->id,
                 'sku' => $item->variant->sku,
                 'requested' => $item->quantity,

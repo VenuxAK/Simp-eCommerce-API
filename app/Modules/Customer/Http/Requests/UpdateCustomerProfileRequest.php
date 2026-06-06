@@ -18,7 +18,7 @@ class UpdateCustomerProfileRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:customers,email,' . $this->user()->id],
+            'email' => ['required', 'email', 'max:255', 'unique:customers,email,'.$this->user()->id],
             'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['nullable', 'string', 'min:8', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
         ];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Customer\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -8,9 +9,9 @@ use Illuminate\Support\Facades\Route;
  * update and delete are admin-only.
  */
 
-Route::get('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'index']);
-Route::get('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'show']);
-Route::get('/customers/{customer}/orders', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'orders']);
-Route::post('/customers', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'store']);
-Route::put('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'update'])->middleware('role:root');
-Route::delete('/customers/{customer}', [App\Modules\Customer\Http\Controllers\CustomerController::class, 'destroy'])->middleware('role:root');
+Route::get('/customers', [CustomerController::class, 'index']);
+Route::get('/customers/{customer}', [CustomerController::class, 'show']);
+Route::get('/customers/{customer}/orders', [CustomerController::class, 'orders']);
+Route::post('/customers', [CustomerController::class, 'store']);
+Route::put('/customers/{customer}', [CustomerController::class, 'update'])->middleware('role:root');
+Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('role:root');

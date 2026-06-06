@@ -7,15 +7,15 @@ use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Core\Traits\StoreScope;
+use App\Modules\Inventory\Models\StockMovement;
+use App\Modules\Inventory\Services\StockService;
+use App\Modules\Promotion\Services\DiscountService;
 use App\Modules\Sales\Http\Requests\ReturnOrderRequest;
 use App\Modules\Sales\Http\Requests\StoreOrderRequest;
 use App\Modules\Sales\Http\Requests\UpdateOrderStatusRequest;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
-use App\Modules\Inventory\Models\StockMovement;
-use App\Modules\Promotion\Services\DiscountService;
 use App\Modules\Sales\Services\OrderService;
-use App\Modules\Inventory\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -67,19 +67,22 @@ class OrderController extends Controller
 
             if (in_array($variantId, $seenVariants)) {
                 $errors[] = 'Duplicate variant in order items.';
+
                 continue;
             }
             $seenVariants[] = $variantId;
 
             $variant = ProductVariant::find($variantId);
 
-            if (!$variant) {
+            if (! $variant) {
                 $errors[] = "Variant #{$variantId} not found.";
+
                 continue;
             }
 
             if ($variant->stock_quantity < $item['quantity']) {
-                $errors[] = 'Insufficient stock for variant (available: ' . $variant->stock_quantity . ')';
+                $errors[] = 'Insufficient stock for variant (available: '.$variant->stock_quantity.')';
+
                 continue;
             }
 
@@ -107,7 +110,7 @@ class OrderController extends Controller
             $errors[] = "Payment amount ({$paidAmount}) is less than total ({$finalAmount}).";
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return $this->respondError(implode(' ', $errors));
         }
 
@@ -119,7 +122,7 @@ class OrderController extends Controller
             return $this->respondError($e->getMessage());
         }
 
-        return new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice']))->response()->setStatusCode(201);
+        return (new OrderResource($order->load(['user', 'customer', 'items.variant.product', 'payment', 'invoice'])))->response()->setStatusCode(201);
     }
 
     public function show(Order $order): OrderResource
@@ -135,7 +138,7 @@ class OrderController extends Controller
      */
     public function returnItems(ReturnOrderRequest $request, Order $order): JsonResponse
     {
-        if (!in_array($order->status, ['completed', 'refunded'])) {
+        if (! in_array($order->status, ['completed', 'refunded'])) {
             return $this->respondError('Order cannot be returned.');
         }
 
@@ -179,8 +182,8 @@ class OrderController extends Controller
                     $order->invoice->update(['status' => 'refunded']);
                 }
 
-                $notes = $order->notes ? $order->notes . "\n" : '';
-                $notes .= 'Return: ' . now()->toDateString() . ' - ' . $totalReturn . ' Ks returned';
+                $notes = $order->notes ? $order->notes."\n" : '';
+                $notes .= 'Return: '.now()->toDateString().' - '.$totalReturn.' Ks returned';
                 $order->update(['notes' => $notes]);
 
                 return $order;
@@ -217,7 +220,7 @@ class OrderController extends Controller
             'delivered' => [],                                // Terminal.
         ];
 
-        if (!isset($allowedFrom[$currentStatus]) || !in_array($newStatus, $allowedFrom[$currentStatus])) {
+        if (! isset($allowedFrom[$currentStatus]) || ! in_array($newStatus, $allowedFrom[$currentStatus])) {
             return $this->respondError("Cannot transition from '{$currentStatus}' to '{$newStatus}'.");
         }
 

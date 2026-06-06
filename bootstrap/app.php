@@ -1,8 +1,14 @@
 <?php
 
+use App\Modules\Identity\Http\Middleware\RoleMiddleware;
+use App\Modules\Store\Http\Middleware\ResolveStore;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,24 +20,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(null);
         $middleware->alias([
-            'admin' => \App\Modules\Identity\Http\Middleware\RoleMiddleware::class,
-            'role' => \App\Modules\Identity\Http\Middleware\RoleMiddleware::class,
-            'store' => \App\Modules\Store\Http\Middleware\ResolveStore::class,
-            'stateful' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'admin' => RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'store' => ResolveStore::class,
+            'stateful' => EnsureFrontendRequestsAreStateful::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(function (\Illuminate\Http\Request $request): bool {
+        $exceptions->shouldRenderJsonWhen(function (Request $request): bool {
             return $request->is('api/*') || $request->expectsJson();
         });
 
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => 'Resource not found.'], 404);
             }
         });
 
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }

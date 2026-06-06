@@ -6,10 +6,10 @@ use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Customer\Models\Address;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\ECommerce\Models\CartItem;
+use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Sales\Services\InvoiceNumberGenerator;
-use App\Modules\Inventory\Services\StockService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -41,7 +41,7 @@ class OnlineOrderService
             foreach ($cartItems as $item) {
                 $variant = ProductVariant::lockForUpdate()->find($item->product_variant_id);
 
-                if (!$variant || $variant->stock_quantity < $item->quantity) {
+                if (! $variant || $variant->stock_quantity < $item->quantity) {
                     throw new \RuntimeException("Insufficient stock for '{$variant?->sku}'.");
                 }
 

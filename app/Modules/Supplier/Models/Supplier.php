@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Supplier extends Model
 {
     use HasFactory;
+
     protected $fillable = ['name', 'contact_person', 'phone', 'email', 'address', 'notes', 'store_id'];
 
     protected static function newFactory(): SupplierFactory

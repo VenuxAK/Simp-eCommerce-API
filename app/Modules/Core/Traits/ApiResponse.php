@@ -3,8 +3,6 @@
 namespace App\Modules\Core\Traits;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * ApiResponse helper methods.

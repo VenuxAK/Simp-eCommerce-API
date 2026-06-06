@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Store\Models\Store;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CustomerFactory extends Factory
@@ -17,7 +18,7 @@ class CustomerFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),
             'loyalty_points' => fake()->numberBetween(0, 500),
-            'store_id' => \App\Modules\Store\Models\Store::inRandomOrder()->first()?->id ?? 1,
+            'store_id' => Store::inRandomOrder()->first()?->id ?? 1,
         ];
     }
 }

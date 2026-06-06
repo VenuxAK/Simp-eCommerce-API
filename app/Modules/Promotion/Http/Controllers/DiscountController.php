@@ -21,7 +21,8 @@ class DiscountController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $discounts = Discount::when(fn($q) => $this->scopeByStore($q))->orderBy('name')->paginate(20);
+        $discounts = Discount::when(fn ($q) => $this->scopeByStore($q))->orderBy('name')->paginate(20);
+
         return DiscountResource::collection($discounts);
     }
 
@@ -37,13 +38,15 @@ class DiscountController extends Controller
             })
             ->orderBy('name')
             ->get();
+
         return DiscountResource::collection($discounts);
     }
 
     public function store(StoreDiscountRequest $request): JsonResponse
     {
         $discount = Discount::create($this->mergeStoreId($request->validated()));
-        return new DiscountResource($discount)->response()->setStatusCode(201);
+
+        return (new DiscountResource($discount))->response()->setStatusCode(201);
     }
 
     public function show(Discount $discount): DiscountResource
@@ -54,12 +57,14 @@ class DiscountController extends Controller
     public function update(UpdateDiscountRequest $request, Discount $discount): DiscountResource
     {
         $discount->update($request->validated());
+
         return new DiscountResource($discount);
     }
 
     public function destroy(Discount $discount): JsonResponse
     {
         $discount->delete();
+
         return $this->respondMessage('Discount deleted.');
     }
 }

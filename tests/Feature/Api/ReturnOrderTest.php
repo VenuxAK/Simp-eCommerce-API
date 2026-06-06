@@ -4,12 +4,15 @@ namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
+use App\Modules\Sales\Models\Order;
 use Tests\ApiTestCase;
 
 class ReturnOrderTest extends ApiTestCase
 {
     private int $orderId;
+
     private int $variantId;
+
     private int $orderItemId;
 
     protected function setUp(): void
@@ -93,7 +96,7 @@ class ReturnOrderTest extends ApiTestCase
 
     public function test_cannot_return_pending_order(): void
     {
-        $order = \App\Modules\Sales\Models\Order::create([
+        $order = Order::create([
             'user_id' => User::where('role', 'root')->first()->id,
             'store_id' => 1,
             'order_number' => 'ORD-PEND-RET',

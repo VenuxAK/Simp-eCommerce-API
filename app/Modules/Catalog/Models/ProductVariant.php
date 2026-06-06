@@ -2,8 +2,8 @@
 
 namespace App\Modules\Catalog\Models;
 
-use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Inventory\Models\StockMovement;
+use App\Modules\Sales\Models\OrderItem;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

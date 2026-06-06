@@ -3,6 +3,7 @@
 namespace App\Modules\ECommerce\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\ECommerce\Http\Resources\CartItemResource;
 use App\Modules\ECommerce\Models\CartItem;
@@ -103,7 +104,7 @@ class CartController extends Controller
 
     private function validateStock(int $variantId, int $quantity): void
     {
-        $variant = \App\Modules\Catalog\Models\ProductVariant::findOrFail($variantId);
+        $variant = ProductVariant::findOrFail($variantId);
 
         if ($variant->stock_quantity < $quantity) {
             abort(422, "Insufficient stock for '{$variant->sku}'. Available: {$variant->stock_quantity}.");

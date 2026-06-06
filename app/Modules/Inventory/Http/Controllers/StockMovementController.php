@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Inventory\Http\Resources\StockMovementResource;
 use App\Modules\Inventory\Models\StockMovement;
+use App\Modules\Store\Models\Store;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class StockMovementController extends Controller
@@ -18,11 +19,11 @@ class StockMovementController extends Controller
 
         $user = request()->user();
         if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
-            $query->whereHas('variant.product', fn($q) => $q->where('store_id', $user->store_id));
+            $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $user->store_id));
         } elseif ($user && $user->isRoot() && request()->header('X-Store')) {
-            $store = \App\Modules\Store\Models\Store::where('slug', request()->header('X-Store'))->first();
+            $store = Store::where('slug', request()->header('X-Store'))->first();
             if ($store) {
-                $query->whereHas('variant.product', fn($q) => $q->where('store_id', $store->id));
+                $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $store->id));
             }
         }
 

@@ -19,14 +19,14 @@ class BackupController extends Controller
         Storage::disk('local')->makeDirectory('backups');
 
         $driver = DB::getDriverName();
-        $filename = 'backup-' . now()->format('Y-m-d-His') . '.' . $driver;
+        $filename = 'backup-'.now()->format('Y-m-d-His').'.'.$driver;
         $backupPath = Storage::disk('local')->path("backups/{$filename}");
 
         match ($driver) {
             'sqlite' => $this->dumpSqlite($backupPath),
-            'pgsql'  => $this->dumpPgsql($backupPath),
-            'mysql'  => $this->dumpMysql($backupPath),
-            default  => abort(500, "Backup not supported for driver: {$driver}"),
+            'pgsql' => $this->dumpPgsql($backupPath),
+            'mysql' => $this->dumpMysql($backupPath),
+            default => abort(500, "Backup not supported for driver: {$driver}"),
         };
 
         return $this->respond(['message' => 'Backup created.', 'filename' => $filename]);
@@ -40,7 +40,7 @@ class BackupController extends Controller
             abort(500, 'Cannot backup an in-memory SQLite database.');
         }
 
-        if (!file_exists($dbPath)) {
+        if (! file_exists($dbPath)) {
             abort(404, 'Database file not found.');
         }
 
@@ -51,11 +51,11 @@ class BackupController extends Controller
     {
         $process = new Process([
             'pg_dump',
-            '--host=' . config('database.connections.pgsql.host'),
-            '--port=' . config('database.connections.pgsql.port'),
-            '--username=' . config('database.connections.pgsql.username'),
-            '--dbname=' . config('database.connections.pgsql.database'),
-            '--file=' . $backupPath,
+            '--host='.config('database.connections.pgsql.host'),
+            '--port='.config('database.connections.pgsql.port'),
+            '--username='.config('database.connections.pgsql.username'),
+            '--dbname='.config('database.connections.pgsql.database'),
+            '--file='.$backupPath,
         ]);
 
         $process->setEnv(['PGPASSWORD' => config('database.connections.pgsql.password')]);
@@ -66,10 +66,10 @@ class BackupController extends Controller
     {
         $process = new Process([
             'mysqldump',
-            '--host=' . config('database.connections.mysql.host'),
-            '--port=' . config('database.connections.mysql.port'),
-            '--user=' . config('database.connections.mysql.username'),
-            '--password=' . config('database.connections.mysql.password'),
+            '--host='.config('database.connections.mysql.host'),
+            '--port='.config('database.connections.mysql.port'),
+            '--user='.config('database.connections.mysql.username'),
+            '--password='.config('database.connections.mysql.password'),
             config('database.connections.mysql.database'),
         ], timeout: null);
 
@@ -80,8 +80,8 @@ class BackupController extends Controller
     {
         Storage::disk('local')->makeDirectory('backups');
         $files = collect(Storage::disk('local')->files('backups'))
-            ->filter(fn($f) => str_starts_with(basename($f), 'backup-'))
-            ->map(fn($f) => [
+            ->filter(fn ($f) => str_starts_with(basename($f), 'backup-'))
+            ->map(fn ($f) => [
                 'filename' => basename($f),
                 'size' => Storage::disk('local')->size($f),
                 'created_at' => date('Y-m-d H:i:s', Storage::disk('local')->lastModified($f)),
@@ -97,7 +97,7 @@ class BackupController extends Controller
         $filename = basename($filename);
 
         $path = "backups/{$filename}";
-        if (!Storage::disk('local')->exists($path)) {
+        if (! Storage::disk('local')->exists($path)) {
             return $this->respondError('Backup not found.', 404);
         }
 

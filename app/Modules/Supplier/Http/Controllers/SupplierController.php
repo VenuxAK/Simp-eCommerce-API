@@ -21,14 +21,16 @@ class SupplierController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $suppliers = Supplier::when(fn($q) => $this->scopeByStore($q))->withCount('products')->orderBy('name')->paginate(20);
+        $suppliers = Supplier::when(fn ($q) => $this->scopeByStore($q))->withCount('products')->orderBy('name')->paginate(20);
+
         return SupplierResource::collection($suppliers);
     }
 
     public function store(StoreSupplierRequest $request): JsonResponse
     {
         $supplier = Supplier::create($this->mergeStoreId($request->validated()));
-        return new SupplierResource($supplier)->response()->setStatusCode(201);
+
+        return (new SupplierResource($supplier))->response()->setStatusCode(201);
     }
 
     public function show(Supplier $supplier): SupplierResource
@@ -39,6 +41,7 @@ class SupplierController extends Controller
     public function update(UpdateSupplierRequest $request, Supplier $supplier): SupplierResource
     {
         $supplier->update($request->validated());
+
         return new SupplierResource($supplier);
     }
 
@@ -49,6 +52,7 @@ class SupplierController extends Controller
             return $this->respondError("Cannot delete supplier with {$productCount} product(s).");
         }
         $supplier->delete();
+
         return $this->respondMessage('Supplier deleted.');
     }
 }

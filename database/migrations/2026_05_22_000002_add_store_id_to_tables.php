@@ -30,11 +30,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('products', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
-        Schema::table('categories', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
-        Schema::table('orders', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
-        Schema::table('discounts', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
-        Schema::table('suppliers', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
-        Schema::table('cash_sessions', fn(Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('products', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('categories', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('orders', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('discounts', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('suppliers', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
+        Schema::table('cash_sessions', fn (Blueprint $t) => $t->dropConstrainedForeignId('store_id'));
     }
 };

@@ -3,9 +3,9 @@
 namespace App\Modules\Sales\Services;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
-use App\Modules\Inventory\Services\StockService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,11 +24,11 @@ class OrderService
      * records payment and invoice, and awards loyalty points.
      *
      * @param  array  $orderItems  Items with variant_id, quantity, unit_price, subtotal
-     * @param  array  $data        Raw request data (customer_id, payment, notes, etc.)
-     * @param  float  $finalAmount Total after discount
+     * @param  array  $data  Raw request data (customer_id, payment, notes, etc.)
+     * @param  float  $finalAmount  Total after discount
      * @param  float  $paidAmount  Amount tendered by customer
      * @param  float  $discountAmount  Discount applied
-     * @param  string $discountLabel   Human-readable discount description
+     * @param  string  $discountLabel  Human-readable discount description
      */
     public function createOrder(
         array $orderItems,
@@ -43,7 +43,7 @@ class OrderService
         return DB::transaction(function () use ($orderItems, $data, $finalAmount, $paidAmount, $discountAmount, $discountLabel, $generator) {
             $notes = $data['notes'] ?? null;
             if ($discountAmount > 0) {
-                $notes = ($notes ? $notes . "\n" : '') . "Discount: {$discountLabel}";
+                $notes = ($notes ? $notes."\n" : '')."Discount: {$discountLabel}";
             }
 
             $order = Order::create([
@@ -60,7 +60,7 @@ class OrderService
             foreach ($orderItems as $item) {
                 $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
 
-                if (!$variant || $variant->stock_quantity < $item['quantity']) {
+                if (! $variant || $variant->stock_quantity < $item['quantity']) {
                     throw new \RuntimeException("Insufficient stock for variant SKU: {$item['variant']['sku']}");
                 }
 

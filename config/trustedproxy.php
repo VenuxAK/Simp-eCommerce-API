@@ -1,11 +1,13 @@
 <?php
 
+use Illuminate\Http\Request;
+
 return [
 
     'proxies' => env('TRUSTED_PROXIES', ''),
 
-    'headers' => \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
-        \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
-        \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
-        \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO,
+    'headers' => Request::HEADER_X_FORWARDED_FOR |
+        Request::HEADER_X_FORWARDED_HOST |
+        Request::HEADER_X_FORWARDED_PORT |
+        Request::HEADER_X_FORWARDED_PROTO,
 ];

@@ -35,7 +35,7 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        return new UserResource($user)->response()->setStatusCode(201);
+        return (new UserResource($user))->response()->setStatusCode(201);
     }
 
     public function show(User $user): UserResource

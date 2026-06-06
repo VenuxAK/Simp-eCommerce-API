@@ -4,11 +4,14 @@ namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Facades\Socialite;
 
 class OAuthController extends Controller
 {
@@ -16,7 +19,7 @@ class OAuthController extends Controller
 
     public function redirect(string $provider): JsonResponse
     {
-        $redirectUrl = \Laravel\Socialite\Facades\Socialite::driver($provider)
+        $redirectUrl = Socialite::driver($provider)
             ->stateless()
             ->redirect()
             ->getTargetUrl();
@@ -31,26 +34,27 @@ class OAuthController extends Controller
         ]);
 
         try {
-            $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)
+            $socialUser = Socialite::driver($provider)
                 ->stateless()
                 ->user();
         } catch (\Exception $e) {
             Log::warning('OAuth callback failed', ['provider' => $provider, 'error' => $e->getMessage()]);
+
             return $this->respondError('OAuth authentication failed.', 422);
         }
 
-        if (!$socialUser->email) {
+        if (! $socialUser->email) {
             return $this->respondError('Email is required from OAuth provider.', 422);
         }
 
         $customer = Customer::where('email', $socialUser->email)->first();
 
-        if (!$customer) {
+        if (! $customer) {
             // Resolve store_id from X-Store header for the registration.
             $storeId = null;
             $storeSlug = $request->header('X-Store');
             if ($storeSlug) {
-                $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+                $store = Store::where('slug', $storeSlug)->first();
                 if ($store) {
                     $storeId = $store->id;
                 }
@@ -70,7 +74,7 @@ class OAuthController extends Controller
         }
 
         return $this->respond([
-            'customer' => new \App\Modules\Customer\Http\Resources\CustomerResource($customer),
+            'customer' => new CustomerResource($customer),
         ]);
     }
 }

@@ -7,7 +7,6 @@ use Tests\ApiTestCase;
 
 class CategoryTest extends ApiTestCase
 {
-
     public function test_can_list_categories(): void
     {
         Category::factory(3)->create();

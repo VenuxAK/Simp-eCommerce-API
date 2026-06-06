@@ -13,8 +13,11 @@ abstract class ApiTestCase extends TestCase
     use RefreshDatabase;
 
     protected User $adminUser;
+
     protected User $staffUser;
+
     protected array $adminHeaders;
+
     protected array $staffHeaders;
 
     protected function setUp(): void
@@ -30,6 +33,7 @@ abstract class ApiTestCase extends TestCase
     {
         $category = Category::factory()->create();
         $product = Product::factory()->create(['category_id' => $category->id, 'base_price' => $price]);
+
         return ProductVariant::factory()->create([
             'product_id' => $product->id,
             'stock_quantity' => $stockQty,

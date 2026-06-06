@@ -7,7 +7,6 @@ use Tests\ApiTestCase;
 
 class CustomerTest extends ApiTestCase
 {
-
     public function test_can_list_customers(): void
     {
         Customer::factory(3)->create();

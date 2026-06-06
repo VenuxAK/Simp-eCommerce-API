@@ -59,7 +59,7 @@ class DashboardController extends Controller
             'total_variants' => $lowStockVariants->count() + $outOfStockVariants->count() + ProductVariant::whereIn('product_id', $productIds)->where('stock_quantity', '>', 5)->count(),
             'low_stock_count' => $lowStockVariants->count(),
             'out_of_stock_count' => $outOfStockVariants->count(),
-            'low_stock_variants' => $lowStockVariants->map(fn($v) => [
+            'low_stock_variants' => $lowStockVariants->map(fn ($v) => [
                 'id' => $v->id,
                 'sku' => $v->sku,
                 'product' => $v->product->name,

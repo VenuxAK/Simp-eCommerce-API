@@ -21,7 +21,7 @@ class ResolveStore
 
         $store = Store::where('slug', $slug)->where('is_active', true)->first();
 
-        if (!$store) {
+        if (! $store) {
             return response()->json(['message' => 'Store not found or inactive.'], 404);
         }
 

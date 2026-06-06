@@ -3,16 +3,15 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\Category;
-use App\Modules\Sales\Models\Order;
-use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Models\OrderItem;
 use Illuminate\Http\UploadedFile;
 use Tests\ApiTestCase;
 
 class ProductTest extends ApiTestCase
 {
-
     public function test_can_list_products(): void
     {
         $category = Category::factory()->create();

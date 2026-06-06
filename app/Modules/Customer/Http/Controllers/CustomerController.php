@@ -28,11 +28,11 @@ class CustomerController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $customers = Customer::withCount('orders')
-            ->when(fn($q) => $this->scopeByStore($q))
-            ->when(request('search'), fn($q) => $q->where(function ($q) {
-                $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%'])
-                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%' . request('search') . '%'])
-                    ->orWhereRaw('LOWER(phone) LIKE LOWER(?)', ['%' . request('search') . '%']);
+            ->when(fn ($q) => $this->scopeByStore($q))
+            ->when(request('search'), fn ($q) => $q->where(function ($q) {
+                $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.request('search').'%'])
+                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%'.request('search').'%'])
+                    ->orWhereRaw('LOWER(phone) LIKE LOWER(?)', ['%'.request('search').'%']);
             }))
             ->orderBy('name')
             ->paginate(20);
@@ -55,7 +55,7 @@ class CustomerController extends Controller
 
         $customer = Customer::create($data);
 
-        return new CustomerResource($customer)->response()->setStatusCode(201);
+        return (new CustomerResource($customer))->response()->setStatusCode(201);
     }
 
     public function show(Customer $customer): CustomerResource

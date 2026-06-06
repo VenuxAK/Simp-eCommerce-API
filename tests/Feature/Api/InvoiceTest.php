@@ -3,10 +3,10 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Catalog\Models\Category;
-use App\Modules\Sales\Models\Invoice;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
+use App\Modules\Sales\Models\Invoice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,6 +15,7 @@ class InvoiceTest extends TestCase
     use RefreshDatabase;
 
     private array $headers;
+
     private ?int $orderId = null;
 
     protected function setUp(): void

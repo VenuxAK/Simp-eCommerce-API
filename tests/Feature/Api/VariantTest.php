@@ -31,7 +31,7 @@ class VariantTest extends TestCase
             'sku' => 'TEST-SKU-001',
         ]);
 
-        $response = $this->getJson("/api/variants/by-sku/TEST-SKU-001", $this->headers);
+        $response = $this->getJson('/api/variants/by-sku/TEST-SKU-001', $this->headers);
 
         $response->assertOk()->assertJsonPath('variant.sku', 'TEST-SKU-001');
     }

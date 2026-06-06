@@ -18,7 +18,7 @@ class ProductVariantFactory extends Factory
 
         return [
             'product_id' => Product::factory(),
-            'sku' => 'SKU-' . Str::upper(Str::random(12)),
+            'sku' => 'SKU-'.Str::upper(Str::random(12)),
             'size' => fake()->randomElement($sizes),
             'color' => fake()->randomElement($colors),
             'price_adjustment' => fake()->randomFloat(2, -10, 20),

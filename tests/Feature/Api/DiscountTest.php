@@ -7,7 +7,6 @@ use Tests\ApiTestCase;
 
 class DiscountTest extends ApiTestCase
 {
-
     public function test_can_create_discount(): void
     {
         $response = $this->postJson('/api/discounts', [

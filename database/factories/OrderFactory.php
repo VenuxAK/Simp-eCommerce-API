@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Modules\Customer\Models\Customer;
-use App\Modules\Sales\Models\Order;
 use App\Modules\Identity\Models\User;
+use App\Modules\Sales\Models\Order;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrderFactory extends Factory
@@ -16,7 +16,7 @@ class OrderFactory extends Factory
         return [
             'user_id' => User::factory(),
             'customer_id' => Customer::factory(),
-            'order_number' => 'ORD-' . fake()->unique()->numerify('########'),
+            'order_number' => 'ORD-'.fake()->unique()->numerify('########'),
             'store_id' => 1,
             'total_amount' => 0,
             'status' => fake()->randomElement(['pending', 'completed', 'cancelled']),

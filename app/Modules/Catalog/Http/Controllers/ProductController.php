@@ -3,19 +3,21 @@
 namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Sales\Models\OrderItem;
 use App\Modules\Catalog\Http\Requests\StoreProductRequest;
 use App\Modules\Catalog\Http\Requests\UpdateProductRequest;
 use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Models\Product;
-use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Catalog\Services\ProductExportService;
 use App\Modules\Catalog\Services\ProductImportService;
+use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Sales\Models\OrderItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 /**
  * Handles Product-related API requests.
@@ -33,9 +35,9 @@ class ProductController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $products = Product::with(['category', 'supplier', 'variants'])
-            ->when(true, fn($q) => $this->scopeByStore($q))
-            ->when(request('category_id'), fn($q) => $q->where('category_id', request('category_id')))
-            ->when(request('search'), fn($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%' . request('search') . '%']))
+            ->when(true, fn ($q) => $this->scopeByStore($q))
+            ->when(request('category_id'), fn ($q) => $q->where('category_id', request('category_id')))
+            ->when(request('search'), fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.request('search').'%']))
             ->orderBy('name')
             ->paginate(20);
 
@@ -48,7 +50,7 @@ class ProductController extends Controller
             'category_id' => $request->category_id,
             'supplier_id' => $request->supplier_id ?? null,
             'name' => $request->name,
-            'slug' => Str::slug($request->name) . '-' . Str::random(8),
+            'slug' => Str::slug($request->name).'-'.Str::random(8),
             'description' => $request->description,
             'base_price' => $request->base_price,
             'image' => $request->image,
@@ -64,7 +66,7 @@ class ProductController extends Controller
             ]);
         }
 
-        return new ProductResource($product->load(['category', 'variants']))->response()->setStatusCode(201);
+        return (new ProductResource($product->load(['category', 'variants'])))->response()->setStatusCode(201);
     }
 
     public function show(Product $product): ProductResource
@@ -78,7 +80,7 @@ class ProductController extends Controller
             'category_id' => $request->category_id ?? $product->category_id,
             'supplier_id' => $request->supplier_id ?? $product->supplier_id,
             'name' => $request->name ?? $product->name,
-            'slug' => $request->name ? Str::slug($request->name) . '-' . Str::random(8) : $product->slug,
+            'slug' => $request->name ? Str::slug($request->name).'-'.Str::random(8) : $product->slug,
             'description' => $request->description ?? $product->description,
             'base_price' => $request->base_price ?? $product->base_price,
             'image' => $request->image ?? $product->image,
@@ -111,7 +113,7 @@ class ProductController extends Controller
             }
 
             $toDelete = array_diff($existingIds, $updatedIds);
-            if (!empty($toDelete)) {
+            if (! empty($toDelete)) {
                 $variantOrderCount = OrderItem::whereIn('product_variant_id', $toDelete)->count();
                 if ($variantOrderCount > 0) {
                     return $this->respondError("Cannot delete {$variantOrderCount} variant(s) with existing order history. Remove them from the payload to keep them.");
@@ -123,7 +125,7 @@ class ProductController extends Controller
         return new ProductResource($product->load(['category', 'variants']));
     }
 
-    public function exportCsv(): \Illuminate\Http\Response
+    public function exportCsv(): Response
     {
         $csv = $this->exportService->exportToCsv();
 
@@ -142,9 +144,10 @@ class ProductController extends Controller
         return $this->respond($result);
     }
 
-    public function labels(Product $product): \Illuminate\View\View
+    public function labels(Product $product): View
     {
         $product->load('variants');
+
         return view('pdf.label', ['variants' => $product->variants]);
     }
 

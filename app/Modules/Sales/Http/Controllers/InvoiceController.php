@@ -10,6 +10,8 @@ use App\Modules\Sales\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 /**
  * Handles Invoice-related API requests.
@@ -47,7 +49,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function receipt(Invoice $invoice): \Illuminate\View\View
+    public function receipt(Invoice $invoice): View
     {
         $invoice->load(['order.customer', 'order.items.variant.product']);
 
@@ -59,7 +61,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function pdf(Invoice $invoice): \Illuminate\Http\Response
+    public function pdf(Invoice $invoice): Response
     {
         $invoice->load(['order.customer', 'order.items.variant.product', 'order.payment']);
 

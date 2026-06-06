@@ -21,13 +21,15 @@ class StoreController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $stores = Store::orderBy('name')->paginate(20);
+
         return StoreResource::collection($stores);
     }
 
     public function store(StoreStoreRequest $request): JsonResponse
     {
         $store = Store::create($request->validated());
-        return new StoreResource($store)->response()->setStatusCode(201);
+
+        return (new StoreResource($store))->response()->setStatusCode(201);
     }
 
     public function show(Store $store): StoreResource
@@ -38,6 +40,7 @@ class StoreController extends Controller
     public function update(UpdateStoreRequest $request, Store $store): StoreResource
     {
         $store->update($request->validated());
+
         return new StoreResource($store);
     }
 
@@ -47,6 +50,7 @@ class StoreController extends Controller
             return $this->respondError('Cannot delete the main store.');
         }
         $store->delete();
+
         return $this->respondMessage('Store deleted.');
     }
 }

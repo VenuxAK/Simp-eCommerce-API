@@ -24,7 +24,7 @@ class UpdateStoreRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255', 'unique:stores,slug,' . $this->route('store')?->id],
+            'slug' => ['sometimes', 'string', 'max:255', 'unique:stores,slug,'.$this->route('store')?->id],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
             'settings' => ['nullable', 'json'],

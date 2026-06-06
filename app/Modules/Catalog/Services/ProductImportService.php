@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Store\Models\Store;
 use App\Modules\Supplier\Models\Supplier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -43,14 +44,15 @@ class ProductImportService
                 ]);
 
                 if ($rowValidator->fails()) {
-                    $errors[] = "Row " . ($created + 1) . ": " . implode('; ', $rowValidator->errors()->all());
+                    $errors[] = 'Row '.($created + 1).': '.implode('; ', $rowValidator->errors()->all());
+
                     continue;
                 }
 
                 $storeId = app()->bound('current_store') && ($store = app('current_store'))
                     ? $store->id
                     : (request()->header('X-Store')
-                        ? \App\Modules\Store\Models\Store::where('slug', request()->header('X-Store'))->first()?->id
+                        ? Store::where('slug', request()->header('X-Store'))->first()?->id
                         : 1);
 
                 $category = Category::firstOrCreate(
@@ -58,7 +60,7 @@ class ProductImportService
                     ['slug' => Str::slug($data['category'] ?? 'Uncategorized'), 'store_id' => $storeId],
                 );
                 $supplier = null;
-                if (!empty($data['supplier'])) {
+                if (! empty($data['supplier'])) {
                     $supplier = Supplier::firstOrCreate(
                         ['name' => $data['supplier']],
                         ['store_id' => $storeId],
@@ -72,7 +74,7 @@ class ProductImportService
                             'category_id' => $category->id,
                             'supplier_id' => $supplier?->id,
                             'store_id' => $storeId,
-                            'slug' => Str::slug($data['name']) . '-' . Str::random(8),
+                            'slug' => Str::slug($data['name']).'-'.Str::random(8),
                             'base_price' => $data['base_price'] ?? 0,
                         ],
                     );
@@ -95,6 +97,7 @@ class ProductImportService
         });
 
         fclose($handle);
+
         return ['created' => $created, 'errors' => $errors];
     }
 }

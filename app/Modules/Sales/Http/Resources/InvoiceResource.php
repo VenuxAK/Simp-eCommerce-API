@@ -16,7 +16,7 @@ class InvoiceResource extends JsonResource
             'id' => $this->id,
             'order_id' => $this->order_id,
             'order' => new OrderResource($this->whenLoaded('order')),
-            'total_amount' => $this->whenLoaded('order', fn() => (float) $this->order->total_amount),
+            'total_amount' => $this->whenLoaded('order', fn () => (float) $this->order->total_amount),
             'invoice_number' => $this->invoice_number,
             'issued_date' => $this->issued_date,
             'due_date' => $this->due_date,

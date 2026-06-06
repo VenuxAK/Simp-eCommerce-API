@@ -41,7 +41,7 @@ class AuditLogResource extends JsonResource
      */
     private function redactSensitive(mixed $values, array $sensitiveFields): mixed
     {
-        if (!is_array($values)) {
+        if (! is_array($values)) {
             $decoded = json_decode($values, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return $values;

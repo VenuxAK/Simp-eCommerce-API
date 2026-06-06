@@ -12,6 +12,7 @@ class ProfileTest extends TestCase
     use RefreshDatabase;
 
     private array $headers;
+
     private User $user;
 
     protected function setUp(): void

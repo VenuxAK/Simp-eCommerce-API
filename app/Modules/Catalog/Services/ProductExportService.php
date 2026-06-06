@@ -17,17 +17,17 @@ class ProductExportService
         foreach ($products as $product) {
             foreach ($product->variants as $variant) {
                 $csv .= implode(',', [
-                    '"' . ($product->category?->name ?? '') . '"',
-                    '"' . $product->name . '"',
-                    '"' . $variant->sku . '"',
-                    '"' . ($variant->size ?? '') . '"',
-                    '"' . ($variant->color ?? '') . '"',
+                    '"'.($product->category?->name ?? '').'"',
+                    '"'.$product->name.'"',
+                    '"'.$variant->sku.'"',
+                    '"'.($variant->size ?? '').'"',
+                    '"'.($variant->color ?? '').'"',
                     $product->base_price,
                     $variant->price_adjustment,
                     $variant->purchase_price ?? '',
                     $variant->stock_quantity,
-                    '"' . ($product->supplier?->name ?? '') . '"',
-                ]) . "\n";
+                    '"'.($product->supplier?->name ?? '').'"',
+                ])."\n";
             }
         }
 

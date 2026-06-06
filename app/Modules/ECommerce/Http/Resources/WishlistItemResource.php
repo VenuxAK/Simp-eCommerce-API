@@ -19,7 +19,7 @@ class WishlistItemResource extends JsonResource
                 'base_price' => $this->product->base_price,
                 'image' => $this->product->image,
                 'category' => $this->product->category?->name,
-                'variants' => $this->product->variants->map(fn($v) => [
+                'variants' => $this->product->variants->map(fn ($v) => [
                     'id' => $v->id,
                     'sku' => $v->sku,
                     'size' => $v->size,

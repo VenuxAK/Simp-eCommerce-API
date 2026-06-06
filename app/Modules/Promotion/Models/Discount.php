@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Discount extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name', 'type', 'value', 'applies_to',
         'category_id', 'product_id', 'store_id', 'starts_at', 'ends_at', 'is_active',

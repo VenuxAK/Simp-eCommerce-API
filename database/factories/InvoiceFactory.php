@@ -14,7 +14,7 @@ class InvoiceFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'invoice_number' => 'INV-' . fake()->unique()->numerify('########'),
+            'invoice_number' => 'INV-'.fake()->unique()->numerify('########'),
             'issued_date' => fake()->date(),
             'due_date' => fake()->optional()->dateTimeThisMonth(),
             'status' => fake()->randomElement(['draft', 'issued', 'paid', 'cancelled']),

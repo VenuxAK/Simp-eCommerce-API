@@ -22,12 +22,12 @@ class DiscountService
         $discountAmount = 0;
         $discountLabel = '';
 
-        if (!$discountId) {
+        if (! $discountId) {
             return [$discountAmount, $discountLabel];
         }
 
         $discount = Discount::find($discountId);
-        if (!$discount || !$discount->is_active) {
+        if (! $discount || ! $discount->is_active) {
             return [$discountAmount, $discountLabel];
         }
 
@@ -35,10 +35,10 @@ class DiscountService
         $discountableTotal = match ($discount->applies_to) {
             'all' => $totalAmount,
             'category' => collect($orderItems)
-                ->filter(fn($item) => $item['variant']->product->category_id === $discount->category_id)
+                ->filter(fn ($item) => $item['variant']->product->category_id === $discount->category_id)
                 ->sum('subtotal'),
             'product' => collect($orderItems)
-                ->filter(fn($item) => $item['variant']->product_id === $discount->product_id)
+                ->filter(fn ($item) => $item['variant']->product_id === $discount->product_id)
                 ->sum('subtotal'),
             default => 0,
         };

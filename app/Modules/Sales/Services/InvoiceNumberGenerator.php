@@ -38,6 +38,6 @@ class InvoiceNumberGenerator
 
         $newNumber = $last ? ((int) substr($last->$column, -4)) + 1 : 1;
 
-        return "{$prefix}-{$date}-" . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return "{$prefix}-{$date}-".str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

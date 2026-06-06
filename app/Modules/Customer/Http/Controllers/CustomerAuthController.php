@@ -7,6 +7,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Customer\Http\Requests\RegisterCustomerRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,7 @@ class CustomerAuthController extends Controller
         // Assign store_id from the X-Store header sent by the storefront.
         $storeSlug = $request->header('X-Store');
         if ($storeSlug) {
-            $store = \App\Modules\Store\Models\Store::where('slug', $storeSlug)->first();
+            $store = Store::where('slug', $storeSlug)->first();
             if ($store) {
                 $data['store_id'] = $store->id;
             }
@@ -51,7 +52,7 @@ class CustomerAuthController extends Controller
 
         $customer = Customer::where('email', $request->email)->first();
 
-        if (!$customer || !$customer->password || !Hash::check($request->password, $customer->password)) {
+        if (! $customer || ! $customer->password || ! Hash::check($request->password, $customer->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);

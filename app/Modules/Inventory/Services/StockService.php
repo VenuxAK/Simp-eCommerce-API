@@ -3,6 +3,7 @@
 namespace App\Modules\Inventory\Services;
 
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Identity\Models\User;
 use App\Modules\Inventory\Models\StockMovement;
 
 /**
@@ -25,7 +26,7 @@ class StockService
             'reason' => $reason,
             'reference_type' => $referenceType,
             'reference_id' => $referenceId,
-            'user_id' => $user instanceof \App\Modules\Identity\Models\User ? $user->id : null,
+            'user_id' => $user instanceof User ? $user->id : null,
         ]);
     }
 }
