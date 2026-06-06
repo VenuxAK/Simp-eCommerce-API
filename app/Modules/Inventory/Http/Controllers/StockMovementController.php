@@ -5,8 +5,8 @@ namespace App\Modules\Inventory\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Inventory\Http\Resources\StockMovementResource;
-use App\Modules\Inventory\Models\StockMovement;
-use App\Modules\Store\Models\Store;
+use App\Modules\Inventory\Repositories\StockMovementRepository;
+use App\Modules\Store\Repositories\StoreRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -14,15 +14,20 @@ class StockMovementController extends Controller
 {
     use QueryFilter;
 
+    public function __construct(
+        private readonly StockMovementRepository $stockMovementRepository,
+        private readonly StoreRepository $storeRepository,
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = StockMovement::with(['variant.product', 'user']);
+        $query = $this->stockMovementRepository->query()->with(['variant.product', 'user']);
 
         $user = $request->user();
         if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
             $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $user->store_id));
         } elseif ($user && $user->isRoot() && $request->header('X-Store')) {
-            $store = Store::where('slug', $request->header('X-Store'))->first();
+            $store = $this->storeRepository->findBySlug($request->header('X-Store'));
             if ($store) {
                 $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $store->id));
             }

@@ -5,12 +5,17 @@ namespace App\Modules\Promotion\Services;
 use App\Modules\Core\Enums\DiscountScope;
 use App\Modules\Core\Enums\DiscountType;
 use App\Modules\Promotion\Models\Discount;
+use App\Modules\Promotion\Repositories\DiscountRepository;
 
 /**
  * Business logic for Discount operations.
  */
 class DiscountService
 {
+    public function __construct(
+        private readonly DiscountRepository $discountRepository,
+    ) {}
+
     /**
      * Calculate discount amount and return a human-readable label.
      *
@@ -28,7 +33,7 @@ class DiscountService
             return [$discountAmount, $discountLabel];
         }
 
-        $discount = Discount::find($discountId);
+        $discount = $this->discountRepository->find($discountId);
         if (! $discount || ! $discount->is_active) {
             return [$discountAmount, $discountLabel];
         }

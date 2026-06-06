@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Identity\Http\Requests\LoginRequest;
 use App\Modules\Identity\Http\Resources\UserResource;
-use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,10 +23,14 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(
+        private readonly UserRepository $userRepository,
+    ) {}
+
     public function login(LoginRequest $request): JsonResponse
     {
 
-        $user = User::where('email', $request->email)->first();
+        $user = $this->userRepository->findByEmail($request->email);
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([

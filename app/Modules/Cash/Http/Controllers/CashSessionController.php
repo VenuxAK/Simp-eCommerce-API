@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Cash\Http\Requests\CloseCashSessionRequest;
 use App\Modules\Cash\Http\Requests\OpenCashSessionRequest;
 use App\Modules\Cash\Http\Resources\CashSessionResource;
-use App\Modules\Cash\Models\CashSession;
+use App\Modules\Cash\Repositories\CashSessionRepository;
 use App\Modules\Cash\Services\CashSessionService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
@@ -26,11 +26,13 @@ class CashSessionController extends Controller
 
     public function __construct(
         private readonly CashSessionService $cashSessionService,
+        private readonly CashSessionRepository $cashSessionRepository,
     ) {}
 
     public function index(): AnonymousResourceCollection
     {
-        $sessions = CashSession::with('user')
+        $sessions = $this->cashSessionRepository->query()
+            ->with('user')
             ->when(fn ($q) => $this->scopeByStore($q))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -40,9 +42,7 @@ class CashSessionController extends Controller
 
     public function active(): JsonResponse|CashSessionResource
     {
-        $query = CashSession::whereNull('closed_at');
-        $this->scopeByStore($query);
-        $session = $query->first();
+        $session = $this->cashSessionRepository->findActiveByStore($this->resolveStoreId());
 
         if (! $session) {
             return $this->respond(['data' => null]);
@@ -53,9 +53,7 @@ class CashSessionController extends Controller
 
     public function open(OpenCashSessionRequest $request): JsonResponse
     {
-        $existingQuery = CashSession::whereNull('closed_at');
-        $this->scopeByStore($existingQuery);
-        $existing = $existingQuery->first();
+        $existing = $this->cashSessionRepository->findActiveByStore($this->resolveStoreId());
 
         if ($existing) {
             return $this->respondError('A cash session is already open for this store.');
@@ -63,7 +61,7 @@ class CashSessionController extends Controller
 
         $data = $request->validated();
 
-        $session = CashSession::create($this->mergeStoreId([
+        $session = $this->cashSessionRepository->create($this->mergeStoreId([
             'user_id' => $request->user()->id,
             'opened_at' => now(),
             'opening_balance' => $data['opening_balance'],
@@ -75,9 +73,7 @@ class CashSessionController extends Controller
 
     public function close(CloseCashSessionRequest $request): JsonResponse
     {
-        $sessionQuery = CashSession::whereNull('closed_at');
-        $this->scopeByStore($sessionQuery);
-        $session = $sessionQuery->first();
+        $session = $this->cashSessionRepository->findActiveByStore($this->resolveStoreId());
 
         if (! $session) {
             return $this->respondError('No open cash session for this store.');
@@ -88,7 +84,7 @@ class CashSessionController extends Controller
         $settlement = $this->cashSessionService->calculateSettlement($session, now());
         $difference = $data['closing_balance'] - $settlement['expected_balance'];
 
-        $session->update([
+        $this->cashSessionRepository->update($session, [
             'closed_at' => now(),
             'closing_balance' => $data['closing_balance'],
             'expected_balance' => $settlement['expected_balance'],

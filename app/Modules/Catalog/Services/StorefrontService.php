@@ -2,8 +2,8 @@
 
 namespace App\Modules\Catalog\Services;
 
-use App\Modules\Catalog\Models\Category;
-use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Repositories\CategoryRepository;
+use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Store\Models\Store;
 
 /**
@@ -15,6 +15,11 @@ use App\Modules\Store\Models\Store;
  */
 class StorefrontService
 {
+    public function __construct(
+        private readonly ProductRepository $productRepo,
+        private readonly CategoryRepository $categoryRepo,
+    ) {}
+
     /**
      * Paginated product listing filtered by availability, category, and search.
      *
@@ -24,27 +29,17 @@ class StorefrontService
      */
     public function products(Store $store, ?int $categoryId, ?string $search, int $perPage = 20)
     {
-        return Product::where('store_id', $store->id)
-            ->where(function ($q) {
-                $q->whereDoesntHave('variants')
-                    ->orWhereHas('variants', fn ($q) => $q->where('stock_quantity', '>', 0));
-            })
-            ->with(['category', 'variants' => fn ($q) => $q->where('stock_quantity', '>', 0)])
-            ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
-            ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%']))
-            ->orderBy('name')
-            ->paginate($perPage);
+        return $this->productRepo->findAvailableByStore(
+            $store->id, $categoryId, $search, $perPage,
+        );
     }
 
     /**
      * Single product detail for the storefront, scoped to the given store.
      */
-    public function product(Store $store, string $slug): Product
+    public function product(Store $store, string $slug)
     {
-        return Product::where('store_id', $store->id)
-            ->where('slug', $slug)
-            ->with(['category', 'variants'])
-            ->firstOrFail();
+        return $this->productRepo->findBySlug($store->id, $slug);
     }
 
     /**
@@ -52,10 +47,7 @@ class StorefrontService
      */
     public function categories(Store $store)
     {
-        return Category::where('store_id', $store->id)
-            ->withCount('products')
-            ->orderBy('name')
-            ->get();
+        return $this->categoryRepo->findByStore($store->id);
     }
 
     /**
@@ -73,7 +65,7 @@ class StorefrontService
             'email' => $store->email,
             'is_active' => $store->is_active,
             'settings' => $store->settings,
-            'products_count' => Product::where('store_id', $store->id)->count(),
+            'products_count' => $this->productRepo->getIdsByStore($store->id)->count(),
         ];
     }
 }

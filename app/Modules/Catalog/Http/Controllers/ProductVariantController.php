@@ -8,6 +8,7 @@ use App\Modules\Catalog\Http\Requests\UploadImageRequest;
 use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Http\Resources\ProductVariantResource;
 use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Inventory\Services\StockService;
@@ -27,6 +28,7 @@ class ProductVariantController extends Controller
     public function __construct(
         private readonly StockService $stockService,
         private readonly MediaService $mediaService,
+        private readonly ProductVariantRepository $variantRepo,
     ) {}
 
     /**
@@ -64,9 +66,7 @@ class ProductVariantController extends Controller
      */
     public function bySku(string $sku): JsonResponse
     {
-        $variant = ProductVariant::with('product.category')
-            ->where('sku', $sku)
-            ->first();
+        $variant = $this->variantRepo->findBySku($sku);
 
         if (! $variant) {
             return $this->respondError('Variant not found for the given SKU.', 404);

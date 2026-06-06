@@ -9,6 +9,7 @@ use App\Modules\Customer\Http\Requests\StoreCustomerRequest;
 use App\Modules\Customer\Http\Requests\UpdateCustomerRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Customer\Repositories\CustomerRepository;
 use App\Modules\Customer\Services\CustomerService;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,7 @@ class CustomerController extends Controller
 
     public function __construct(
         private readonly CustomerService $customerService,
+        private readonly CustomerRepository $customerRepository,
     ) {}
 
     public function index(): AnonymousResourceCollection
@@ -47,7 +49,9 @@ class CustomerController extends Controller
 
     public function show(Customer $customer): CustomerResource
     {
-        return new CustomerResource($customer->loadCount('orders'));
+        $customer = $this->customerRepository->findWithOrderCount($customer->id);
+
+        return new CustomerResource($customer);
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer): CustomerResource

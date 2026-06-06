@@ -7,6 +7,7 @@ use App\Modules\Catalog\Http\Requests\StoreCategoryRequest;
 use App\Modules\Catalog\Http\Requests\UpdateCategoryRequest;
 use App\Modules\Catalog\Http\Resources\CategoryResource;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Repositories\CategoryRepository;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
@@ -23,19 +24,22 @@ class CategoryController extends Controller
 {
     use ApiResponse, StoreScope;
 
+    public function __construct(
+        private readonly CategoryRepository $categoryRepo,
+    ) {}
+
     public function index(): AnonymousResourceCollection
     {
-        $categories = Category::withCount('products')
-            ->when(true, fn ($q) => $this->scopeByStore($q))
-            ->orderBy('name')
-            ->paginate(20);
+        $categories = $this->categoryRepo->paginateByStore(
+            storeId: $this->resolveStoreId(),
+        );
 
         return CategoryResource::collection($categories);
     }
 
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        $category = Category::create($this->mergeStoreId([
+        $category = $this->categoryRepo->create($this->mergeStoreId([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
@@ -46,13 +50,15 @@ class CategoryController extends Controller
 
     public function show(Category $category): CategoryResource
     {
-        return new CategoryResource($category->loadCount('products'));
+        return new CategoryResource(
+            $this->categoryRepo->findWithProductCount($category->id),
+        );
     }
 
     public function update(UpdateCategoryRequest $request, Category $category): CategoryResource
     {
         // Regenerate the slug whenever the name changes to keep them in sync.
-        $category->update([
+        $this->categoryRepo->update($category, [
             'name' => $request->name ?? $category->name,
             'slug' => $request->name ? Str::slug($request->name) : $category->slug,
             'description' => $request->description ?? $category->description,
@@ -66,13 +72,13 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): JsonResponse
     {
-        $productCount = $category->products()->count();
+        $productCount = $this->categoryRepo->getProductCount($category->id);
 
         if ($productCount > 0) {
             return $this->respondError("Cannot delete category: {$productCount} product(s) are linked to it.");
         }
 
-        $category->delete();
+        $this->categoryRepo->delete($category);
 
         return $this->respondMessage('Category deleted.');
     }

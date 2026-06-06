@@ -2,48 +2,42 @@
 
 namespace App\Modules\Report\Services;
 
-use App\Modules\Cash\Models\CashSession;
-use App\Modules\Catalog\Models\Product;
-use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Cash\Repositories\CashSessionRepository;
+use App\Modules\Catalog\Repositories\ProductRepository;
+use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use App\Modules\Core\Traits\StoreScope;
-use App\Modules\Sales\Models\Order;
-use Illuminate\Support\Facades\DB;
+use App\Modules\Sales\Repositories\OrderRepository;
 
 class DashboardService
 {
     use StoreScope;
 
+    public function __construct(
+        private readonly OrderRepository $orderRepository,
+        private readonly ProductRepository $productRepository,
+        private readonly ProductVariantRepository $variantRepository,
+        private readonly CashSessionRepository $cashSessionRepository,
+    ) {}
+
     public function summary(): array
     {
-        $today = now()->startOfDay();
+        $storeId = $this->resolveStoreId();
 
-        $orderQuery = Order::where('created_at', '>=', $today);
-        $this->scopeByStore($orderQuery);
-        $todaySales = (float) $orderQuery->sum('total_amount');
-        $todayOrderCount = $orderQuery->count();
+        $todayOrders = $this->orderRepository->findTodayOrdersByStore($storeId);
+        $todaySales = (float) $todayOrders->sum('total_amount');
+        $todayOrderCount = $todayOrders->count();
 
-        $recentOrders = Order::with(['user', 'customer', 'items.variant', 'payment'])
-            ->orderBy('created_at', 'desc');
-        $this->scopeByStore($recentOrders);
-        $recentOrders = $recentOrders->limit(10)->get();
+        $recentOrders = $this->orderRepository->findRecentOrdersByStore($storeId, 10);
 
-        $productIds = Product::query();
-        $this->scopeByStore($productIds);
-        $productIds = $productIds->pluck('id');
+        $productIds = $this->productRepository->getIdsByStore($storeId);
 
-        $variants = ProductVariant::with('product')
-            ->whereIn('product_id', $productIds)
-            ->select('id', 'product_id', 'sku', 'size', 'color', 'stock_quantity',
-                DB::raw("CASE WHEN stock_quantity = 0 THEN 'out' WHEN stock_quantity <= 5 THEN 'low' ELSE 'ok' END as stock_status"))
-            ->get();
+        $variants = $this->variantRepository->findStockSummaryByProductIds($productIds->toArray());
 
         $lowStockVariants = $variants->where('stock_status', 'low');
         $outOfStockVariants = $variants->where('stock_status', 'out');
         $wellStockedCount = $variants->where('stock_status', 'ok')->count();
 
-        $activeSession = CashSession::whereNull('closed_at');
-        $this->scopeByStore($activeSession);
-        $activeSession = $activeSession->first();
+        $activeSession = $this->cashSessionRepository->findActiveByStore($storeId);
 
         return [
             'today_sales' => $todaySales,

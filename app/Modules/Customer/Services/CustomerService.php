@@ -4,6 +4,7 @@ namespace App\Modules\Customer\Services;
 
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Customer\Repositories\CustomerRepository;
 
 /**
  * Customer CRUD and data access, scoped by store for multi-tenant isolation.
@@ -17,6 +18,10 @@ class CustomerService
 {
     use StoreScope;
 
+    public function __construct(
+        private readonly CustomerRepository $customerRepository,
+    ) {}
+
     /**
      * Search and paginate customers within the current store scope.
      *
@@ -26,32 +31,26 @@ class CustomerService
      */
     public function listCustomers(?string $search, int $perPage = 20)
     {
-        $customers = Customer::withCount('orders')
-            ->when(fn ($q) => $this->scopeByStore($q))
-            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%'])
-                    ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%'.$search.'%'])
-                    ->orWhereRaw('LOWER(phone) LIKE LOWER(?)', ['%'.$search.'%']);
-            }))
-            ->orderBy('name')
-            ->paginate($perPage);
-
-        return $customers;
+        return $this->customerRepository->paginateFiltered(
+            storeId: $this->resolveStoreId(),
+            search: $search,
+            perPage: $perPage,
+        );
     }
 
     public function createCustomer(array $data): Customer
     {
-        return Customer::create($data);
+        return $this->customerRepository->create($data);
     }
 
     public function updateCustomer(Customer $customer, array $data): void
     {
-        $customer->update($data);
+        $this->customerRepository->update($customer, $data);
     }
 
     public function deleteCustomer(Customer $customer): void
     {
-        $customer->delete();
+        $this->customerRepository->delete($customer);
     }
 
     /**

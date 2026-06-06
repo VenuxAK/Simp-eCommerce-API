@@ -9,6 +9,7 @@ use App\Modules\Promotion\Http\Requests\StoreDiscountRequest;
 use App\Modules\Promotion\Http\Requests\UpdateDiscountRequest;
 use App\Modules\Promotion\Http\Resources\DiscountResource;
 use App\Modules\Promotion\Models\Discount;
+use App\Modules\Promotion\Repositories\DiscountRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -19,32 +20,25 @@ class DiscountController extends Controller
 {
     use ApiResponse, StoreScope;
 
+    public function __construct(
+        private readonly DiscountRepository $discountRepository,
+    ) {}
+
     public function index(): AnonymousResourceCollection
     {
-        $discounts = Discount::when(fn ($q) => $this->scopeByStore($q))->orderBy('name')->paginate(20);
+        $discounts = $this->discountRepository->paginateByStore($this->resolveStoreId());
 
         return DiscountResource::collection($discounts);
     }
 
     public function active(): AnonymousResourceCollection
     {
-        $now = now()->toDateString();
-        $discounts = Discount::where('is_active', true)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
-            })
-            ->orderBy('name')
-            ->get();
-
-        return DiscountResource::collection($discounts);
+        return DiscountResource::collection($this->discountRepository->findActive());
     }
 
     public function store(StoreDiscountRequest $request): JsonResponse
     {
-        $discount = Discount::create($this->mergeStoreId($request->validated()));
+        $discount = $this->discountRepository->create($this->mergeStoreId($request->validated()));
 
         return (new DiscountResource($discount))->response()->setStatusCode(201);
     }
@@ -56,14 +50,14 @@ class DiscountController extends Controller
 
     public function update(UpdateDiscountRequest $request, Discount $discount): DiscountResource
     {
-        $discount->update($request->validated());
+        $this->discountRepository->update($discount, $request->validated());
 
         return new DiscountResource($discount);
     }
 
     public function destroy(Discount $discount): JsonResponse
     {
-        $discount->delete();
+        $this->discountRepository->delete($discount);
 
         return $this->respondMessage('Discount deleted.');
     }

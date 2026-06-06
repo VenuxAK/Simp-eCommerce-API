@@ -7,6 +7,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\QueryFilter;
 use App\Modules\Sales\Http\Resources\InvoiceResource;
 use App\Modules\Sales\Models\Invoice;
+use App\Modules\Sales\Repositories\InvoiceRepository;
 use App\Modules\Sales\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -23,16 +24,14 @@ class InvoiceController extends Controller
 
     public function __construct(
         private readonly InvoiceService $invoiceService,
+        private readonly InvoiceRepository $invoiceRepository,
     ) {}
 
     public function index(): AnonymousResourceCollection
     {
-        $invoices = $this->applyFilters(
-            Invoice::with(['order.user', 'order.customer', 'order.items.variant.product']),
-            ['status' => 'status'],
-        );
-        $invoices = $this->applyDateRange($invoices, 'issued_date');
-        $invoices = $this->latestPaginated($invoices);
+        $filters = request()->only(['status', 'date_from', 'date_to']);
+
+        $invoices = $this->invoiceRepository->paginateFiltered($filters);
 
         return InvoiceResource::collection($invoices);
     }

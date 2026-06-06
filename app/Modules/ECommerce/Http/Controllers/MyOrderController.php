@@ -8,6 +8,7 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\ECommerce\Services\MyOrderService;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -24,11 +25,13 @@ class MyOrderController extends Controller
 
     public function __construct(
         private readonly MyOrderService $myOrderService,
+        private readonly OrderRepository $orderRepository,
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $orders = Order::where('customer_id', $request->user()->id)
+        $orders = $this->orderRepository->query()
+            ->where('customer_id', $request->user()->id)
             ->where('source', 'online')
             ->with(['items.variant.product', 'shipment', 'invoice', 'payment'])
             ->orderBy('created_at', 'desc')

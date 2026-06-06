@@ -7,6 +7,7 @@ use App\Modules\Catalog\Http\Requests\StoreProductRequest;
 use App\Modules\Catalog\Http\Requests\UpdateProductRequest;
 use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Catalog\Services\ProductExportService;
 use App\Modules\Catalog\Services\ProductImportService;
@@ -34,16 +35,16 @@ class ProductController extends Controller
         private readonly ProductImportService $importService,
         private readonly ProductExportService $exportService,
         private readonly MediaService $mediaService,
+        private readonly ProductRepository $productRepo,
     ) {}
 
     public function index(): AnonymousResourceCollection
     {
-        $products = Product::with(['category', 'supplier', 'variants'])
-            ->when(true, fn ($q) => $this->scopeByStore($q))
-            ->when(request('category_id'), fn ($q) => $q->where('category_id', request('category_id')))
-            ->when(request('search'), fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.request('search').'%']))
-            ->orderBy('name')
-            ->paginate(20);
+        $products = $this->productRepo->findByStore(
+            storeId: $this->resolveStoreId(),
+            categoryId: request('category_id'),
+            search: request('search'),
+        );
 
         return ProductResource::collection($products);
     }

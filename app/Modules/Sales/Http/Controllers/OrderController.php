@@ -14,6 +14,7 @@ use App\Modules\Sales\Http\Requests\StoreOrderRequest;
 use App\Modules\Sales\Http\Requests\UpdateOrderStatusRequest;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Repositories\OrderRepository;
 use App\Modules\Sales\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,18 +29,20 @@ class OrderController extends Controller
     public function __construct(
         private readonly OrderService $orderService,
         private readonly DiscountService $discountService,
+        private readonly OrderRepository $orderRepository,
     ) {}
 
     public function index(): AnonymousResourceCollection
     {
-        $query = Order::with(['user', 'customer', 'items.variant', 'payment', 'invoice']);
-        $this->scopeByStore($query);
-        $orders = $this->applyFilters(
-            $query,
-            ['status' => 'status', 'customer_id' => 'customer_id'],
+        $filters = array_merge(
+            request()->only(['status', 'customer_id', 'date_from', 'date_to']),
+            ['store_id' => $this->resolveStoreId()],
         );
-        $orders = $this->applyDateRange($orders);
-        $orders = $this->latestPaginated($orders);
+
+        $orders = $this->orderRepository->paginateFiltered(
+            $filters,
+            ['user', 'customer', 'items.variant', 'payment', 'invoice'],
+        );
 
         return OrderResource::collection($orders);
     }

@@ -7,7 +7,8 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Http\Requests\OAuthCallbackRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
-use App\Modules\Customer\Models\Customer;
+use App\Modules\Customer\Repositories\CustomerRepository;
+use App\Modules\Store\Repositories\StoreRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,11 @@ use Laravel\Socialite\Facades\Socialite;
 class OAuthController extends Controller
 {
     use ApiResponse, StoreScope;
+
+    public function __construct(
+        private readonly CustomerRepository $customerRepository,
+        private readonly StoreRepository $storeRepository,
+    ) {}
 
     public function redirect(string $provider): JsonResponse
     {
@@ -52,10 +58,10 @@ class OAuthController extends Controller
             return $this->respondError('Email is required from OAuth provider.', 422);
         }
 
-        $customer = Customer::where('email', $socialUser->email)->first();
+        $customer = $this->customerRepository->findByEmail($socialUser->email);
 
         if (! $customer) {
-            $customer = Customer::create([
+            $customer = $this->customerRepository->create([
                 'name' => $socialUser->name ?? $socialUser->email,
                 'email' => $socialUser->email,
                 'password' => null,

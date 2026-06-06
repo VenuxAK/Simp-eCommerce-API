@@ -3,7 +3,8 @@
 namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\Product;
-use App\Modules\Sales\Models\OrderItem;
+use App\Modules\Catalog\Repositories\ProductRepository;
+use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use Illuminate\Support\Str;
 
 /**
@@ -15,6 +16,11 @@ use Illuminate\Support\Str;
  */
 class ProductService
 {
+    public function __construct(
+        private readonly ProductRepository $productRepo,
+        private readonly ProductVariantRepository $variantRepo,
+    ) {}
+
     /**
      * Create a product and its variants atomically.
      *
@@ -24,7 +30,7 @@ class ProductService
      */
     public function createProduct(array $data): Product
     {
-        $product = Product::create([
+        $product = $this->productRepo->create([
             'category_id' => $data['category_id'],
             'supplier_id' => $data['supplier_id'] ?? null,
             'store_id' => $data['store_id'] ?? null,
@@ -36,7 +42,8 @@ class ProductService
         ]);
 
         foreach ($data['variants'] as $variantData) {
-            $product->variants()->create([
+            $this->variantRepo->create([
+                'product_id' => $product->id,
                 'sku' => $variantData['sku'],
                 'size' => $variantData['size'] ?? null,
                 'color' => $variantData['color'] ?? null,
@@ -98,7 +105,8 @@ class ProductService
                 ]);
                 $updatedIds[] = $variantData['id'];
             } else {
-                $new = $product->variants()->create([
+                $new = $this->variantRepo->create([
+                    'product_id' => $product->id,
                     'sku' => $variantData['sku'],
                     'size' => $variantData['size'] ?? null,
                     'color' => $variantData['color'] ?? null,
@@ -113,7 +121,7 @@ class ProductService
 
         $toDelete = array_diff($existingIds, $updatedIds);
         if (! empty($toDelete)) {
-            $variantOrderCount = OrderItem::whereIn('product_variant_id', $toDelete)->count();
+            $variantOrderCount = $this->productRepo->findWithOrderHistory($toDelete);
             if ($variantOrderCount > 0) {
                 return "Cannot delete {$variantOrderCount} variant(s) with existing order history. Remove them from the payload to keep them.";
             }
@@ -131,7 +139,9 @@ class ProductService
      */
     public function canDelete(Product $product): ?string
     {
-        $orderCount = OrderItem::whereIn('product_variant_id', $product->variants()->pluck('id'))->count();
+        $orderCount = $this->productRepo->findWithOrderHistory(
+            $product->variants()->pluck('id')->toArray(),
+        );
 
         if ($orderCount > 0) {
             return "Cannot delete product: {$orderCount} order item(s) reference it.";

@@ -3,30 +3,31 @@
 namespace App\Modules\Report\Services;
 
 use App\Modules\Core\Traits\StoreScope;
-use App\Modules\Sales\Models\Order;
-use App\Modules\Sales\Models\OrderItem;
-use App\Modules\Sales\Models\Payment;
+use App\Modules\Sales\Repositories\OrderItemRepository;
+use App\Modules\Sales\Repositories\OrderRepository;
+use App\Modules\Sales\Repositories\PaymentRepository;
 
 class ReportService
 {
     use StoreScope;
 
+    public function __construct(
+        private readonly OrderRepository $orderRepository,
+        private readonly OrderItemRepository $orderItemRepository,
+        private readonly PaymentRepository $paymentRepository,
+    ) {}
+
     public function sales(string $dateFrom, string $dateTo): array
     {
-        $orders = Order::whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
-            ->where('status', 'completed');
-        $this->scopeByStore($orders);
-        $orders = $orders->get();
+        $storeId = $this->resolveStoreId();
+
+        $orders = $this->orderRepository->findCompletedBetween($dateFrom, $dateTo, $storeId);
 
         $totalSales = (float) $orders->sum('total_amount');
         $orderCount = $orders->count();
         $averageOrderValue = $orderCount > 0 ? $totalSales / $orderCount : 0;
 
-        $itemsSold = OrderItem::whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-            $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
-                ->where('status', 'completed');
-            $this->scopeByStore($q);
-        })->sum('quantity');
+        $itemsSold = $this->orderItemRepository->getSoldQuantityBetween($dateFrom, $dateTo, $storeId);
 
         $dailySales = $orders->groupBy(fn ($o) => $o->created_at->toDateString())
             ->map(fn ($dayOrders) => [
@@ -49,20 +50,9 @@ class ReportService
 
     public function bestSellers(string $dateFrom, string $dateTo, int $limit): array
     {
-        $items = OrderItem::selectRaw('
-                product_variant_id,
-                SUM(quantity) as total_qty,
-                SUM(subtotal) as total_revenue
-            ')
-            ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
-                    ->where('status', 'completed');
-                $this->scopeByStore($q);
-            })
-            ->groupBy('product_variant_id')
-            ->orderByDesc('total_qty')
-            ->limit($limit)
-            ->get();
+        $storeId = $this->resolveStoreId();
+
+        $items = $this->orderItemRepository->getBestSellers($dateFrom, $dateTo, $storeId, $limit);
 
         $items->load(['variant.product.category']);
 
@@ -80,14 +70,9 @@ class ReportService
 
     public function paymentMethods(string $dateFrom, string $dateTo): array
     {
-        $methods = Payment::selectRaw('method, COUNT(*) as count, SUM(amount) as total')
-            ->whereHas('order', function ($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('created_at', [$dateFrom, $dateTo.' 23:59:59'])
-                    ->where('status', 'completed');
-                $this->scopeByStore($q);
-            })
-            ->groupBy('method')
-            ->get();
+        $storeId = $this->resolveStoreId();
+
+        $methods = $this->paymentRepository->getMethodSummary($dateFrom, $dateTo, $storeId);
 
         return $methods->map(fn ($m) => [
             'method' => $m->method,

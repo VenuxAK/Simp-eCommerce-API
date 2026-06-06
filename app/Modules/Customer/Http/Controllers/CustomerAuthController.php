@@ -7,8 +7,8 @@ use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Customer\Http\Requests\CustomerLoginRequest;
 use App\Modules\Customer\Http\Requests\RegisterCustomerRequest;
 use App\Modules\Customer\Http\Resources\CustomerResource;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Store\Models\Store;
+use App\Modules\Customer\Repositories\CustomerRepository;
+use App\Modules\Store\Repositories\StoreRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +26,11 @@ class CustomerAuthController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(
+        private readonly CustomerRepository $customerRepository,
+        private readonly StoreRepository $storeRepository,
+    ) {}
+
     public function register(RegisterCustomerRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -33,13 +38,13 @@ class CustomerAuthController extends Controller
         // Assign store_id from the X-Store header sent by the storefront.
         $storeSlug = $request->header('X-Store');
         if ($storeSlug) {
-            $store = Store::where('slug', $storeSlug)->first();
+            $store = $this->storeRepository->findBySlug($storeSlug);
             if ($store) {
                 $data['store_id'] = $store->id;
             }
         }
 
-        $customer = Customer::create($data);
+        $customer = $this->customerRepository->create($data);
 
         // Session login for Laravel-based storefronts; API clients skip this.
         if ($request->hasSession()) {
@@ -55,7 +60,7 @@ class CustomerAuthController extends Controller
     public function login(CustomerLoginRequest $request): JsonResponse
     {
 
-        $customer = Customer::where('email', $request->email)->first();
+        $customer = $this->customerRepository->findByEmail($request->email);
 
         // password is nullable — walk-in customers created via CRM have no password.
         if (! $customer || ! $customer->password || ! Hash::check($request->password, $customer->password)) {

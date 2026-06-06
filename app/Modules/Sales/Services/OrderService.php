@@ -2,13 +2,17 @@
 
 namespace App\Modules\Sales\Services;
 
-use App\Modules\Catalog\Models\ProductVariant;
+use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Enums\StockMovementReason;
-use App\Modules\Inventory\Models\StockMovement;
+use App\Modules\Inventory\Repositories\StockMovementRepository;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
+use App\Modules\Sales\Repositories\InvoiceRepository;
+use App\Modules\Sales\Repositories\OrderItemRepository;
+use App\Modules\Sales\Repositories\OrderRepository;
+use App\Modules\Sales\Repositories\PaymentRepository;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,6 +23,12 @@ class OrderService
     public function __construct(
         private readonly StockService $stockService,
         private readonly InvoiceNumberGenerator $numberGenerator,
+        private readonly OrderRepository $orderRepository,
+        private readonly OrderItemRepository $orderItemRepository,
+        private readonly ProductVariantRepository $variantRepository,
+        private readonly StockMovementRepository $stockMovementRepository,
+        private readonly InvoiceRepository $invoiceRepository,
+        private readonly PaymentRepository $paymentRepository,
     ) {}
 
     /**
@@ -61,7 +71,7 @@ class OrderService
 
             // Lock each variant row and decrement stock atomically.
             foreach ($orderItems as $item) {
-                $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
+                $variant = $this->variantRepository->lockForUpdate($item['variant_id']);
 
                 if (! $variant || $variant->stock_quantity < $item['quantity']) {
                     throw new \RuntimeException("Insufficient stock for variant SKU: {$item['variant']['sku']}");
@@ -112,7 +122,8 @@ class OrderService
             foreach ($returnData['items'] as $returnItem) {
                 $orderItem = $order->items()->findOrFail($returnItem['order_item_id']);
 
-                $alreadyReturned = StockMovement::where('product_variant_id', $orderItem->product_variant_id)
+                $alreadyReturned = (int) $this->stockMovementRepository->query()
+                    ->where('product_variant_id', $orderItem->product_variant_id)
                     ->where('reference_type', 'order')
                     ->where('reference_id', $order->id)
                     ->where('reason', StockMovementReason::Refunded->value)
@@ -128,7 +139,7 @@ class OrderService
                 $subtotal = $unitPrice * $returnItem['quantity'];
                 $totalReturn += $subtotal;
 
-                $variant = ProductVariant::lockForUpdate()->find($orderItem->product_variant_id);
+                $variant = $this->variantRepository->lockForUpdate($orderItem->product_variant_id);
                 $variant->increment('stock_quantity', $returnItem['quantity']);
 
                 $this->stockService->recordMovement(

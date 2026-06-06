@@ -9,6 +9,7 @@ use App\Modules\Customer\Http\Requests\StoreAddressRequest;
 use App\Modules\Customer\Http\Requests\UpdateAddressRequest;
 use App\Modules\Customer\Http\Resources\AddressResource;
 use App\Modules\Customer\Models\Address;
+use App\Modules\Customer\Repositories\AddressRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,9 +23,14 @@ class AddressController extends Controller
 {
     use ApiResponse, AuthorizesOwnership;
 
+    public function __construct(
+        private readonly AddressRepository $addressRepository,
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
-        $addresses = $request->user()->addresses()->orderBy('is_default', 'desc')->get();
+        $addresses = $this->addressRepository->findByCustomer($request->user()->id)
+            ->sortByDesc('is_default');
 
         return AddressResource::collection($addresses);
     }
@@ -33,17 +39,20 @@ class AddressController extends Controller
     {
         $customer = $request->user();
 
-        $isFirst = ! $customer->addresses()->exists();
+        $isFirst = $this->addressRepository->findByCustomer($customer->id)->isEmpty();
         $data = $request->validated();
         // Auto-default the first address; otherwise respect the request if set.
         $data['is_default'] = $isFirst || ($data['is_default'] ?? false);
 
         // Demote any existing default before promoting the new one.
         if ($data['is_default']) {
-            $customer->addresses()->update(['is_default' => false]);
+            $this->addressRepository->clearDefaults($customer->id);
         }
 
-        $address = $customer->addresses()->create($data);
+        $address = $this->addressRepository->create([
+            ...$data,
+            'customer_id' => $customer->id,
+        ]);
 
         return (new AddressResource($address))->response()->setStatusCode(201);
     }
@@ -63,10 +72,10 @@ class AddressController extends Controller
 
         // Demote all other defaults first to maintain the single-default invariant.
         if ($data['is_default'] ?? false) {
-            $request->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
+            $this->addressRepository->clearDefaults($request->user()->id, $address->id);
         }
 
-        $address->update($data);
+        $this->addressRepository->update($address, $data);
 
         return new AddressResource($address);
     }
@@ -75,7 +84,7 @@ class AddressController extends Controller
     {
         $this->authorizeOwner($request, $address);
 
-        $address->delete();
+        $this->addressRepository->delete($address);
 
         return $this->respondMessage('Address deleted.');
     }
@@ -85,8 +94,8 @@ class AddressController extends Controller
         $this->authorizeOwner($request, $address);
 
         // Unset all other defaults, set this one.
-        $request->user()->addresses()->update(['is_default' => false]);
-        $address->update(['is_default' => true]);
+        $this->addressRepository->clearDefaults($request->user()->id);
+        $this->addressRepository->update($address, ['is_default' => true]);
 
         return $this->respond(new AddressResource($address));
     }

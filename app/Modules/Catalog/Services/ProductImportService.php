@@ -2,10 +2,10 @@
 
 namespace App\Modules\Catalog\Services;
 
-use App\Modules\Catalog\Models\Category;
-use App\Modules\Catalog\Models\Product;
-use App\Modules\Core\Traits\StoreScope;
-use App\Modules\Supplier\Models\Supplier;
+use App\Modules\Catalog\Repositories\CategoryRepository;
+use App\Modules\Catalog\Repositories\ProductRepository;
+use App\Modules\Store\Repositories\StoreRepository;
+use App\Modules\Supplier\Repositories\SupplierRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -21,7 +21,25 @@ use Illuminate\Support\Str;
  */
 class ProductImportService
 {
-    use StoreScope;
+    private readonly StoreRepository $storeRepo;
+
+    private readonly CategoryRepository $categoryRepo;
+
+    private readonly SupplierRepository $supplierRepo;
+
+    private readonly ProductRepository $productRepo;
+
+    public function __construct(
+        ?StoreRepository $storeRepo = null,
+        ?CategoryRepository $categoryRepo = null,
+        ?SupplierRepository $supplierRepo = null,
+        ?ProductRepository $productRepo = null,
+    ) {
+        $this->storeRepo = $storeRepo ?? app(StoreRepository::class);
+        $this->categoryRepo = $categoryRepo ?? app(CategoryRepository::class);
+        $this->supplierRepo = $supplierRepo ?? app(SupplierRepository::class);
+        $this->productRepo = $productRepo ?? app(ProductRepository::class);
+    }
 
     /**
      * Import products and variants from a CSV file.
@@ -58,15 +76,15 @@ class ProductImportService
                     continue;
                 }
 
-                $storeId = $this->resolveStoreId() ?? 1;
+                $storeId = $this->storeRepo->getCurrentStore()?->id ?? 1;
 
-                $category = Category::firstOrCreate(
-                    ['name' => $data['category'] ?? 'Uncategorized'],
+                $category = $this->categoryRepo->firstOrCreateByName(
+                    $data['category'] ?? 'Uncategorized',
                     ['slug' => Str::slug($data['category'] ?? 'Uncategorized'), 'store_id' => $storeId],
                 );
                 $supplier = null;
                 if (! empty($data['supplier'])) {
-                    $supplier = Supplier::firstOrCreate(
+                    $supplier = $this->supplierRepo->query()->firstOrCreate(
                         ['name' => $data['supplier']],
                         ['store_id' => $storeId],
                     );
@@ -75,7 +93,7 @@ class ProductImportService
                 try {
                     // Use name as the match key so re-importing the same file
                     // updates existing products rather than creating duplicates.
-                    $product = Product::firstOrCreate(
+                    $product = $this->productRepo->query()->firstOrCreate(
                         ['name' => $data['name']],
                         [
                             'category_id' => $category->id,

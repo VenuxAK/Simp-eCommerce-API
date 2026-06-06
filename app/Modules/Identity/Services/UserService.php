@@ -3,7 +3,8 @@
 namespace App\Modules\Identity\Services;
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Sales\Models\Order;
+use App\Modules\Identity\Repositories\UserRepository;
+use App\Modules\Sales\Repositories\OrderRepository;
 
 /**
  * Encapsulates user lifecycle logic — creation, update, deletion with safety guards.
@@ -14,13 +15,18 @@ use App\Modules\Sales\Models\Order;
  */
 class UserService
 {
+    public function __construct(
+        private readonly UserRepository $userRepository,
+        private readonly OrderRepository $orderRepository,
+    ) {}
+
     public function createUser(array $data): User
     {
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         }
 
-        return User::create($data);
+        return $this->userRepository->create($data);
     }
 
     public function updateUser(User $user, array $data): void
@@ -35,7 +41,7 @@ class UserService
             }
         }
 
-        $user->update($data);
+        $this->userRepository->update($user, $data);
     }
 
     /**
@@ -55,7 +61,9 @@ class UserService
             return 'Cannot delete another root user.';
         }
 
-        $orderCount = Order::where('user_id', $targetUser->id)->count();
+        $orderCount = $this->orderRepository->query()
+            ->where('user_id', $targetUser->id)
+            ->count();
 
         if ($orderCount > 0) {
             return "Cannot delete user: {$orderCount} order(s) are linked to this user.";
@@ -66,6 +74,6 @@ class UserService
 
     public function deleteUser(User $user): void
     {
-        $user->delete();
+        $this->userRepository->delete($user);
     }
 }

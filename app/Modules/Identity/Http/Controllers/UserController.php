@@ -8,6 +8,7 @@ use App\Modules\Identity\Http\Requests\StoreUserRequest;
 use App\Modules\Identity\Http\Requests\UpdateUserRequest;
 use App\Modules\Identity\Http\Resources\UserResource;
 use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Repositories\UserRepository;
 use App\Modules\Identity\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -21,11 +22,14 @@ class UserController extends Controller
 
     public function __construct(
         private readonly UserService $userService,
+        private readonly UserRepository $userRepository,
     ) {}
 
     public function index(): AnonymousResourceCollection
     {
-        return UserResource::collection(User::orderBy('name')->paginate(20));
+        return UserResource::collection(
+            $this->userRepository->query()->orderBy('name')->paginate(20),
+        );
     }
 
     public function store(StoreUserRequest $request): JsonResponse
