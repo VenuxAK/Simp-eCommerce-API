@@ -12,6 +12,7 @@ use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Store\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Converts a shopping cart into an order.
@@ -29,53 +30,55 @@ class CheckoutController extends Controller
 
     public function placeOrder(PlaceOrderRequest $request): JsonResponse
     {
-        $customer = $request->user();
+        return DB::transaction(function () use ($request) {
+            $customer = $request->user();
 
-        $cartItems = CartItem::where('customer_id', $customer->id)
-            ->with('variant.product')
-            ->get();
+            $cartItems = CartItem::where('customer_id', $customer->id)
+                ->with('variant.product')
+                ->get();
 
-        if ($cartItems->isEmpty()) {
-            return $this->respondError('Cart is empty.', 422);
-        }
-
-        $address = Address::where('id', $request->address_id)
-            ->where('customer_id', $customer->id)
-            ->first();
-
-        if (! $address) {
-            return $this->respondError('Invalid shipping address.', 422);
-        }
-
-        // Double-check stock for every cart item before proceeding.
-        foreach ($cartItems as $item) {
-            if ($item->variant->stock_quantity < $item->quantity) {
-                return $this->respondError(
-                    "Insufficient stock for '{$item->variant->sku}'. Available: {$item->variant->stock_quantity}.", 422);
+            if ($cartItems->isEmpty()) {
+                return $this->respondError('Cart is empty.', 422);
             }
-        }
 
-        // Resolve store from X-Store header or fall back to the middleware-resolved store.
-        $storeId = null;
-        $storeSlug = $request->header('X-Store');
-        if ($storeSlug) {
-            $store = Store::where('slug', $storeSlug)->first();
-            if ($store) {
-                $storeId = $store->id;
+            $address = Address::where('id', $request->address_id)
+                ->where('customer_id', $customer->id)
+                ->first();
+
+            if (! $address) {
+                return $this->respondError('Invalid shipping address.', 422);
             }
-        }
-        if (! $storeId && app()->bound('current_store')) {
-            $storeId = app('current_store')->id;
-        }
 
-        $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes, $storeId);
+            // Double-check stock for every cart item before proceeding.
+            foreach ($cartItems as $item) {
+                if ($item->variant->stock_quantity < $item->quantity) {
+                    return $this->respondError(
+                        "Insufficient stock for '{$item->variant->sku}'. Available: {$item->variant->stock_quantity}.", 422);
+                }
+            }
 
-        return $this->respond([
-            'message' => 'Order placed successfully.',
-            'order' => new OrderResource($order->load([
-                'items.variant.product', 'shipment.address', 'invoice',
-            ])),
-        ])->setStatusCode(201);
+            // Resolve store from X-Store header or fall back to the middleware-resolved store.
+            $storeId = null;
+            $storeSlug = $request->header('X-Store');
+            if ($storeSlug) {
+                $store = Store::where('slug', $storeSlug)->first();
+                if ($store) {
+                    $storeId = $store->id;
+                }
+            }
+            if (! $storeId && app()->bound('current_store')) {
+                $storeId = app('current_store')->id;
+            }
+
+            $order = $this->orderService->placeOrder($customer, $cartItems, $address, $request->notes, $storeId);
+
+            return $this->respond([
+                'message' => 'Order placed successfully.',
+                'order' => new OrderResource($order->load([
+                    'items.variant.product', 'shipment.address', 'invoice',
+                ])),
+            ])->setStatusCode(201);
+        });
     }
 
     public function validateStock(Request $request): JsonResponse

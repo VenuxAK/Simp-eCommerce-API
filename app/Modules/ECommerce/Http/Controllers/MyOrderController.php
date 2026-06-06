@@ -9,6 +9,7 @@ use App\Modules\Sales\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Customer-facing order history.
@@ -52,16 +53,18 @@ class MyOrderController extends Controller
             return $this->respondError('Only orders in processing status can be cancelled.', 422);
         }
 
-        // Restock all items.
-        foreach ($order->items as $item) {
-            $item->variant->increment('stock_quantity', $item->quantity);
-        }
+        DB::transaction(function () use ($order) {
+            // Restock all items.
+            foreach ($order->items as $item) {
+                $item->variant->increment('stock_quantity', $item->quantity);
+            }
 
-        $order->update(['status' => 'cancelled']);
+            $order->update(['status' => 'cancelled']);
 
-        if ($order->invoice) {
-            $order->invoice->update(['status' => 'cancelled']);
-        }
+            if ($order->invoice) {
+                $order->invoice->update(['status' => 'cancelled']);
+            }
+        });
 
         return $this->respondMessage('Order cancelled.');
     }

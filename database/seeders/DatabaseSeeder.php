@@ -15,12 +15,26 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedMainStore();
         $this->seedUsers();
         $this->seedClothingStore();
 
         foreach (Store::all() as $store) {
             $this->seedStoreData($store);
         }
+    }
+
+    private function seedMainStore(): void
+    {
+        Store::firstOrCreate(
+            ['slug' => 'main'],
+            [
+                'name' => 'Main Store',
+                'description' => 'Primary store for SimpCommerce.',
+                'is_active' => true,
+                'settings' => json_encode(['currency' => 'MMK']),
+            ]
+        );
     }
 
     private function seedUsers(): void

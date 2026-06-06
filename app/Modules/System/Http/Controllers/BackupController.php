@@ -69,11 +69,13 @@ class BackupController extends Controller
             '--host='.config('database.connections.mysql.host'),
             '--port='.config('database.connections.mysql.port'),
             '--user='.config('database.connections.mysql.username'),
-            '--password='.config('database.connections.mysql.password'),
             config('database.connections.mysql.database'),
-        ], timeout: null);
+        ]);
 
-        file_put_contents($backupPath, $process->mustRun()->getOutput());
+        $process->setEnv(['MYSQL_PWD' => config('database.connections.mysql.password')]);
+        $process->mustRun();
+
+        file_put_contents($backupPath, $process->getOutput());
     }
 
     public function list(): JsonResponse
