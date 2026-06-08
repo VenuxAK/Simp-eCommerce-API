@@ -54,7 +54,9 @@ class ReportService
 
         $items = $this->orderItemRepository->getBestSellers($dateFrom, $dateTo, $storeId, $limit);
 
-        $items->load(['variant.product.category']);
+        // Eager-load variant→product→category in a single batch query
+        // instead of N+1 loading after aggregation.
+        $items->loadMissing(['variant.product.category']);
 
         return $items->map(fn ($item) => [
             'product_variant_id' => $item->product_variant_id,

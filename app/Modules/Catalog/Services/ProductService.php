@@ -13,12 +13,16 @@ use Illuminate\Support\Str;
  * Keep business rules (slug uniqueness, variant diffing, order-protected deletion)
  * in a dedicated service rather than the controller so they remain testable
  * independent of HTTP concerns.
+ *
+ * All write operations invalidate the storefront cache for the affected store
+ * so the public catalog stays fresh.
  */
 class ProductService
 {
     public function __construct(
         private readonly ProductRepository $productRepo,
         private readonly ProductVariantRepository $variantRepo,
+        private readonly StorefrontCacheService $storefrontCache,
     ) {}
 
     /**
@@ -54,6 +58,10 @@ class ProductService
             ]);
         }
 
+        if ($product->store_id) {
+            $this->storefrontCache->invalidateStore($product->store_id);
+        }
+
         return $product;
     }
 
@@ -75,6 +83,10 @@ class ProductService
             $updateData['slug'] = Str::slug($data['name']).'-'.Str::random(8);
         }
         $product->update($updateData);
+
+        if ($product->store_id) {
+            $this->storefrontCache->invalidateStore($product->store_id);
+        }
 
         return $product;
     }
@@ -126,6 +138,10 @@ class ProductService
                 return "Cannot delete {$variantOrderCount} variant(s) with existing order history. Remove them from the payload to keep them.";
             }
             $product->variants()->whereIn('id', $toDelete)->delete();
+        }
+
+        if ($product->store_id) {
+            $this->storefrontCache->invalidateStore($product->store_id);
         }
 
         return null;

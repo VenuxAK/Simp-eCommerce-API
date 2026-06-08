@@ -14,6 +14,12 @@ use Illuminate\Database\Eloquent\Model;
  */
 abstract class Repository
 {
+    /** Maximum items per page to prevent unbounded result sets. */
+    protected const MAX_PER_PAGE = 100;
+
+    /** Default items per page across the application. */
+    protected const DEFAULT_PER_PAGE = 20;
+
     abstract protected function model(): string;
 
     public function find(int $id): ?Model
@@ -31,9 +37,9 @@ abstract class Repository
         return $this->model()::all();
     }
 
-    public function paginate(int $perPage = 20): iterable
+    public function paginate(int $perPage = self::DEFAULT_PER_PAGE): iterable
     {
-        return $this->model()::paginate($perPage);
+        return $this->model()::paginate($this->clampPerPage($perPage));
     }
 
     public function create(array $data): Model
@@ -54,5 +60,16 @@ abstract class Repository
     public function query(): Builder
     {
         return $this->model()::query();
+    }
+
+    /**
+     * Clamp per_page to a safe range [1, MAX_PER_PAGE].
+     *
+     * Prevents clients from requesting 0 or extremely large
+     * page sizes that could cause memory or performance issues.
+     */
+    protected function clampPerPage(int $perPage): int
+    {
+        return max(1, min($perPage, static::MAX_PER_PAGE));
     }
 }

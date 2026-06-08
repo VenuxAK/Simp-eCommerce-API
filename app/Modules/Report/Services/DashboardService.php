@@ -3,10 +3,11 @@
 namespace App\Modules\Report\Services;
 
 use App\Modules\Cash\Repositories\CashSessionRepository;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Catalog\Repositories\ProductRepository;
-use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Sales\Repositories\OrderRepository;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -15,7 +16,6 @@ class DashboardService
     public function __construct(
         private readonly OrderRepository $orderRepository,
         private readonly ProductRepository $productRepository,
-        private readonly ProductVariantRepository $variantRepository,
         private readonly CashSessionRepository $cashSessionRepository,
     ) {}
 
@@ -31,11 +31,27 @@ class DashboardService
 
         $productIds = $this->productRepository->getIdsByStore($storeId);
 
-        $variants = $this->variantRepository->findStockSummaryByProductIds($productIds->toArray());
+        // Single aggregation query replaces 3 separate variant queries.
+        // Computes total/low/out-of-stock counts in one pass using
+        // conditional aggregation (CASE inside SUM/COUNT).
+        $stockSummary = ProductVariant::whereIn('product_id', $productIds->toArray())
+            ->select([
+                DB::raw('COUNT(*) as total_variants'),
+                DB::raw("COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock_count"),
+                DB::raw("COUNT(CASE WHEN stock_quantity > 0 AND stock_quantity <= 5 THEN 1 END) as low_stock_count"),
+                DB::raw("COUNT(CASE WHEN stock_quantity > 5 THEN 1 END) as well_stocked_count"),
+            ])
+            ->first();
 
-        $lowStockVariants = $variants->where('stock_status', 'low');
-        $outOfStockVariants = $variants->where('stock_status', 'out');
-        $wellStockedCount = $variants->where('stock_status', 'ok')->count();
+        // Only fetch the top 5 low-stock variants for the dashboard alert.
+        $lowStockVariants = ProductVariant::with('product:id,name')
+            ->whereIn('product_id', $productIds->toArray())
+            ->where('stock_quantity', '>', 0)
+            ->where('stock_quantity', '<=', 5)
+            ->select('id', 'product_id', 'sku', 'size', 'color', 'stock_quantity')
+            ->orderBy('stock_quantity')
+            ->limit(5)
+            ->get();
 
         $activeSession = $this->cashSessionRepository->findActiveByStore($storeId);
 
@@ -44,10 +60,10 @@ class DashboardService
             'today_orders_count' => $todayOrderCount,
             'active_session' => $activeSession,
             'total_products' => $productIds->count(),
-            'total_variants' => $variants->count(),
-            'low_stock_count' => $lowStockVariants->count(),
-            'out_of_stock_count' => $outOfStockVariants->count(),
-            'low_stock_variants' => $lowStockVariants->take(5)->map(fn ($v) => [
+            'total_variants' => (int) ($stockSummary->total_variants ?? 0),
+            'low_stock_count' => (int) ($stockSummary->low_stock_count ?? 0),
+            'out_of_stock_count' => (int) ($stockSummary->out_of_stock_count ?? 0),
+            'low_stock_variants' => $lowStockVariants->map(fn ($v) => [
                 'id' => $v->id,
                 'sku' => $v->sku,
                 'product' => $v->product->name,

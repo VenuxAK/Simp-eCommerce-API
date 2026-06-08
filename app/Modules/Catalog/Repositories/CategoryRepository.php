@@ -56,7 +56,7 @@ class CategoryRepository extends Repository
         return Category::where('store_id', $storeId)
             ->withCount('products')
             ->orderBy('name')
-            ->paginate($perPage);
+            ->paginate($this->clampPerPage($perPage));
     }
 
     /**

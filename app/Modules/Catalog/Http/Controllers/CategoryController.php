@@ -8,6 +8,7 @@ use App\Modules\Catalog\Http\Requests\UpdateCategoryRequest;
 use App\Modules\Catalog\Http\Resources\CategoryResource;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Repositories\CategoryRepository;
+use App\Modules\Catalog\Services\StorefrontCacheService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class CategoryController extends Controller
 
     public function __construct(
         private readonly CategoryRepository $categoryRepo,
+        private readonly StorefrontCacheService $storefrontCache,
     ) {}
 
     public function index(): AnonymousResourceCollection
@@ -44,6 +46,8 @@ class CategoryController extends Controller
             'slug' => Str::slug($request->name),
             'description' => $request->description,
         ]));
+
+        $this->storefrontCache->invalidateStore($this->resolveStoreId());
 
         return (new CategoryResource($category))->response()->setStatusCode(201);
     }
@@ -64,6 +68,8 @@ class CategoryController extends Controller
             'description' => $request->description ?? $category->description,
         ]);
 
+        $this->storefrontCache->invalidateStore($this->resolveStoreId());
+
         return new CategoryResource($category);
     }
 
@@ -79,6 +85,8 @@ class CategoryController extends Controller
         }
 
         $this->categoryRepo->delete($category);
+
+        $this->storefrontCache->invalidateStore($this->resolveStoreId());
 
         return $this->respondMessage('Category deleted.');
     }

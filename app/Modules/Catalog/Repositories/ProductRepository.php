@@ -44,7 +44,7 @@ class ProductRepository extends Repository
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
             ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%']))
             ->orderBy('name')
-            ->paginate($perPage);
+            ->paginate($this->clampPerPage($perPage));
     }
 
     /**
@@ -53,19 +53,26 @@ class ProductRepository extends Repository
      * A product is available if it has no variants (simple product)
      * or at least one variant with positive stock. Only in-stock
      * variants are eager-loaded to keep the response lean.
+     *
+     * Uses simplePaginate() instead of paginate() to avoid the
+     * expensive COUNT(*) query on high-volume storefront listings.
      */
-    public function findAvailableByStore(int $storeId, ?int $categoryId, ?string $search, int $perPage = 20): LengthAwarePaginator
+    public function findAvailableByStore(int $storeId, ?int $categoryId, ?string $search, int $perPage = 20): \Illuminate\Contracts\Pagination\Paginator
     {
         return Product::where('store_id', $storeId)
             ->where(function ($q) {
                 $q->whereDoesntHave('variants')
                     ->orWhereHas('variants', fn ($q) => $q->where('stock_quantity', '>', 0));
             })
-            ->with(['category', 'variants' => fn ($q) => $q->where('stock_quantity', '>', 0)])
+            ->with([
+                'category',
+                'variants' => fn ($q) => $q->where('stock_quantity', '>', 0),
+            ])
+            ->select('id', 'category_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image', 'created_at', 'updated_at')
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
             ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%']))
             ->orderBy('name')
-            ->paginate($perPage);
+            ->simplePaginate($this->clampPerPage($perPage));
     }
 
     /**
