@@ -38,7 +38,7 @@ class StorefrontTest extends TestCase
             'store_id' => $this->store->id,
             'category_id' => $category->id,
         ]);
-        ProductVariant::factory()->create(['product_id' => $product->id]);
+        ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
 
         $response = $this->withHeaders($this->storeHeaders)
             ->getJson('/api/storefront/products');
@@ -57,7 +57,7 @@ class StorefrontTest extends TestCase
             'store_id' => $this->store->id,
             'category_id' => $category->id,
         ]);
-        ProductVariant::factory()->create(['product_id' => $product->id]);
+        ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
 
         Product::factory()->create([
             'store_id' => $otherStore->id,
@@ -79,7 +79,7 @@ class StorefrontTest extends TestCase
             'category_id' => $category->id,
             'slug' => 'blue-tshirt',
         ]);
-        ProductVariant::factory()->create(['product_id' => $product->id]);
+        ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
 
         $response = $this->withHeaders($this->storeHeaders)
             ->getJson('/api/storefront/products/blue-tshirt');

@@ -48,7 +48,8 @@ class StorefrontCacheService
         int $page = 1,
     ) {
         if ($search) {
-            return $this->storefrontService->products($store, $categoryId, $search, $perPage);
+            $paginator = $this->storefrontService->products($store, $categoryId, $search, $perPage);
+            return \App\Modules\Catalog\Http\Resources\ProductResource::collection($paginator)->response()->getData(true);
         }
 
         $key = $this->key($store->id, 'products', [
@@ -58,7 +59,8 @@ class StorefrontCacheService
         ]);
 
         return Cache::remember($key, self::TTL, function () use ($store, $categoryId, $perPage) {
-            return $this->storefrontService->products($store, $categoryId, null, $perPage);
+            $paginator = $this->storefrontService->products($store, $categoryId, null, $perPage);
+            return \App\Modules\Catalog\Http\Resources\ProductResource::collection($paginator)->response()->getData(true);
         });
     }
 
@@ -70,7 +72,8 @@ class StorefrontCacheService
         $key = $this->key($store->id, 'product', ['slug' => $slug]);
 
         return Cache::remember($key, self::TTL, function () use ($store, $slug) {
-            return $this->storefrontService->product($store, $slug);
+            $product = $this->storefrontService->product($store, $slug);
+            return (new \App\Modules\Catalog\Http\Resources\ProductResource($product))->resolve();
         });
     }
 

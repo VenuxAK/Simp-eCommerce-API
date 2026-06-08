@@ -6,7 +6,6 @@ use App\Modules\Catalog\Repositories\CategoryRepository;
 use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Store\Repositories\StoreRepository;
 use App\Modules\Supplier\Repositories\SupplierRepository;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -48,14 +47,14 @@ class ProductImportService
      * within a single database transaction. Returns a count of created
      * records and any row-level validation errors.
      */
-    public function importFromFile(UploadedFile $file): array
+    public function importFromPath(string $filePath, int $storeId): array
     {
-        $handle = fopen($file->getPathname(), 'r');
+        $handle = fopen($filePath, 'r');
         $header = fgetcsv($handle);
         $created = 0;
         $errors = [];
 
-        DB::transaction(function () use ($handle, $header, &$created, &$errors) {
+        DB::transaction(function () use ($handle, $header, $storeId, &$created, &$errors) {
             while (($row = fgetcsv($handle)) !== false) {
                 $data = array_combine($header, $row);
 
@@ -75,8 +74,6 @@ class ProductImportService
 
                     continue;
                 }
-
-                $storeId = $this->storeRepo->getCurrentStore()?->id ?? 1;
 
                 $category = $this->categoryRepo->firstOrCreateByName(
                     $data['category'] ?? 'Uncategorized',

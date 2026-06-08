@@ -10,6 +10,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Catalog\Services\ProductExportService;
+use App\Modules\Catalog\Jobs\ProcessProductImportJob;
 use App\Modules\Catalog\Services\ProductImportService;
 use App\Modules\Catalog\Services\ProductService;
 use App\Modules\Core\Traits\ApiResponse;
@@ -99,18 +100,20 @@ class ProductController extends Controller
     }
 
     /**
-     * Import products from an uploaded CSV file.
+     * Queue product import from an uploaded CSV file.
      *
      * Accepts .csv and .txt extensions (Excel often saves CSVs as .txt).
-     * The import service handles validation and reports per-row errors.
+     * The file is stored temporarily and processed by a background job.
      */
     public function importCsv(Request $request): JsonResponse
     {
         $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
 
-        $result = $this->importService->importFromFile($request->file('file'));
+        $path = $request->file('file')->store('imports');
 
-        return $this->respond($result);
+        ProcessProductImportJob::dispatch($path, $this->resolveStoreId());
+
+        return $this->respondMessage('Import queued for processing.');
     }
 
     /**

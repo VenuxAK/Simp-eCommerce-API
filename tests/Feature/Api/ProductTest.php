@@ -200,7 +200,8 @@ class ProductTest extends ApiTestCase
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
-        $this->assertEquals(0, $response->json('created'));
+        $this->assertEquals('Import queued for processing.', $response->json('message'));
+        $this->assertDatabaseMissing('products', ['name' => 'NO-NAME']);
     }
 
     public function test_csv_import_rejects_negative_price(): void
@@ -211,7 +212,8 @@ class ProductTest extends ApiTestCase
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
-        $this->assertEquals(0, $response->json('created'));
+        $this->assertEquals('Import queued for processing.', $response->json('message'));
+        $this->assertDatabaseMissing('products', ['name' => 'Bad Product']);
     }
 
     public function test_csv_import_succeeds_with_valid_data(): void
@@ -222,7 +224,7 @@ class ProductTest extends ApiTestCase
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
-        $this->assertEquals(1, $response->json('created'));
+        $this->assertEquals('Import queued for processing.', $response->json('message'));
         $this->assertDatabaseHas('products', ['name' => 'Valid Product']);
         $this->assertDatabaseHas('product_variants', ['sku' => 'VP-001']);
     }

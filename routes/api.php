@@ -30,8 +30,8 @@ Route::middleware(['store', 'stateful', 'auth:customer', 'throttle:60,1'])->grou
     require __DIR__.'/modules/customer-portal.php';
 });
 
-// ── 4. Staff dashboard — scoped by store, Sanctum with User guard ──
-Route::middleware(['store', 'auth:sanctum', 'throttle:60,1'])->group(function () {
+// ── 4. Staff dashboard — scoped by store, CachedTokenAuth with User guard ──
+Route::middleware(['store', 'cached.auth', 'throttle:60,1'])->group(function () {
     require __DIR__.'/modules/identity.php';
     require __DIR__.'/modules/catalog.php';
     require __DIR__.'/modules/sales.php';

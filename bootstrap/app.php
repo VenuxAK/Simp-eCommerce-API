@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Identity\Http\Middleware\CachedTokenAuth;
 use App\Modules\Identity\Http\Middleware\RoleMiddleware;
 use App\Modules\Store\Http\Middleware\ResolveStore;
 use Illuminate\Auth\AuthenticationException;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'store' => ResolveStore::class,
             'stateful' => EnsureFrontendRequestsAreStateful::class,
+            'cached.auth' => CachedTokenAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -20,15 +20,17 @@ trait StoreScope
         $user = request()->user();
 
         // Staff/store_admin assigned to a specific store.
-        if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
-            return $user->store_id;
-        }
+        if ($user instanceof \App\Modules\Identity\Models\User) {
+            if (($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
+                return $user->store_id;
+            }
 
-        // Root user with an active store selector.
-        if ($user && $user->isRoot() && request()->header('X-Store')) {
-            $store = Store::where('slug', request()->header('X-Store'))->first();
-            if ($store) {
-                return $store->id;
+            // Root user with an active store selector.
+            if ($user->isRoot() && request()->header('X-Store')) {
+                $store = Store::where('slug', request()->header('X-Store'))->first();
+                if ($store) {
+                    return $store->id;
+                }
             }
         }
 

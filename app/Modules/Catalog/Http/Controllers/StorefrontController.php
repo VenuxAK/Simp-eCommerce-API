@@ -30,7 +30,7 @@ class StorefrontController extends Controller
     /**
      * Paginated product listing filtered by availability and search.
      */
-    public function products(Request $request): AnonymousResourceCollection
+    public function products(Request $request): JsonResponse
     {
         $store = app('current_store');
 
@@ -42,17 +42,19 @@ class StorefrontController extends Controller
             (int) $request->input('page', 1),
         );
 
-        return ProductResource::collection($result);
+        return response()->json($result);
     }
 
     /**
      * Single product detail page by slug.
      */
-    public function product(Request $request, string $slug): ProductResource|JsonResponse
+    public function product(Request $request, string $slug): JsonResponse
     {
-        $product = $this->storefrontCache->product(app('current_store'), $slug);
+        $productArray = $this->storefrontCache->product(app('current_store'), $slug);
 
-        $etag = '"' . md5($product->updated_at?->toIso8601String() . $product->id) . '"';
+        // We use the ID for the ETag since we no longer have the updated_at timestamp directly on the array, 
+        // or we can use md5 of the entire array which is safer.
+        $etag = '"' . md5(serialize($productArray)) . '"';
 
         // Return 304 Not Modified if the client already has this version.
         if ($request->header('If-None-Match') === $etag) {
@@ -60,10 +62,8 @@ class StorefrontController extends Controller
                 ->header('ETag', $etag);
         }
 
-        return (new ProductResource($product))
-            ->response()
+        return response()->json(['data' => $productArray])
             ->header('ETag', $etag)
-            ->header('Last-Modified', $product->updated_at?->toRfc7231String() ?? '')
             ->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     }
 

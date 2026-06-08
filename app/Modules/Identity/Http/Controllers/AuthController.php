@@ -10,7 +10,9 @@ use App\Modules\Identity\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Staff/internal authentication — uses Sanctum tokens with 24h expiry.
@@ -50,11 +52,14 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        // currentAccessToken is null when the token was already revoked or never issued.
-        $token = $request->user()->currentAccessToken();
+        $tokenStr = $request->bearerToken();
 
-        if ($token) {
-            $token->delete();
+        if ($tokenStr) {
+            $token = PersonalAccessToken::findToken($tokenStr);
+            if ($token) {
+                $token->delete();
+                Cache::forget("auth:token:" . hash('sha256', $tokenStr));
+            }
         }
 
         return $this->respondMessage('Logged out.');

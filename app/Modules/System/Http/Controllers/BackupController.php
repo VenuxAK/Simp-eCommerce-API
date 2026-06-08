@@ -19,9 +19,9 @@ class BackupController extends Controller
 
     public function create(): JsonResponse
     {
-        return $this->respond(
-            $this->backupService->create(),
-        );
+        \App\Modules\System\Jobs\CreateBackupJob::dispatch();
+
+        return $this->respondMessage('Backup queued for processing.');
     }
 
     public function list(): JsonResponse
