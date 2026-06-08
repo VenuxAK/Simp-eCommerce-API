@@ -35,7 +35,8 @@ Route::delete('/cart/{cartItem}', [CartController::class, 'remove']);
 Route::delete('/cart', [CartController::class, 'clear']);
 
 // Checkout.
-Route::post('/checkout', [CheckoutController::class, 'placeOrder']);
+Route::post('/checkout', [CheckoutController::class, 'placeOrder'])
+    ->middleware(['throttle:checkout', 'idempotent']);
 Route::get('/checkout/validate', [CheckoutController::class, 'validateStock']);
 
 // Order history.

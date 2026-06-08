@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/orders', [OrderController::class, 'index']);
 Route::get('/orders/{order}', [OrderController::class, 'show']);
-Route::post('/orders', [OrderController::class, 'store']);
+Route::post('/orders', [OrderController::class, 'store'])
+    ->middleware(['throttle:checkout', 'idempotent']);
 Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->middleware('role:root,store_admin');
 Route::post('/orders/{order}/return', [OrderController::class, 'returnItems'])->middleware('role:root,store_admin');
 

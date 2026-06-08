@@ -18,20 +18,22 @@ use Illuminate\Support\Facades\Route;
  */
 
 // ── 1. Public — no authentication required ───────────────────────
-require __DIR__.'/modules/auth.php';
+Route::middleware(['timeout'])->group(function () {
+    require __DIR__.'/modules/auth.php';
+});
 
 // ── 2. Storefront — public, scoped by X-Store header ────────────
-Route::middleware(['store', 'throttle:60,1'])->prefix('storefront')->group(function () {
+Route::middleware(['store', 'throttle:api', 'timeout'])->prefix('storefront')->group(function () {
     require __DIR__.'/modules/storefront.php';
 });
 
 // ── 3. Customer portal — stateful session + Customer guard ────
-Route::middleware(['store', 'stateful', 'auth:customer', 'throttle:60,1'])->group(function () {
+Route::middleware(['store', 'stateful', 'auth:customer', 'throttle:api', 'timeout'])->group(function () {
     require __DIR__.'/modules/customer-portal.php';
 });
 
 // ── 4. Staff dashboard — scoped by store, CachedTokenAuth with User guard ──
-Route::middleware(['store', 'cached.auth', 'throttle:60,1'])->group(function () {
+Route::middleware(['store', 'cached.auth', 'throttle:api', 'timeout'])->group(function () {
     require __DIR__.'/modules/identity.php';
     require __DIR__.'/modules/catalog.php';
     require __DIR__.'/modules/sales.php';
