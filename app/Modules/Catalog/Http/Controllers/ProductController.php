@@ -44,6 +44,7 @@ class ProductController extends Controller
             storeId: $this->resolveStoreId(),
             categoryId: request('category_id'),
             search: request('search'),
+            perPage: (int) request('per_page', 20),
         );
 
         return ProductResource::collection($products);

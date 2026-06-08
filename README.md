@@ -6,9 +6,10 @@ Laravel 13 REST API backend for SimpCommerce — a modular commerce platform wit
 
 ## Requirements
 
-- PHP 8.3+
-- PostgreSQL 16+ (SQLite for testing/lightweight deployments)
+- PHP 8.4+
+- PostgreSQL 16+ (SQLite for testing)
 - Composer
+- Node.js (for asset bundling)
 
 ## Quick Start
 
@@ -38,82 +39,133 @@ php artisan serve
 
 ## Default Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@simppos.test` | `Pass1234` |
-| Staff | `staff@simppos.test` | `Pass1234` |
+| Role       | Email                  | Password   |
+|------------|------------------------|------------|
+| Root       | `admin@simppos.test`   | `Pass1234` |
+| Staff      | `staff@simppos.test`   | `Pass1234` |
 
 ## Testing
 
 ```bash
-php artisan test
+php artisan test --compact
 # 147 tests covering all endpoints
 ```
 
 ## Architecture
 
-**Modular monolith** — 14 modules under `app/Modules/` with per-module route files under `routes/modules/`. Master loader at `routes/api.php` (~22 lines).
+**Modular monolith** — 14 modules under `app/Modules/` with per-module route files under `routes/modules/`. Master loader at `routes/api.php`.
 
 ```
 Core → Identity → Store → Catalog → Customer → Sales → Inventory
-→ Promotion → Supplier → Cash → Audit → Report → System → ECommerce
+     → Promotion → Supplier → Cash → Audit → Report → System → ECommerce
 ```
 
 **Database**: PostgreSQL (development/production), SQLite in-memory (tests).
 
-**Multi-store**: `store_id` as nullable FK on 6 tables. ResolveStore middleware reads `X-Store` header, scopes catalog queries by store.
+**Multi-store**: `store_id` FK on 6 tables. `ResolveStore` middleware reads `X-Store` header, scopes catalog queries by store.
 
 **Auth**: Sanctum token-based, two guards (`web` + `customer`), 24h staff / 7d customer tokens.
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api`. Routes are organized into 15 per-module files.
+All endpoints are prefixed with `/api`. Routes are organized into 15 per-module files. **103 total routes**.
 
 ### Storefront (Public — no auth)
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/storefront/products` | Paginated products (store-scoped, filterable) |
-| GET | `/api/storefront/products/{slug}` | Product detail with variants |
-| GET | `/api/storefront/categories` | Category list with product counts |
-| GET | `/api/storefront/settings` | Store config (branding, contact, currency) |
+| Method | Endpoint                           | Description                              |
+|--------|------------------------------------|------------------------------------------|
+| GET    | `/api/storefront/products`         | Paginated products (store-scoped)        |
+| GET    | `/api/storefront/products/{slug}`  | Product detail with variants             |
+| GET    | `/api/storefront/categories`       | Category list with product counts        |
+| GET    | `/api/storefront/settings`         | Store config (branding, contact, currency) |
 
-### Staff Auth & Dashboard (auth:sanctum)
+### Staff Auth & Dashboard (`auth:sanctum`)
 
-| Module | Description |
-|---|---|
-| Auth | staff login/logout/me |
-| Products | CRUD, CSV import/export, images, barcode labels |
-| Categories | CRUD (write=admin) |
-| Orders | list/detail/create, status updates, item returns |
-| Invoices | list/detail/print/pdf/receipt |
-| Customers | CRM with order history |
-| Suppliers, Discounts, Stock, Cash, Stores, Users, Audit Logs | Full CRUD |
-| Reports | dashboard summary, sales, best-sellers, payment methods |
-| Backups | driver-aware create/download (pg_dump/mysqldump/copy) |
+| Module             | Description                                                                |
+|--------------------|----------------------------------------------------------------------------|
+| Auth               | Staff login/logout/me                                                      |
+| Profile            | Self-update name/email/password                                             |
+| Users              | CRUD (admin only)                                                           |
+| Products           | CRUD, CSV import/export, image upload, barcode labels                       |
+| Variants           | Stock adjustment, image upload, barcode lookup by SKU                       |
+| Categories         | CRUD (write = admin)                                                        |
+| Orders             | List/detail/create (POS), status updates (admin), item returns (admin)      |
+| Invoices           | List/detail/print/PDF/receipt                                               |
+| Customers (CRM)    | CRUD + order history                                                        |
+| Suppliers          | CRUD (admin)                                                                |
+| Discounts          | CRUD + active list (admin)                                                  |
+| Stock Movements    | Filtered list (admin)                                                       |
+| Cash Sessions      | Open/close/active session                                                   |
+| Stores             | CRUD (admin)                                                                |
+| Backups            | Driver-aware create/list/download (pg_dump/mysqldump/copy)                  |
+| Reports            | Dashboard summary, sales, best-sellers, payment methods                     |
+| Audit Logs         | Filtered list (admin)                                                       |
 
-### Customer Portal (auth:customer)
+### Customer Portal (`auth:customer`)
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/customer/register\|login\|logout` | Auth |
-| GET/PUT | `/api/customer/me\|profile` | Profile |
-| CRUD | `/api/addresses` | Address book |
-| CRUD | `/api/cart` | Shopping cart |
-| POST | `/api/checkout` | COD order placement |
-| GET | `/api/my/orders` | Order history |
-| POST | `/api/my/orders/{id}/cancel` | Cancel order |
+| Method         | Endpoint                          | Description                    |
+|----------------|-----------------------------------|--------------------------------|
+| POST           | `/api/customer/register\|login\|logout` | Customer auth               |
+| GET/PUT        | `/api/customer/me\|profile`       | Profile management             |
+| CRUD           | `/api/addresses`                  | Address book                   |
+| PUT            | `/api/addresses/{id}/default`     | Set default address            |
+| CRUD           | `/api/cart`                       | Shopping cart                  |
+| DELETE         | `/api/cart`                       | Clear entire cart              |
+| POST           | `/api/checkout`                   | Place COD order                |
+| GET            | `/api/checkout/validate`          | Validate stock before checkout |
+| GET            | `/api/my/orders`                  | Order history                  |
+| POST           | `/api/my/orders/{id}/cancel`      | Cancel order (processing only) |
+| GET/POST/DELETE| `/api/wishlist`                   | Wishlist management            |
 
-Full documentation: see `SPECIFICATION.md` and `ARCHITECTURE.md`
+Full documentation: see [`SPECIFICATION.md`](SPECIFICATION.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), and [`API.md`](API.md).
 
 ## Key Features
 
-- **Modular monolith**: 14 modules, per-module routes, 147 tests
+- **Modular monolith**: 14 modules, 15 route files, 103 routes, 147 tests
 - **Sanctum auth**: Token-based, two guards (staff 24h, customer 7d)
-- **E-Commerce**: Server-side cart, COD checkout, shipments, online order management
-- **Multi-store**: store_id scoping via ResolveStore middleware, public storefront API
-- **Driver-aware backup**: pg_dump/mysqldump/file copy based on database driver
-- **i18n**: English + Burmese, server errors translated via custom mapping
-- **Atomic stock**: Transaction-safe decrement, idempotent transitions
+- **OAuth (Google)**: Customer social login via Socialite → Sanctum token
+- **E-Commerce**: Server-side cart, COD checkout, shipments, wishlist, online order management
+- **Multi-store**: `store_id` scoping via `ResolveStore` middleware, public storefront API
+- **Driver-aware backup**: `pg_dump`/`mysqldump`/file copy based on database driver
+- **i18n**: English + Burmese server-side error translations
+- **Atomic stock**: Transaction-safe decrement, idempotent cancel guard
 - **PDF/Receipt**: Invoice PDF download + thermal receipt format
 - **Password policy**: Min 8 chars, uppercase + lowercase + digit
+- **Enums**: Strongly-typed enums for all domain values (roles, statuses, types)
+- **Repository pattern**: Core `Repository` base class; ECommerce module uses CartItem, Wishlist, Shipment repositories
+- **Service layer**: Dedicated services for Orders, Invoices, Cart, Checkout, Wishlist, Reports, Dashboard, Products, Storefront
+
+## Directory Structure
+
+```
+api/
+├── app/
+│   └── Modules/           # 14 domain modules
+│       ├── Core/          # Enums, Traits (ApiResponse, QueryFilter, StoreScope,
+│       │                  #   AuthorizesOwnership, HandlesPasswordUpdate), Repository base
+│       ├── Identity/      # Auth, Users, Profiles, UserRole enum, AdminMiddleware
+│       ├── Store/         # StoreController, ResolveStore middleware, Store model
+│       ├── Catalog/       # Products, Variants, Categories, Storefront, ProductService,
+│       │                  #   ProductImportService, ProductExportService, StorefrontService
+│       ├── Customer/      # CRM, CustomerAuth, OAuthController, AddressBook
+│       ├── Sales/         # Orders, Invoices, OrderService, InvoiceService,
+│       │                  #   InvoiceNumberGenerator
+│       ├── Inventory/     # StockMovements, StockService
+│       ├── Promotion/     # Discounts, DiscountService
+│       ├── Supplier/      # Suppliers
+│       ├── Cash/          # CashSessions, CashSessionService
+│       ├── Audit/         # AuditLogs
+│       ├── Report/        # Dashboard & Reports (DashboardService, ReportService)
+│       ├── System/        # Backups (driver-aware)
+│       └── ECommerce/     # Cart, Checkout, MyOrders, Wishlist, OnlineOrderService,
+│                          #   CartItemRepository, WishlistItemRepository, ShipmentRepository
+├── database/
+│   ├── factories/         # 15 model factories
+│   ├── migrations/        # 31 migration files
+│   └── seeders/
+├── routes/
+│   ├── api.php            # Master route loader
+│   └── modules/           # 15 per-module route files
+├── docs/                  # Project documentation
+└── tests/                 # 147 tests (Feature + Unit)
+```

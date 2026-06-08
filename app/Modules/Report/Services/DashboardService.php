@@ -47,7 +47,7 @@ class DashboardService
             'total_variants' => $variants->count(),
             'low_stock_count' => $lowStockVariants->count(),
             'out_of_stock_count' => $outOfStockVariants->count(),
-            'low_stock_variants' => $lowStockVariants->map(fn ($v) => [
+            'low_stock_variants' => $lowStockVariants->take(5)->map(fn ($v) => [
                 'id' => $v->id,
                 'sku' => $v->sku,
                 'product' => $v->product->name,

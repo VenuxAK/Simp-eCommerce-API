@@ -20,7 +20,9 @@ class ProductVariantResource extends JsonResource
             'size' => $this->size,
             'color' => $this->color,
             'image' => $this->image,
-            'image_url' => $this->image ? Storage::url($this->image) : null,
+            'image_url' => $this->image
+                ? (str_starts_with($this->image, 'http') ? $this->image : Storage::disk('public')->url($this->image))
+                : null,
             'product' => new ProductResource($this->whenLoaded('product')),
             'price_adjustment' => (float) $this->price_adjustment,
             'purchase_price' => $this->purchase_price ? (float) $this->purchase_price : null,
