@@ -10,6 +10,7 @@ use App\Modules\Customer\Http\Resources\CustomerResource;
 use App\Modules\Customer\Repositories\CustomerRepository;
 use App\Modules\Store\Repositories\StoreRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
@@ -36,13 +37,14 @@ class OAuthController extends Controller
     {
         $redirectUrl = Socialite::driver($provider)
             ->stateless()
+            ->with(['state' => request()->header('Origin', config('app.storefront_url'))])
             ->redirect()
             ->getTargetUrl();
 
         return $this->respond(['redirect_url' => $redirectUrl]);
     }
 
-    public function callback(OAuthCallbackRequest $request, string $provider): JsonResponse
+    public function callback(OAuthCallbackRequest $request, string $provider): RedirectResponse|JsonResponse
     {
         try {
             $socialUser = Socialite::driver($provider)
@@ -74,8 +76,15 @@ class OAuthController extends Controller
             $request->session()->regenerate();
         }
 
-        return $this->respond([
-            'customer' => new CustomerResource($customer),
-        ]);
+        $stateUrl = rtrim($request->query('state', config('app.storefront_url', 'http://localhost:3000')), '/');
+        
+        // Prevent open redirect by validating against CORS allowed origins or localhost
+        $allowedOrigins = config('cors.allowed_origins', []);
+        $isLocalhost = str_starts_with($stateUrl, 'http://localhost');
+        if (! in_array($stateUrl, $allowedOrigins) && ! $isLocalhost) {
+            $stateUrl = rtrim(config('app.storefront_url', 'http://localhost:3000'), '/');
+        }
+
+        return redirect($stateUrl . '/auth/callback');
     }
 }

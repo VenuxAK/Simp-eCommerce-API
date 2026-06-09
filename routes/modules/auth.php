@@ -23,4 +23,4 @@ Route::post('/customer/login', [CustomerAuthController::class, 'login'])
 Route::get('/auth/oauth/{provider}/redirect', [OAuthController::class, 'redirect']);
 // Callback — provider redirects here with ?code= after consent.
 Route::get('/auth/oauth/{provider}/callback', [OAuthController::class, 'callback'])
-    ->middleware('stateful');
+    ->middleware('web');

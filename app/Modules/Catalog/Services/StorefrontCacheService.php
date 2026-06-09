@@ -85,7 +85,7 @@ class StorefrontCacheService
         $key = $this->key($store->id, 'categories');
 
         return Cache::remember($key, self::TTL, function () use ($store) {
-            return $this->storefrontService->categories($store);
+            return $this->storefrontService->categories($store)->toArray();
         });
     }
 

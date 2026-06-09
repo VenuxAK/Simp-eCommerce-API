@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Storefront Application URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used to redirect the user back to the storefront SPA after
+    | performing actions like OAuth login that require browser navigation.
+    |
+    */
+
+    'storefront_url' => env('STOREFRONT_URL', 'http://localhost:3000'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
