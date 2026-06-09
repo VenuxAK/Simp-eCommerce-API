@@ -311,7 +311,7 @@ simpcommerce-api/
 - [x] **Multi-store**: `store_id` on 8 tables, `ResolveStore` middleware, `StoreScope` trait
 - [x] **Storefront API**: `/api/storefront/products|categories|settings` public endpoints
 - [x] **ECommerce**: Cart, Wishlist, COD checkout, shipments, customer orders
-- [x] **OAuth**: Google social login via Socialite → Sanctum token (`OAuthController`)
+- [x] **OAuth**: Google social login via Socialite → Session Cookie (`OAuthController`)
 - [x] **Enums**: 11 strongly-typed enums replacing all magic strings
 - [x] **Repository pattern**: Base `Repository` class + ECommerce repositories
 - [x] **Service layer**: 14 dedicated services extracted from controllers

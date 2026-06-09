@@ -17,13 +17,13 @@ http://localhost:8000/api
 |------------------|------------------------------|----------|-----------------------|
 | `auth:sanctum`   | Sanctum token (Bearer)       | 24 hours | Staff dashboard       |
 | `auth:customer`  | Sanctum token (Bearer)       | 7 days   | Customer portal       |
-| OAuth (Google)   | Socialite → Sanctum token    | 7 days   | Customer portal       |
+| OAuth (Google)   | Socialite → Session Cookie   | 7 days   | Customer portal       |
 
 **Staff login** returns `{ token, user }`. Attach via `Authorization: Bearer <token>`.
 
 **Customer login** returns `{ token, customer }`. Same pattern.
 
-**OAuth (Google)** returns a redirect URL; after consent, the callback exchanges the code for `{ token, customer }`.
+**OAuth (Google)** returns a redirect URL; after consent, the callback exchanges the code, creates a session, and redirects to the frontend.
 
 ## Multi-Store
 
@@ -246,9 +246,9 @@ Password policy: min 8 chars, must include uppercase, lowercase, and a digit.
 | Method | Endpoint                         | Notes                                    |
 |--------|----------------------------------|------------------------------------------|
 | GET    | `/auth/oauth/google/redirect`    | Returns `{ redirect_url }`              |
-| GET    | `/auth/oauth/google/callback`    | `?code=…` → `{ token, customer }`      |
+| GET    | `/auth/oauth/google/callback`    | `?code=…` → Redirects with Session Cookie |
 
-**Flow**: Frontend calls redirect endpoint → opens `redirect_url` in browser → user consents → Google redirects back with `?code=` → backend exchanges code, finds or creates `Customer` by email, returns Sanctum token. OAuth customers have `password = null` and can only authenticate via Google.
+**Flow**: Frontend calls redirect endpoint → opens `redirect_url` in browser → user consents → Google redirects back with `?code=` → backend exchanges code, finds or creates `Customer` by email, creates a session, and redirects to the storefront. OAuth customers have `password = null` and can only authenticate via Google.
 
 ### B.4 Customer Profile (`auth:customer`)
 

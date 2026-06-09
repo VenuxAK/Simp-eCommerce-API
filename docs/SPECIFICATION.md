@@ -115,7 +115,7 @@ All domain-specific string values are backed by PHP 8.1+ enums in `app/Modules/C
 | POST   | `/api/customer/register`                    | Register (rate-limited: 10/min)          |
 | POST   | `/api/customer/login`                       | Login (rate-limited: 10/min)             |
 | GET    | `/api/auth/oauth/{provider}/redirect`       | OAuth redirect URL (Google)              |
-| GET    | `/api/auth/oauth/{provider}/callback?code=` | OAuth callback → `{ token, customer }`   |
+| GET    | `/api/auth/oauth/{provider}/callback?code=` | OAuth callback → Redirects with Session Cookie   |
 
 ### Customer Portal (`auth:customer`)
 
@@ -228,8 +228,7 @@ Frontend → GET /api/auth/oauth/google/redirect → { redirect_url }
 → Open redirect_url in browser → User consents on Google
 → Google redirects to callback with ?code=
 → GET /api/auth/oauth/google/callback
-→ OAuthController: exchange code → find or create Customer by email
-→ Return { token, customer }
+→ OAuthController: exchange code → find or create Customer by email → create session → redirect to storefront
 ```
 
 ---

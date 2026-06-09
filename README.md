@@ -123,7 +123,7 @@ Full documentation: see [`SPECIFICATION.md`](SPECIFICATION.md), [`ARCHITECTURE.m
 
 - **Modular monolith**: 14 modules, 15 route files, 103 routes, 147 tests
 - **Sanctum auth**: Token-based, two guards (staff 24h, customer 7d)
-- **OAuth (Google)**: Customer social login via Socialite → Sanctum token
+- **OAuth (Google)**: Customer social login via Socialite → Session Cookie
 - **E-Commerce**: Server-side cart, COD checkout, shipments, wishlist, online order management
 - **Multi-store**: `store_id` scoping via `ResolveStore` middleware, public storefront API
 - **Driver-aware backup**: `pg_dump`/`mysqldump`/file copy based on database driver
