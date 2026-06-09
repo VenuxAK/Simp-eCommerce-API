@@ -43,30 +43,32 @@ class BackupService
 
     private function dumpPgsql(string $backupPath): void
     {
+        $conn = DB::connection();
         $process = new Process([
             'pg_dump',
-            '--host='.config('database.connections.pgsql.host'),
-            '--port='.config('database.connections.pgsql.port'),
-            '--username='.config('database.connections.pgsql.username'),
-            '--dbname='.config('database.connections.pgsql.database'),
+            '--host='.$conn->getConfig('host'),
+            '--port='.$conn->getConfig('port'),
+            '--username='.$conn->getConfig('username'),
+            '--dbname='.$conn->getConfig('database'),
             '--file='.$backupPath,
         ]);
 
-        $process->setEnv(['PGPASSWORD' => config('database.connections.pgsql.password')]);
+        $process->setEnv(['PGPASSWORD' => $conn->getConfig('password')]);
         $process->mustRun();
     }
 
     private function dumpMysql(string $backupPath): void
     {
+        $conn = DB::connection();
         $process = new Process([
             'mysqldump',
-            '--host='.config('database.connections.mysql.host'),
-            '--port='.config('database.connections.mysql.port'),
-            '--user='.config('database.connections.mysql.username'),
-            config('database.connections.mysql.database'),
+            '--host='.$conn->getConfig('host'),
+            '--port='.$conn->getConfig('port'),
+            '--user='.$conn->getConfig('username'),
+            $conn->getConfig('database'),
         ]);
 
-        $process->setEnv(['MYSQL_PWD' => config('database.connections.mysql.password')]);
+        $process->setEnv(['MYSQL_PWD' => $conn->getConfig('password')]);
         $process->mustRun();
 
         file_put_contents($backupPath, $process->getOutput());
