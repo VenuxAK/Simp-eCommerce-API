@@ -21,7 +21,7 @@ class Category extends Model
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'description', 'store_id'];
+    protected $fillable = ['name', 'slug', 'description', 'parent_id', 'store_id'];
 
     protected static function newFactory(): CategoryFactory
     {
@@ -41,5 +41,15 @@ class Category extends Model
     public function discounts(): HasMany
     {
         return $this->hasMany(Discount::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Category::class, 'parent_id');
     }
 }

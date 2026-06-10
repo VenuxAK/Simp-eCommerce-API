@@ -25,7 +25,7 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected $fillable = ['category_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image'];
+    protected $fillable = ['category_id', 'brand_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image'];
 
     /**
      * Get the attributes that should be cast.
@@ -50,6 +50,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     // TODO: Replace with contract when Supplier module is extracted.

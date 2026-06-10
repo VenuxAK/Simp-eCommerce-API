@@ -3,11 +3,9 @@
 namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Catalog\Services\StorefrontCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * Public (unauthenticated) API endpoints for the storefront.
@@ -36,8 +34,9 @@ class StorefrontController extends Controller
 
         $result = $this->storefrontCache->products(
             $store,
-            $request->input('category_id'),
+            $request->input('category_slug'),
             $request->input('search'),
+            $request->input('brand_id'), // Can be array or comma-separated
             (int) $request->input('per_page', 20),
             (int) $request->input('page', 1),
         );
@@ -73,6 +72,19 @@ class StorefrontController extends Controller
     public function categories(Request $request): JsonResponse
     {
         $data = $this->storefrontCache->categories(app('current_store'));
+
+        return $this->withETag(
+            response()->json(['data' => $data]),
+            $data,
+        );
+    }
+
+    /**
+     * All brands for the current store.
+     */
+    public function brands(Request $request): JsonResponse
+    {
+        $data = $this->storefrontCache->brands(app('current_store'));
 
         return $this->withETag(
             response()->json(['data' => $data]),

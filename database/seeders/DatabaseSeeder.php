@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
@@ -90,16 +91,50 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
+        $brands = [
+            'Adidas' => 'https://placehold.co/400x200?text=Adidas',
+            'Nike' => 'https://placehold.co/400x200?text=Nike',
+            'Puma' => 'https://placehold.co/400x200?text=Puma',
+            'Zara' => 'https://placehold.co/400x200?text=Zara',
+            'Vans' => 'https://placehold.co/400x200?text=Vans'
+        ];
+        $brandIds = [];
+        foreach ($brands as $brandName => $brandLogo) {
+            $brandIds[] = Brand::create([
+                'name' => $brandName,
+                'slug' => Str::slug($brandName).'-'.$store->slug,
+                'logo' => $brandLogo,
+                'store_id' => $store->id,
+            ])->id;
+        }
+
         $categoryIds = [];
+        // Create main parent categories
+        $mensClothingId = Category::create([
+            'name' => 'Men\'s Clothing',
+            'slug' => 'mens-clothing-'.$store->slug,
+            'description' => 'Apparel for men',
+            'store_id' => $store->id,
+        ])->id;
+        $womensClothingId = Category::create([
+            'name' => 'Women\'s Clothing',
+            'slug' => 'womens-clothing-'.$store->slug,
+            'description' => 'Apparel for women',
+            'store_id' => $store->id,
+        ])->id;
 
         foreach ($products as $item) {
             $categoryName = $item['category'];
 
             if (! isset($categoryIds[$categoryName])) {
+                // Randomly assign to men's or women's as parent
+                $parentId = fake()->boolean() ? $mensClothingId : $womensClothingId;
+
                 $category = Category::create([
                     'name' => $categoryName,
                     'slug' => Str::slug($categoryName).'-'.$store->slug,
                     'description' => fake()->sentence(),
+                    'parent_id' => $parentId,
                     'store_id' => $store->id,
                 ]);
                 $categoryIds[$categoryName] = $category->id;
@@ -112,6 +147,7 @@ class DatabaseSeeder extends Seeder
                 'base_price' => $item['price'],
                 'image' => $item['image_url'],
                 'category_id' => $categoryIds[$categoryName],
+                'brand_id' => fake()->randomElement($brandIds),
                 'store_id' => $store->id,
             ]);
 

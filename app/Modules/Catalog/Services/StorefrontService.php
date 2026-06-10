@@ -2,6 +2,7 @@
 
 namespace App\Modules\Catalog\Services;
 
+use App\Modules\Catalog\Models\Brand;
 use App\Modules\Catalog\Repositories\CategoryRepository;
 use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Store\Models\Store;
@@ -27,10 +28,10 @@ class StorefrontService
      * or at least one variant with positive stock. Only in-stock variants are
      * eager-loaded to keep the response lean.
      */
-    public function products(Store $store, ?int $categoryId, ?string $search, int $perPage = 20)
+    public function products(Store $store, ?string $categorySlug, ?string $search, mixed $brandIds = null, int $perPage = 20)
     {
         return $this->productRepo->findAvailableByStore(
-            $store->id, $categoryId, $search, $perPage,
+            $store->id, $categorySlug, $search, $brandIds, $perPage,
         );
     }
 
@@ -48,6 +49,14 @@ class StorefrontService
     public function categories(Store $store)
     {
         return $this->categoryRepo->findByStore($store->id);
+    }
+
+    /**
+     * All brands for the store.
+     */
+    public function brands(Store $store)
+    {
+        return Brand::where('store_id', $store->id)->orderBy('name')->get();
     }
 
     /**

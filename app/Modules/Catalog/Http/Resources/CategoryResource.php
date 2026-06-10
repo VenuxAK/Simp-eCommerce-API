@@ -16,8 +16,10 @@ class CategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'parent_id' => $this->parent_id,
             'description' => $this->description,
             'products_count' => $this->whenCounted('products'),
+            'children' => CategoryResource::collection($this->whenLoaded('children')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

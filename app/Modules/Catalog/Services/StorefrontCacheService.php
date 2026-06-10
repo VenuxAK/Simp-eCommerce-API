@@ -2,6 +2,8 @@
 
 namespace App\Modules\Catalog\Services;
 
+use App\Modules\Catalog\Http\Resources\BrandResource;
+use App\Modules\Catalog\Http\Resources\ProductResource;
 use App\Modules\Store\Models\Store;
 use Illuminate\Support\Facades\Cache;
 
@@ -42,25 +44,27 @@ class StorefrontCacheService
      */
     public function products(
         Store $store,
-        ?int $categoryId,
+        ?string $categorySlug,
         ?string $search,
+        mixed $brandIds = null,
         int $perPage = 20,
         int $page = 1,
     ) {
         if ($search) {
-            $paginator = $this->storefrontService->products($store, $categoryId, $search, $perPage);
-            return \App\Modules\Catalog\Http\Resources\ProductResource::collection($paginator)->response()->getData(true);
+            $paginator = $this->storefrontService->products($store, $categorySlug, $search, $brandIds, $perPage);
+            return ProductResource::collection($paginator)->response()->getData(true);
         }
 
         $key = $this->key($store->id, 'products', [
-            'cat' => $categoryId,
+            'cat' => $categorySlug,
+            'brd' => is_array($brandIds) ? implode(',', $brandIds) : $brandIds,
             'pp' => $perPage,
             'p' => $page,
         ]);
 
-        return Cache::remember($key, self::TTL, function () use ($store, $categoryId, $perPage) {
-            $paginator = $this->storefrontService->products($store, $categoryId, null, $perPage);
-            return \App\Modules\Catalog\Http\Resources\ProductResource::collection($paginator)->response()->getData(true);
+        return Cache::remember($key, self::TTL, function () use ($store, $categorySlug, $brandIds, $perPage) {
+            $paginator = $this->storefrontService->products($store, $categorySlug, null, $brandIds, $perPage);
+            return ProductResource::collection($paginator)->response()->getData(true);
         });
     }
 
@@ -73,7 +77,7 @@ class StorefrontCacheService
 
         return Cache::remember($key, self::TTL, function () use ($store, $slug) {
             $product = $this->storefrontService->product($store, $slug);
-            return (new \App\Modules\Catalog\Http\Resources\ProductResource($product))->resolve();
+            return (new ProductResource($product))->resolve();
         });
     }
 
@@ -86,6 +90,19 @@ class StorefrontCacheService
 
         return Cache::remember($key, self::TTL, function () use ($store) {
             return $this->storefrontService->categories($store)->toArray();
+        });
+    }
+
+    /**
+     * Cached brands listing for a store.
+     */
+    public function brands(Store $store)
+    {
+        $key = $this->key($store->id, 'brands');
+
+        return Cache::remember($key, self::TTL, function () use ($store) {
+            $brands = $this->storefrontService->brands($store);
+            return BrandResource::collection($brands)->resolve();
         });
     }
 

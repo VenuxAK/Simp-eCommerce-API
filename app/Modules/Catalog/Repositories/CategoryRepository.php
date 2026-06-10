@@ -40,6 +40,10 @@ class CategoryRepository extends Repository
     public function findByStore(int $storeId): Collection
     {
         return Category::where('store_id', $storeId)
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->withCount('products')->orderBy('name');
+            }])
             ->withCount('products')
             ->orderBy('name')
             ->get();

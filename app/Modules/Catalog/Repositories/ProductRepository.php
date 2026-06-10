@@ -28,7 +28,7 @@ class ProductRepository extends Repository
      * Used by store/show/update flows where the response always
      * includes the parent category and variant children.
      */
-    public function findWithRelations(int $id, array $relations = ['category', 'variants']): ?Product
+    public function findWithRelations(int $id, array $relations = ['category', 'brand', 'variants']): ?Product
     {
         return Product::with($relations)->find($id);
     }
@@ -39,7 +39,7 @@ class ProductRepository extends Repository
      */
     public function findByStore(int $storeId, ?int $categoryId, ?string $search, int $perPage = 20): LengthAwarePaginator
     {
-        return Product::with(['category', 'supplier', 'variants'])
+        return Product::with(['category', 'brand', 'supplier', 'variants'])
             ->where('store_id', $storeId)
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
             ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%']))
@@ -57,7 +57,7 @@ class ProductRepository extends Repository
      * Uses simplePaginate() instead of paginate() to avoid the
      * expensive COUNT(*) query on high-volume storefront listings.
      */
-    public function findAvailableByStore(int $storeId, ?int $categoryId, ?string $search, int $perPage = 20): \Illuminate\Contracts\Pagination\Paginator
+    public function findAvailableByStore(int $storeId, ?string $categorySlug, ?string $search, mixed $brandIds = null, int $perPage = 20): \Illuminate\Contracts\Pagination\Paginator
     {
         return Product::where('store_id', $storeId)
             ->where(function ($q) {
@@ -66,10 +66,20 @@ class ProductRepository extends Repository
             })
             ->with([
                 'category',
+                'brand',
                 'variants' => fn ($q) => $q->where('stock_quantity', '>', 0),
             ])
-            ->select('id', 'category_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image', 'created_at', 'updated_at')
-            ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
+            ->select('id', 'category_id', 'brand_id', 'supplier_id', 'store_id', 'name', 'slug', 'description', 'base_price', 'image', 'created_at', 'updated_at')
+            ->when($categorySlug, function ($q) use ($categorySlug) {
+                $q->whereHas('category', function ($q2) use ($categorySlug) {
+                    $q2->where('slug', $categorySlug)
+                       ->orWhereHas('parent', fn ($q3) => $q3->where('slug', $categorySlug));
+                });
+            })
+            ->when($brandIds, function ($q) use ($brandIds) {
+                $ids = is_array($brandIds) ? $brandIds : explode(',', $brandIds);
+                $q->whereIn('brand_id', $ids);
+            })
             ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$search.'%']))
             ->orderBy('name')
             ->simplePaginate($this->clampPerPage($perPage));
@@ -81,7 +91,7 @@ class ProductRepository extends Repository
      * Used by the storefront product detail page where the URL
      * contains the slug rather than the numeric ID.
      */
-    public function findBySlug(int $storeId, string $slug, array $relations = ['category', 'variants']): Product
+    public function findBySlug(int $storeId, string $slug, array $relations = ['category', 'brand', 'variants']): Product
     {
         return Product::where('store_id', $storeId)
             ->where('slug', $slug)

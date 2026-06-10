@@ -11,4 +11,5 @@ use Illuminate\Support\Facades\Route;
 Route::get('/products', [StorefrontController::class, 'products']);
 Route::get('/products/{slug}', [StorefrontController::class, 'product']);
 Route::get('/categories', [StorefrontController::class, 'categories']);
+Route::get('/brands', [StorefrontController::class, 'brands']);
 Route::get('/settings', [StorefrontController::class, 'settings']);
