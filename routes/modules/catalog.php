@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Catalog\Http\Controllers\BrandController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\ProductController;
 use App\Modules\Catalog\Http\Controllers\ProductVariantController;
@@ -29,4 +30,12 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
 Route::post('/categories', [CategoryController::class, 'store'])->middleware('role:root,store_admin');
 Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('role:root,store_admin');
+Route::post('/categories/{category}/image', [CategoryController::class, 'uploadImage'])->middleware('role:root,store_admin');
 Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role:root,store_admin');
+
+Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/brands/{brand}', [BrandController::class, 'show']);
+Route::post('/brands', [BrandController::class, 'store'])->middleware('role:root,store_admin');
+Route::put('/brands/{brand}', [BrandController::class, 'update'])->middleware('role:root,store_admin');
+Route::post('/brands/{brand}/logo', [BrandController::class, 'uploadLogo'])->middleware('role:root,store_admin');
+Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->middleware('role:root,store_admin');

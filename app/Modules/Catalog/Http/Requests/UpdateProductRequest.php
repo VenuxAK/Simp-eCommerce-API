@@ -26,6 +26,7 @@ class UpdateProductRequest extends FormRequest
         return [
             'category_id' => ['sometimes', 'exists:categories,id'],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'brand_id' => ['nullable', 'exists:brands,id'],
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'base_price' => ['sometimes', 'numeric', 'min:0'],

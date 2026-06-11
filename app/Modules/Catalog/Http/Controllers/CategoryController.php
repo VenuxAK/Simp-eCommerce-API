@@ -9,9 +9,11 @@ use App\Modules\Catalog\Http\Resources\CategoryResource;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Repositories\CategoryRepository;
 use App\Modules\Catalog\Services\StorefrontCacheService;
+use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
@@ -28,6 +30,7 @@ class CategoryController extends Controller
     public function __construct(
         private readonly CategoryRepository $categoryRepo,
         private readonly StorefrontCacheService $storefrontCache,
+        private readonly MediaService $mediaService,
     ) {}
 
     public function index(): AnonymousResourceCollection
@@ -45,6 +48,7 @@ class CategoryController extends Controller
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
+            'parent_id' => $request->parent_id,
         ]));
 
         $this->storefrontCache->invalidateStore($this->resolveStoreId());
@@ -66,11 +70,23 @@ class CategoryController extends Controller
             'name' => $request->name ?? $category->name,
             'slug' => $request->name ? Str::slug($request->name) : $category->slug,
             'description' => $request->description ?? $category->description,
+            'parent_id' => $request->has('parent_id') ? $request->parent_id : $category->parent_id,
         ]);
 
         $this->storefrontCache->invalidateStore($this->resolveStoreId());
 
         return new CategoryResource($category);
+    }
+
+    public function uploadImage(Request $request, Category $category): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $this->mediaService->uploadImage($category, $request->file('image'), 'image');
+
+        return $this->respond(new CategoryResource($category));
     }
 
     /**
@@ -82,6 +98,11 @@ class CategoryController extends Controller
 
         if ($productCount > 0) {
             return $this->respondError("Cannot delete category: {$productCount} product(s) are linked to it.");
+        }
+
+        $childCount = Category::where('parent_id', $category->id)->count();
+        if ($childCount > 0) {
+            return $this->respondError("Cannot delete category: it has {$childCount} sub-categor(ies).");
         }
 
         $this->categoryRepo->delete($category);

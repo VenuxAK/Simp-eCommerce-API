@@ -17,6 +17,7 @@ class BrandResource extends JsonResource
             'logo_url' => $this->logo
                 ? (str_starts_with($this->logo, 'http') ? $this->logo : Storage::disk('public')->url($this->logo))
                 : null,
+            'products_count' => $this->whenCounted('products'),
         ];
     }
 }

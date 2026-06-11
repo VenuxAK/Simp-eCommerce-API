@@ -24,7 +24,9 @@ class MediaService
      */
     public function uploadImage(Model $model, UploadedFile $file, string $field = 'image', string $disk = 'public'): string
     {
-        $directory = class_basename($model::class) === 'Product' ? 'products' : 'variants';
+        $directory = 'variants';
+        if (class_basename($model::class) === 'Product') $directory = 'products';
+        elseif (class_basename($model::class) === 'Brand') $directory = 'brands';
 
         if ($model->$field) {
             Storage::disk($disk)->delete($model->$field);

@@ -37,6 +37,7 @@ class ProductService
         $product = $this->productRepo->create([
             'category_id' => $data['category_id'],
             'supplier_id' => $data['supplier_id'] ?? null,
+            'brand_id' => $data['brand_id'] ?? null,
             'store_id' => $data['store_id'] ?? null,
             'name' => $data['name'],
             'slug' => Str::slug($data['name']).'-'.Str::random(8),
@@ -74,7 +75,7 @@ class ProductService
     public function updateProduct(Product $product, array $data): Product
     {
         $updateData = [];
-        foreach (['category_id', 'supplier_id', 'name', 'description', 'base_price', 'image'] as $field) {
+        foreach (['category_id', 'supplier_id', 'brand_id', 'name', 'description', 'base_price', 'image'] as $field) {
             if (array_key_exists($field, $data)) {
                 $updateData[$field] = $data[$field];
             }

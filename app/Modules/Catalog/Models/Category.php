@@ -21,7 +21,7 @@ class Category extends Model
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'description', 'parent_id', 'store_id'];
+    protected $fillable = ['name', 'slug', 'description', 'image', 'parent_id', 'store_id'];
 
     protected static function newFactory(): CategoryFactory
     {

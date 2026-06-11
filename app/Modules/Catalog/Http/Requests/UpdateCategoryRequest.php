@@ -3,6 +3,7 @@
 namespace App\Modules\Catalog\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validates and handles Update requests for Category.
@@ -23,8 +24,14 @@ class UpdateCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'max:255', 'unique:categories,name,'.($this->route('category')?->id ?? $this->route('category'))],
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->ignore($this->route('category')),
+            ],
             'description' => ['nullable', 'string'],
+            'parent_id' => ['nullable', 'exists:categories,id'],
         ];
     }
 }
