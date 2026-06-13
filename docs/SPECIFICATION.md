@@ -1,313 +1,484 @@
-# SimpCommerce — Project Specification
+# SimpCommerce — Technical Specification
 
-## 1. Overview
-
-**SimpCommerce** is a modular commerce platform for small-to-medium businesses with bilingual support (English / Burmese), multi-storefront e-commerce capability, and production-ready features. It includes a full POS module for in-store sales alongside customer-facing online shopping (cart, wishlist, COD checkout, order management), all backed by a single API.
-
-- **Backend**: Laravel 13 REST API (modular monolith, 14 modules, 103 routes) — PostgreSQL
-- **Dashboard**: Vue 3 + TypeScript + Shadcn/vue SPA (staff/admin operations)
-- **Storefronts**: Nuxt 4 SSR (separate repos per store, consuming public API)
-- **Auth**: Sanctum token-based (24h staff, 7d customer); OAuth (Google) via Socialite
-- **Database**: PostgreSQL 16+ (development/production), SQLite in-memory (tests)
+> **Authoritative source for**: tech stack, database schema, enums, security model, testing strategy.  
+> For architecture decisions see [ARCHITECTURE.md](./ARCHITECTURE.md).  
+> For API reference see [API.md](./API.md).  
+> For product requirements see [PRD.md](./PRD.md).
 
 ---
 
-## 2. Tech Stack
+## 1. Tech Stack
 
-| Layer               | Technology                                              |
-|---------------------|---------------------------------------------------------|
-| Backend Framework   | Laravel 13                                              |
-| Auth                | Sanctum (token-based) — two guards: `web` (staff) and `customer` |
-| OAuth               | Laravel Socialite v5 (Google)                           |
-| Database            | PostgreSQL 16+ (SQLite in-memory for tests)             |
-| Dashboard Frontend  | Vue 3 + Composition API + TypeScript + Vite             |
-| UI Library          | Shadcn/vue (Tailwind-based)                             |
-| State Management    | Pinia                                                   |
-| Charts              | Chart.js + vue-chartjs                                  |
-| PDF                 | barryvdh/laravel-dompdf                                 |
-| Styling             | Tailwind CSS v4                                         |
-| i18n                | vue-i18n (English + Burmese)                            |
-| Tests               | PHPUnit v12 (147 tests)                                 |
-
----
-
-## 3. Database Schema
-
-### Tables & Fields
-
-| Table                | Fields                                                                                                   |
-|----------------------|----------------------------------------------------------------------------------------------------------|
-| **users**            | `id`, `name`, `email`, `password`, `role` (root/store_admin/staff), `store_id` (FK), `remember_token`, `timestamps` |
-| **stores**           | `id`, `name`, `slug` (unique), `domain` (nullable), `description`, `logo` (nullable), `phone` (nullable), `email` (nullable), `is_active`, `settings` (JSON), `timestamps` |
-| **categories**       | `id`, `name`, `slug`, `description`, `store_id` (FK nullable), `timestamps`                             |
-| **products**         | `id`, `category_id` (FK), `supplier_id` (FK nullable), `store_id` (FK nullable), `name`, `slug`, `description`, `base_price`, `image`, `timestamps` |
-| **product_variants** | `id`, `product_id` (FK), `sku` (unique), `size`, `color`, `image`, `price_adjustment`, `purchase_price`, `stock_quantity`, `timestamps` |
-| **customers**        | `id`, `name`, `email` (nullable unique), `phone`, `address`, `loyalty_points`, `password` (nullable), `email_verified_at`, `remember_token`, `store_id` (FK nullable), `timestamps` |
-| **addresses**        | `id`, `customer_id` (FK), `type` (AddressType enum), `name`, `phone`, `street`, `city`, `state`, `postal_code`, `is_default`, `timestamps` |
-| **orders**           | `id`, `user_id` (FK nullable), `customer_id` (FK nullable), `store_id` (FK nullable), `order_number` (unique), `total_amount`, `source` (OrderSource enum), `status` (OrderStatus enum), `notes`, `timestamps` |
-| **order_items**      | `id`, `order_id` (FK), `product_variant_id` (FK), `quantity`, `unit_price`, `subtotal`, `timestamps`    |
-| **payments**         | `id`, `order_id` (FK), `method` (PaymentMethod enum), `amount`, `paid_at`, `timestamps`                 |
-| **invoices**         | `id`, `order_id` (FK unique), `invoice_number` (unique), `issued_date`, `due_date`, `status` (InvoiceStatus enum), `notes`, `terms`, `timestamps` |
-| **discounts**        | `id`, `name`, `type` (DiscountType enum), `value`, `applies_to` (DiscountScope enum), `category_id` (FK nullable), `product_id` (FK nullable), `store_id` (FK nullable), `starts_at`, `ends_at`, `is_active`, `timestamps` |
-| **stock_movements**  | `id`, `product_variant_id` (FK), `quantity_change`, `reason` (StockMovementReason enum), `reference_type`, `reference_id`, `user_id` (FK nullable), `timestamps` |
-| **suppliers**        | `id`, `name`, `contact_person`, `phone`, `email`, `address`, `notes`, `store_id` (FK nullable), `timestamps` |
-| **cash_sessions**    | `id`, `user_id` (FK), `store_id` (FK nullable), `opened_at`, `closed_at`, `opening_balance`, `closing_balance`, `expected_balance`, `difference`, `notes`, `timestamps` |
-| **cart_items**       | `id`, `customer_id` (FK), `product_variant_id` (FK), `quantity`, `timestamps`                           |
-| **wishlist_items**   | `id`, `customer_id` (FK), `product_variant_id` (FK), `timestamps`                                       |
-| **shipments**        | `id`, `order_id` (FK), `address_id` (FK), `method` (ShipmentMethod enum), `tracking_number`, `tracking_url`, `shipped_at`, `delivered_at`, `notes`, `timestamps` |
-| **audit_logs**       | `id`, `user_id` (FK nullable), `action` (AuditAction enum), `model_type`, `model_id`, `old_values`, `new_values`, `ip_address`, `timestamps` |
-
-### Key Relationships
-
-```
-Store          ──1:N──> Product, Category, Order, Discount, Supplier, CashSession, Customer, User
-Product        ──1:N──> ProductVariant
-ProductVariant ──1:N──> OrderItem, StockMovement, CartItem, WishlistItem
-Customer       ──1:N──> Order, Address, CartItem, WishlistItem
-Order          ──1:1──> Payment, Invoice, Shipment
-```
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Runtime | PHP | 8.4+ |
+| Framework | Laravel | 13 |
+| Database (production) | PostgreSQL | 16+ |
+| Database (testing) | SQLite | in-memory |
+| Staff Auth | Laravel Sanctum | 4.x |
+| Customer Auth | Laravel Sanctum | 4.x |
+| OAuth | Laravel Socialite | 5.x (Google) |
+| PDF Generation | barryvdh/laravel-dompdf | — |
+| Queue | Database driver (`jobs` table) | — |
+| Monitoring | Laravel Nightwatch | 1.x |
+| Testing | PHPUnit | 12 |
+| Code Style | Laravel Pint | 1.x |
+| Dashboard Frontend | Vue 3 + TypeScript + Vite | — |
+| Dashboard UI | Shadcn/vue + Tailwind CSS | v4 |
+| Dashboard State | Pinia | — |
+| Dashboard Charts | Chart.js + vue-chartjs | — |
+| Dashboard i18n | vue-i18n | — |
+| Storefront | Nuxt 4 SSR (separate repos per store) | — |
 
 ---
 
-## 4. Enums (Core Module)
+## 2. Database Schema
 
-All domain-specific string values are backed by PHP 8.1+ enums in `app/Modules/Core/Enums/`:
+### 2.1 Full Table Reference
 
-| Enum                    | Values                                                          |
-|-------------------------|-----------------------------------------------------------------|
-| `UserRole`              | `Root`, `StoreAdmin`, `Staff`                                   |
-| `OrderStatus`           | `Pending`, `Processing`, `Completed`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
-| `OrderSource`           | `Pos`, `Online`                                                 |
-| `InvoiceStatus`         | `Draft`, `Issued`, `Paid`, `Cancelled`, `Overdue`               |
-| `PaymentMethod`         | `Cash`, `Transfer`                                              |
-| `DiscountType`          | `Percentage`, `Fixed`                                           |
-| `DiscountScope`         | `All`, `Category`, `Product`                                    |
-| `StockMovementReason`   | `Sale`, `Purchase`, `Adjustment`, `Return`                      |
-| `ShipmentMethod`        | `Cod`, `Standard`, `Express`                                    |
-| `AddressType`           | `Shipping`, `Billing`                                           |
-| `AuditAction`           | `Created`, `Updated`, `Deleted`                                 |
+#### `users`
+Staff dashboard accounts with role-based access.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `password` | VARCHAR(255) | NOT NULL |
+| `role` | VARCHAR(255) | NOT NULL — `root`, `store_admin`, `staff` |
+| `store_id` | BIGINT | FK → `stores.id`, NOT NULL |
+| `remember_token` | VARCHAR(100) | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `stores`
+Multi-tenant store configurations.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `slug` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `domain` | VARCHAR(255) | NULL |
+| `description` | TEXT | NULL |
+| `logo` | VARCHAR(255) | NULL |
+| `phone` | VARCHAR(255) | NULL |
+| `email` | VARCHAR(255) | NULL |
+| `is_active` | BOOLEAN | DEFAULT true |
+| `settings` | JSON | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `categories`
+Product categories with self-referencing hierarchy support.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `slug` | VARCHAR(255) | NOT NULL |
+| `description` | TEXT | NULL |
+| `image` | VARCHAR(255) | NULL |
+| `parent_id` | BIGINT | FK → `categories.id`, NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `brands`
+Product brands, store-scoped.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `slug` | VARCHAR(255) | NOT NULL |
+| `logo` | VARCHAR(255) | NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NOT NULL, CASCADE DELETE |
+| timestamps | — | `created_at`, `updated_at` |
+| unique | — | `(store_id, slug)` |
+
+#### `products`
+Product catalog entries.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `category_id` | BIGINT | FK → `categories.id`, NOT NULL |
+| `brand_id` | BIGINT | FK → `brands.id`, NULL |
+| `supplier_id` | BIGINT | FK → `suppliers.id`, NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| `name` | VARCHAR(255) | NOT NULL |
+| `slug` | VARCHAR(255) | NOT NULL |
+| `description` | TEXT | NULL |
+| `base_price` | DECIMAL(10,2) | NOT NULL |
+| `image` | VARCHAR(255) | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `product_variants`
+Size/color variants with stock tracking.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `product_id` | BIGINT | FK → `products.id`, NOT NULL |
+| `sku` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `size` | VARCHAR(255) | NULL |
+| `color` | VARCHAR(255) | NULL |
+| `image` | VARCHAR(255) | NULL |
+| `price_adjustment` | DECIMAL(10,2) | DEFAULT 0 |
+| `purchase_price` | DECIMAL(10,2) | NULL |
+| `stock_quantity` | INTEGER | DEFAULT 0 |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `customers`
+Customer portal accounts (Authenticatable via Sanctum + OAuth).
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `email` | VARCHAR(255) | UNIQUE, NULL — null for walk-in/OAuth |
+| `phone` | VARCHAR(255) | NULL |
+| `address` | TEXT | NULL |
+| `loyalty_points` | INTEGER | DEFAULT 0 |
+| `password` | VARCHAR(255) | NULL — null for OAuth-only customers |
+| `email_verified_at` | TIMESTAMP | NULL |
+| `remember_token` | VARCHAR(100) | NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `addresses`
+Customer shipping/billing addresses.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `customer_id` | BIGINT | FK → `customers.id`, NOT NULL |
+| `type` | VARCHAR(255) | NOT NULL — `shipping`, `billing` |
+| `name` | VARCHAR(255) | NOT NULL |
+| `phone` | VARCHAR(255) | NOT NULL |
+| `street` | VARCHAR(255) | NOT NULL |
+| `city` | VARCHAR(255) | NOT NULL |
+| `state` | VARCHAR(255) | NOT NULL |
+| `postal_code` | VARCHAR(255) | NOT NULL |
+| `is_default` | BOOLEAN | DEFAULT false |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `orders`
+Sales orders from POS and online channels.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `user_id` | BIGINT | FK → `users.id`, NULL |
+| `customer_id` | BIGINT | FK → `customers.id`, NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| `order_number` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `total_amount` | DECIMAL(10,2) | NOT NULL |
+| `source` | VARCHAR(255) | NOT NULL — `pos`, `online` |
+| `status` | VARCHAR(255) | NOT NULL — see OrderStatus enum |
+| `notes` | TEXT | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `order_items`
+Line items within orders. Prices frozen at order time.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `order_id` | BIGINT | FK → `orders.id`, NOT NULL |
+| `product_variant_id` | BIGINT | FK → `product_variants.id`, NOT NULL |
+| `quantity` | INTEGER | NOT NULL |
+| `unit_price` | DECIMAL(10,2) | NOT NULL |
+| `subtotal` | DECIMAL(10,2) | NOT NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `payments`
+Payments linked to orders.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `order_id` | BIGINT | FK → `orders.id`, UNIQUE, NOT NULL |
+| `method` | VARCHAR(255) | NOT NULL — `cash`, `transfer` |
+| `amount` | DECIMAL(10,2) | NOT NULL |
+| `paid_at` | TIMESTAMP | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `invoices`
+Financial documents linked to orders.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `order_id` | BIGINT | FK → `orders.id`, UNIQUE, NOT NULL |
+| `invoice_number` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `issued_date` | DATE | NOT NULL |
+| `due_date` | DATE | NOT NULL |
+| `status` | VARCHAR(255) | NOT NULL — see InvoiceStatus enum |
+| `notes` | TEXT | NULL |
+| `terms` | TEXT | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `discounts`
+Promotional discounts with type and scope.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `type` | VARCHAR(255) | NOT NULL — `percentage`, `fixed` |
+| `value` | DECIMAL(10,2) | NOT NULL |
+| `applies_to` | VARCHAR(255) | NOT NULL — `all`, `category`, `product` |
+| `category_id` | BIGINT | FK → `categories.id`, NULL |
+| `product_id` | BIGINT | FK → `products.id`, NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| `starts_at` | TIMESTAMP | NULL |
+| `ends_at` | TIMESTAMP | NULL |
+| `is_active` | BOOLEAN | DEFAULT true |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `stock_movements`
+Audit trail for all inventory changes.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `product_variant_id` | BIGINT | FK → `product_variants.id`, NOT NULL |
+| `quantity_change` | INTEGER | NOT NULL — positive for addition, negative for deduction |
+| `reason` | VARCHAR(255) | NOT NULL — see StockMovementReason enum |
+| `reference_type` | VARCHAR(255) | NULL — polymorphic reference |
+| `reference_id` | BIGINT | NULL |
+| `user_id` | BIGINT | FK → `users.id`, NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `suppliers`
+Vendor/supplier records.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `name` | VARCHAR(255) | NOT NULL |
+| `contact_person` | VARCHAR(255) | NULL |
+| `phone` | VARCHAR(255) | NULL |
+| `email` | VARCHAR(255) | NULL |
+| `address` | TEXT | NULL |
+| `notes` | TEXT | NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `cash_sessions`
+Cash register shift tracking.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `user_id` | BIGINT | FK → `users.id`, NOT NULL |
+| `store_id` | BIGINT | FK → `stores.id`, NULL |
+| `opened_at` | TIMESTAMP | NOT NULL |
+| `closed_at` | TIMESTAMP | NULL |
+| `opening_balance` | DECIMAL(10,2) | NOT NULL |
+| `closing_balance` | DECIMAL(10,2) | NULL |
+| `expected_balance` | DECIMAL(10,2) | NULL |
+| `difference` | DECIMAL(10,2) | NULL |
+| `notes` | TEXT | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `cart_items`
+Server-side shopping cart.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `customer_id` | BIGINT | FK → `customers.id`, NOT NULL |
+| `product_variant_id` | BIGINT | FK → `product_variants.id`, NOT NULL |
+| `quantity` | INTEGER | NOT NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `wishlist_items`
+Customer wishlist (toggle-based).
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `customer_id` | BIGINT | FK → `customers.id`, NOT NULL |
+| `product_variant_id` | BIGINT | FK → `product_variants.id`, NOT NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `shipments`
+Order delivery tracking.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `order_id` | BIGINT | FK → `orders.id`, NOT NULL |
+| `address_id` | BIGINT | FK → `addresses.id`, NOT NULL |
+| `method` | VARCHAR(255) | NOT NULL — `cod`, `standard`, `express` |
+| `tracking_number` | VARCHAR(255) | NULL |
+| `tracking_url` | VARCHAR(255) | NULL |
+| `shipped_at` | TIMESTAMP | NULL |
+| `delivered_at` | TIMESTAMP | NULL |
+| `notes` | TEXT | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `audit_logs`
+Activity log for all model changes (partitioned table).
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `user_id` | BIGINT | FK → `users.id`, NULL |
+| `action` | VARCHAR(255) | NOT NULL — `created`, `updated`, `deleted` |
+| `model_type` | VARCHAR(255) | NOT NULL |
+| `model_id` | BIGINT | NOT NULL |
+| `old_values` | JSON | NULL |
+| `new_values` | JSON | NULL |
+| `ip_address` | VARCHAR(45) | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+### 2.2 Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    stores ||--o{ users : "employs"
+    stores ||--o{ products : "has"
+    stores ||--o{ categories : "has"
+    stores ||--o{ brands : "has"
+    stores ||--o{ orders : "scopes"
+    stores ||--o{ customers : "scopes"
+    stores ||--o{ discounts : "scopes"
+    stores ||--o{ suppliers : "scopes"
+    stores ||--o{ cash_sessions : "scopes"
+
+    categories ||--o| categories : "parent"
+    categories ||--o{ products : "groups"
+    brands ||--o{ products : "brands"
+    suppliers ||--o{ products : "supplies"
+    products ||--o{ product_variants : "has"
+
+    product_variants ||--o{ order_items : "ordered_as"
+    product_variants ||--o{ stock_movements : "tracked"
+    product_variants ||--o{ cart_items : "carted"
+    product_variants ||--o{ wishlist_items : "wishlisted"
+
+    customers ||--o{ orders : "places"
+    customers ||--o{ addresses : "owns"
+    customers ||--o{ cart_items : "carts"
+    customers ||--o{ wishlist_items : "wishlists"
+
+    orders ||--|| payments : "paid_via"
+    orders ||--|| invoices : "invoiced"
+    orders ||--|| shipments : "shipped_via"
+    orders ||--o{ order_items : "contains"
+
+    addresses ||--o{ shipments : "delivered_to"
+    users ||--o{ orders : "processes"
+    users ||--o{ cash_sessions : "operates"
+```
 
 ---
 
-## 5. API Endpoints (Complete Map)
+## 3. Enums
 
-### Storefront (Public — no auth, `X-Store` header required)
+All domain string values use PHP 8.1+ backed enums in `app/Modules/Core/Enums/`.
 
-| Method | Endpoint                                           | Description                           |
-|--------|----------------------------------------------------|---------------------------------------|
-| GET    | `/api/storefront/products?page=&category_id=&search=` | Paginated product listing (store-scoped) |
-| GET    | `/api/storefront/products/{slug}`                  | Product detail with variants          |
-| GET    | `/api/storefront/categories`                       | Category list with product counts     |
-| GET    | `/api/storefront/settings`                         | Store config (name, logo, currency)   |
+### 3.1 Auth & Access
 
-### Staff Auth (Public)
+| Enum | Values | Used In |
+|------|--------|---------|
+| `UserRole` | `Root`, `StoreAdmin`, `Staff` | `users.role`, `RoleMiddleware` |
 
-| Method | Endpoint          | Description                        |
-|--------|-------------------|------------------------------------|
-| POST   | `/api/auth/login` | Staff login (rate-limited: 10/min) |
-| POST   | `/api/auth/logout`| Revoke current token               |
-| GET    | `/api/auth/me`    | Current staff user                 |
+### 3.2 Order & Sales
 
-### Customer Auth (Public)
+| Enum | Values | Used In |
+|------|--------|---------|
+| `OrderStatus` | `Pending`, `Processing`, `Completed`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` | `orders.status` |
+| `OrderSource` | `Pos`, `Online` | `orders.source` |
+| `InvoiceStatus` | `Draft`, `Issued`, `Paid`, `Cancelled`, `Overdue` | `invoices.status` |
+| `PaymentMethod` | `Cash`, `Transfer` | `payments.method` |
+| `ShipmentMethod` | `Cod`, `Standard`, `Express` | `shipments.method` |
 
-| Method | Endpoint                                    | Description                              |
-|--------|---------------------------------------------|------------------------------------------|
-| POST   | `/api/customer/register`                    | Register (rate-limited: 10/min)          |
-| POST   | `/api/customer/login`                       | Login (rate-limited: 10/min)             |
-| GET    | `/api/auth/oauth/{provider}/redirect`       | OAuth redirect URL (Google)              |
-| GET    | `/api/auth/oauth/{provider}/callback?code=` | OAuth callback → Redirects with Session Cookie   |
+### 3.3 Catalog & Inventory
 
-### Customer Portal (`auth:customer`)
+| Enum | Values | Used In |
+|------|--------|---------|
+| `DiscountType` | `Percentage`, `Fixed` | `discounts.type` |
+| `DiscountScope` | `All`, `Category`, `Product` | `discounts.applies_to` |
+| `StockMovementReason` | `Sale`, `Purchase`, `Adjustment`, `Return` | `stock_movements.reason` |
+| `AddressType` | `Shipping`, `Billing` | `addresses.type` |
 
-| Method           | Endpoint                          | Description                    |
-|------------------|-----------------------------------|--------------------------------|
-| POST             | `/api/customer/logout`            | Revoke token                   |
-| GET              | `/api/customer/me`                | View own profile               |
-| PUT              | `/api/customer/profile`           | Update profile                 |
-| GET/POST/PUT/DELETE | `/api/addresses`               | Address book CRUD              |
-| PUT              | `/api/addresses/{id}/default`     | Set default address            |
-| GET/POST/PUT/DELETE | `/api/cart`                    | Shopping cart CRUD             |
-| DELETE           | `/api/cart`                       | Clear cart                     |
-| POST             | `/api/checkout`                   | Place COD order                |
-| GET              | `/api/checkout/validate`          | Validate stock before checkout |
-| GET              | `/api/my/orders`                  | Order history (paginated)      |
-| GET              | `/api/my/orders/{id}`             | Order detail with shipment     |
-| POST             | `/api/my/orders/{id}/cancel`      | Cancel order (processing only) |
-| GET              | `/api/wishlist`                   | Wishlist items                 |
-| POST             | `/api/wishlist/toggle`            | Add/remove toggle              |
-| DELETE           | `/api/wishlist/{id}`              | Remove specific item           |
-| DELETE           | `/api/wishlist`                   | Clear entire wishlist          |
+### 3.4 System
 
-### Staff Dashboard (`auth:sanctum`)
-
-| Module               | Endpoints (prefix)       | Notes                          |
-|----------------------|--------------------------|--------------------------------|
-| Profile              | `/api/profile`           | Self-update                    |
-| Users                | `/api/users`             | CRUD (admin)                   |
-| Categories           | `/api/categories`        | CRUD (write = admin)           |
-| Products             | `/api/products`          | CRUD + CSV + images + labels   |
-| Variants             | `/api/variants`          | Stock adj., images, SKU lookup |
-| Customers (CRM)      | `/api/customers`         | CRUD + order history           |
-| Orders               | `/api/orders`            | List/detail/create/status/return |
-| Invoices             | `/api/invoices`          | List/detail/print/pdf/receipt  |
-| Suppliers            | `/api/suppliers`         | CRUD (admin)                   |
-| Discounts            | `/api/discounts`         | CRUD + active list (admin)     |
-| Stock Movements      | `/api/stock-movements`   | Filtered list (admin)          |
-| Cash Sessions        | `/api/cash-sessions`     | Open/close/active              |
-| Stores               | `/api/stores`            | CRUD (admin)                   |
-| Backups              | `/api/backups`           | Create/list/download (admin)   |
-| Dashboard            | `/api/dashboard/summary` | Staff overview                 |
-| Reports              | `/api/reports/*`         | Sales/best-sellers/payment-methods |
-| Audit Logs           | `/api/audit-logs`        | Filtered list (admin)          |
+| Enum | Values | Used In |
+|------|--------|---------|
+| `AuditAction` | `Created`, `Updated`, `Deleted` | `audit_logs.action` |
 
 ---
 
-## 6. Route Architecture
+## 4. Order Status Transitions
 
+### POS Orders (`source: pos`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Completed
+    Completed --> Cancelled
+    Completed --> Refunded
+    Cancelled --> Refunded
 ```
-routes/api.php (master loader)
-├── Public (no auth)
-│   └── auth.php → staff login, customer register/login, OAuth
-├── Storefront (store middleware)
-│   └── storefront.php → /products, /products/{slug}, /categories, /settings
-├── Customer (store + stateful + auth:customer)
-│   └── customer-portal.php → addresses, cart, checkout, my/orders, wishlist, customer/*
-└── Staff (store + auth:sanctum)
-    ├── identity.php      → auth/logout, me, profile, users
-    ├── catalog.php       → products, variants, categories
-    ├── sales.php         → orders, invoices
-    ├── customer.php      → customers CRM
-    ├── report.php        → dashboard, reports
-    ├── promotion.php     → discounts
-    ├── supplier.php      → suppliers
-    ├── cash.php          → cash-sessions
-    ├── inventory.php     → stock-movements
-    ├── system.php        → backups
-    ├── audit.php         → audit-logs
-    └── store.php         → stores CRUD
+
+### Online Orders (`source: online`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Processing
+    Processing --> Shipped
+    Shipped --> Delivered
+    Processing --> Cancelled
 ```
 
 ---
 
-## 7. Key Workflows
+## 5. Security & Validation
 
-### POS Checkout
-```
-Product Grid → Variant Dialog → Add to Cart → Select Customer (optional)
-→ Select Discount (optional) → Enter Payment → Complete Sale
-→ Stock deducted, Order created (status=completed, source=pos), Invoice auto-generated
-```
-
-### Online COD Checkout
-```
-Customer logged in → Cart with items → Select/Create Address
-→ POST /api/checkout (OnlineOrderService transaction):
-  Order created (status=processing, source=online)
-  + OrderItems + StockMovements + Invoice + Shipment + Cart cleared
-→ Staff marks Shipped → Staff marks Delivered
-```
-
-### Order Cancellation (Customer)
-```
-POST /api/my/orders/{id}/cancel (processing only)
-→ Stock restored (StockMovement reason=return)
-→ Order status → cancelled, Invoice status → cancelled
-```
-
-### Multi-Store Data Flow
-```
-Nuxt storefront → X-Store: clothing header
-→ ResolveStore middleware → looks up Store by slug
-→ scopes all catalog queries by store_id
-→ returns only that store's products, categories, etc.
-```
-
-### OAuth (Google) Flow
-```
-Frontend → GET /api/auth/oauth/google/redirect → { redirect_url }
-→ Open redirect_url in browser → User consents on Google
-→ Google redirects to callback with ?code=
-→ GET /api/auth/oauth/google/callback
-→ OAuthController: exchange code → find or create Customer by email → create session → redirect to storefront
-```
+| Control | Implementation |
+|---------|---------------|
+| **Staff auth** | Sanctum Bearer token, `auth:sanctum` guard, 24h expiry, cached token middleware |
+| **Customer auth** | Sanctum Bearer token, `auth:customer` guard, 7d expiry |
+| **OAuth auth** | Socialite → Google → Session cookie, `password = null` for OAuth-only accounts |
+| **Role enforcement** | `RoleMiddleware` on routes — accepts `root | store_admin | staff` |
+| **Rate limiting** | Auth endpoints: 10/min · General API: 60/min · Checkout: 10/min |
+| **Password policy** | Min 8 characters, must contain uppercase, lowercase, and digit |
+| **Stock validation** | Row-lock queries at checkout (`->lockForUpdate()`) |
+| **Idempotency** | `IdempotencyMiddleware` on checkout; double-cancel guard on order cancellation |
+| **Input validation** | `FormRequest` classes on all endpoints |
+| **Backup security** | `basename()` strips path traversal on download |
+| **Secrets** | All credentials via `.env`; no keys in codebase |
 
 ---
 
-## 8. Security & Validation
+## 6. Numbering Conventions
 
-- **Auth**: Sanctum token-based (Bearer tokens), two guards: `web` (staff) + `customer`
-- **Token lifetimes**: 24h staff, 7d customers; old tokens revoked on login
-- **Rate limiting**: Login/register throttled to 10/min; API general throttle 60/min
-- **Role-based**: Three roles (`root`, `store_admin`, `staff`) enforced via `AdminMiddleware`; `UserRole` enum
-- **Status transitions**: POS (`pending→completed→cancelled→refunded`), Online (`processing→shipped→delivered`, `processing→cancelled`)
-- **Password policy**: Min 8 chars, uppercase + lowercase + digit
-- **Stock validation**: Atomic row-lock queries at checkout, idempotent double-cancel guard
-- **Input validation**: FormRequest classes for all endpoints
-- **Backup security**: `basename()` strips path traversal on download
-- **OAuth**: OAuth customers (`password = null`) cannot use password login
+| Entity | Format | Example | Generator |
+|--------|--------|---------|-----------|
+| Order Number | `ORD-{YYYYMMDD}-{XXXX}` | `ORD-20260611-0001` | `InvoiceNumberGenerator` |
+| Invoice Number | `INV-{YYYYMMDD}-{XXXX}` | `INV-20260611-0001` | `InvoiceNumberGenerator` |
+
+Sequential per date, resets daily. Database-level locking via `LOCK TABLE` to prevent race conditions.
 
 ---
 
-## 9. Testing
+## 7. Testing
 
-- **147 backend tests** across 20 test files (PHPUnit v12)
-- Run with: `php artisan test --compact`
-- Coverage: Auth, Products, Variants, Categories, Customers, Orders, Invoices, Discounts, Suppliers, Stock Movements, Cash Sessions, Returns, Reports, Dashboard, Users, Profile, Backups, Storefront, OAuth
+| Metric | Value |
+|--------|-------|
+| Framework | PHPUnit 12 |
+| Test files | 20 feature test files |
+| Test count | 147+ (all passing) |
+| Database | SQLite in-memory (`phpunit.xml`) |
+| Run command | `php artisan test --compact` |
 
----
+**Coverage**: Auth, Products, Variants, Categories, Customers, Orders, Invoices, Discounts, Suppliers, Stock Movements, Cash Sessions, Returns, Reports, Dashboard, Users, Profile, Backups, Storefront, OAuth.
 
-## 10. Multi-Store Architecture
-
-| Table           | Has `store_id` | Scoped in Storefront? |
-|-----------------|----------------|------------------------|
-| `products`      | Yes (nullable) | ✅ `->where('store_id', ...)` |
-| `categories`    | Yes (nullable) | ✅ `->where('store_id', ...)` |
-| `orders`        | Yes (nullable) | ✅ Set at checkout      |
-| `customers`     | Yes (nullable) | ✅ Set at register      |
-| `discounts`     | Yes (nullable) | ⏳ Not yet              |
-| `suppliers`     | Yes (nullable) | ⏳ Not yet              |
-| `cash_sessions` | Yes (nullable) | Staff only              |
-| `users`         | Yes (FK)       | Staff assignment        |
-
-Store scoping via **opt-in middleware** (`ResolveStore`) — no global scopes. `StoreScope` trait provides a canonical `resolveStoreId()` helper used across services.
-
----
-
-## 11. ECommerce Module
-
-| Component          | Status | Details                                                         |
-|--------------------|--------|-----------------------------------------------------------------|
-| Cart               | ✅     | Server-side, stock-validated, per-authenticated-customer        |
-| Wishlist           | ✅     | Toggle add/remove, per-authenticated-customer                   |
-| COD Checkout       | ✅     | Transactional (order + invoice + shipment + stock deduction + cart clear) |
-| Order Cancellation | ✅     | Processing only, restocks items, cancels invoice                |
-| Shipments          | ✅     | Tracks address, method, shipped/delivered timestamps            |
-| Order Sources      | ✅     | `source` field: `pos` or `online` (backed by `OrderSource` enum) |
-| Payment Gateways   | ⏳     | KBZ Pay, Wave Money (future phase)                              |
-
----
-
-## 12. Numbering Conventions
-
-| Entity         | Format                   | Example              |
-|----------------|--------------------------|----------------------|
-| Order Number   | `ORD-{YYYYMMDD}-{XXXX}` | ORD-20260526-0001    |
-| Invoice Number | `INV-{YYYYMMDD}-{XXXX}` | INV-20260526-0001    |
-
-Sequential per date, resets daily. Implemented in `InvoiceNumberGenerator` with DB-level locking.
-
----
-
-## 13. Core Shared Infrastructure
-
-Located in `app/Modules/Core/`:
-
-| Component               | Purpose                                                             |
-|-------------------------|---------------------------------------------------------------------|
-| `Enums/`                | 11 strongly-typed PHP enums for all domain values                   |
-| `Traits/ApiResponse`    | Standardized `{ data }` / `{ message }` JSON response helpers       |
-| `Traits/QueryFilter`    | Reusable scope for search/date/status filtering on Eloquent queries  |
-| `Traits/StoreScope`     | Canonical `resolveStoreId()` for multi-tenant store resolution      |
-| `Traits/AuthorizesOwnership` | Ownership guard for customer-owned resources (cart, addresses) |
-| `Traits/HandlesPasswordUpdate` | Shared password hash-on-update logic                        |
-| `Repositories/Repository` | Base repository class with common Eloquent query methods          |
+**Conventions**:
+- `ApiTestCase` base class provides `actingAs(User|Customer)` helpers
+- Factories used for all test data; no hardcoded fixtures
+- Each endpoint tested for happy path, validation errors, and auth/role failures

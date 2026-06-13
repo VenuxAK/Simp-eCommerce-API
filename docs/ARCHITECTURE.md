@@ -1,15 +1,6 @@
 # SimpCommerce — Modular Monolith Architecture
 
-> **Status**: Complete — All phases implemented, Storefront API live, ECommerce + Wishlist active
-> **Branch**: `arch/modular-monolith` (active development)
-> **Database**: PostgreSQL 16+ (SQLite in-memory for tests)
-> **Tests**: 147 passing
-> **Routes**: 103 registered routes across 15 module files
-
-**Repositories**:
-- `simpcommerce-api` — Laravel 13 API backend (this repo)
-- `simpcommerce-dashboard` — Vue 3 + TS SPA (staff dashboard, separate repo)
-- `simpcommerce-storefront-*` — Nuxt 4 SSR storefronts (separate repos per store)
+> **Stack**: Laravel 13 · PHP 8.4 · PostgreSQL 16+ · 14 modules · 112 routes · 37 migrations
 
 ---
 
@@ -18,6 +9,7 @@
 A **Modular Monolith** gives clean domain separation within a single deployable unit — no microservices complexity, no network overhead, but disciplined module boundaries.
 
 Driving requirements:
+
 - **Multiple storefronts** — clothing, electronics, each with their own public Nuxt website
 - **Multiple sales channels** — POS (in-store), online storefronts, future channels
 - **Clear domain boundaries** — developers modify specific business areas without touching unrelated code
@@ -26,304 +18,341 @@ Driving requirements:
 
 ## 2. Module Map
 
-### 14 Modules
+```mermaid
+graph TB
+    subgraph API["SimpCommerce API"]
+        direction TB
 
+        subgraph Foundation["Foundation Layer"]
+            Core["Core<br/>(Shared Kernel)"]
+            Identity["Identity<br/>(Auth, Users)"]
+            Store["Store<br/>(Multi-tenant)"]
+        end
+
+        subgraph Catalog["Catalog Domain"]
+            CTG["Categories<br/>(Hierarchical)"]
+            BRD["Brands"]
+            PRD["Products"]
+            VAR["Product Variants"]
+            SFR["Storefront<br/>(Public API)"]
+        end
+
+        subgraph Commerce["Commerce Domain"]
+            CST["Customer<br/>(CRM, Auth, OAuth)"]
+            SALES["Sales<br/>(Orders, Invoices)"]
+            EC["ECommerce<br/>(Cart, Checkout, Wishlist, Shipments)"]
+        end
+
+        subgraph Operations["Operations Domain"]
+            INV["Inventory<br/>(Stock Movements)"]
+            PROMO["Promotion<br/>(Discounts)"]
+            SUP["Supplier"]
+            CASH["Cash<br/>(Sessions)"]
+        end
+
+        subgraph System["System Domain"]
+            AUDIT["Audit<br/>(Logs)"]
+            REPORT["Report<br/>(Analytics)"]
+            SYS["System<br/>(Backups)"]
+        end
+
+        Core -.-> Catalog
+        Core -.-> Commerce
+        Core -.-> Operations
+        Core -.-> System
+        Core -.-> Foundation
+    end
+
+    style Foundation fill:#e8f5e9
+    style Catalog fill:#e3f2fd
+    style Commerce fill:#fff3e0
+    style Operations fill:#fce4ec
+    style System fill:#f3e5f5
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        SimpCommerce API                          │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │  Core    │  │ Identity │  │  Store   │  │ Catalog  │        │
-│  │(Shared   │  │ (Auth,   │  │ (Multi-  │  │(Products │        │
-│  │ Kernel)  │  │  Users)  │  │  store)  │  │ & Categ.)│        │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ Customer │  │  Sales   │  │Inventory │  │Promotion │        │
-│  │(CRM,Auth,│  │ (Orders, │  │ (Stock,  │  │(Discounts│        │
-│  │  OAuth)  │  │  POS)    │  │Movements)│  │ & Rules) │        │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ Supplier │  │   Cash   │  │  Audit   │  │  Report  │        │
-│  │(Vendors) │  │(Sessions)│  │  (Logs)  │  │(Analytics│        │
-│  │          │  │          │  │          │  │ & Dash.) │        │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
-│                                                                  │
-│  ┌──────────┐   ┌───────────────────────────────────────────┐   │
-│  │  System  │   │            ECommerce Module               │   │
-│  │ (Backup) │   │(Cart, Wishlist, Checkout, Shipments, MyOrders)│ │
-│  └──────────┘   └───────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────┘
-```
+
+**14 modules** organized into 5 domain layers, all sharing a common `Core` kernel.
+
+| Layer | Module | Responsibility |
+|-------|--------|---------------|
+| Foundation | Core | Enums, traits (`ApiResponse`, `StoreScope`, `QueryFilter`, `AuthorizesOwnership`, `HandlesPasswordUpdate`), base `Repository` |
+| Foundation | Identity | Staff auth (`AuthController`), user CRUD (`UserController`), profiles, role middleware |
+| Foundation | Store | Multi-tenant store model, `ResolveStore` middleware |
+| Catalog | Catalog | Products, variants, categories (with hierarchy), brands, CSV import/export, image management, storefront API |
+| Commerce | Customer | Customer CRM, customer auth (register/login), OAuth (Google via Socialite), address book |
+| Commerce | Sales | Orders (POS + online), invoices, payments, status transitions, returns |
+| Commerce | ECommerce | Server-side cart, COD checkout, wishlist, shipments, customer order history |
+| Operations | Inventory | Stock movements, stock service (atomic decrement/increment) |
+| Operations | Promotion | Discounts (percentage/fixed, scoped to all/category/product) |
+| Operations | Supplier | Supplier CRUD, store-scoped |
+| Operations | Cash | Cash drawer sessions (open/close/reconcile) |
+| System | Audit | Model change logging (created/updated/deleted with old/new values) |
+| System | Report | Dashboard summary, sales reports, best-sellers, payment method analytics |
+| System | System | Database backups (driver-aware: pg_dump/mysqldump/copy) |
 
 ---
 
-## 3. Key Architectural Features
+## 3. Core Shared Kernel
 
-### Core Shared Kernel (`app/Modules/Core/`)
+`app/Modules/Core/` provides infrastructure consumed by all other modules. It has no HTTP layer.
 
-The Core module contains all shared infrastructure used across modules:
-
-| Component                    | Purpose                                                                |
-|------------------------------|------------------------------------------------------------------------|
-| `Enums/` (11 enums)          | Strongly-typed PHP enums for all domain values (UserRole, OrderStatus, etc.) |
-| `Traits/ApiResponse`         | Standardized `{ data }` / `{ message }` JSON response helpers          |
-| `Traits/QueryFilter`         | Reusable Eloquent scope for search/date/status filtering               |
-| `Traits/StoreScope`          | Canonical `resolveStoreId()` for multi-tenant store resolution        |
-| `Traits/AuthorizesOwnership` | Ownership guard for customer-owned resources (cart items, addresses)   |
-| `Traits/HandlesPasswordUpdate` | Shared password hashing logic (used in Profile, User, Customer)     |
-| `Repositories/Repository`   | Base repository class with common Eloquent query helpers               |
-
-### Multi-Store (Tenant Per Store)
-
-- `store_id` FK on 8 tables: `products`, `categories`, `orders`, `discounts`, `suppliers`, `cash_sessions`, `customers`, `users`
-- **`ResolveStore` middleware** reads `X-Store` header, resolves `app('current_store')`
-- Middleware registered as `store` alias, applied to `/api/storefront/*` and `/api/customer/*` route groups
-- **`StoreScope` trait** provides the canonical `resolveStoreId()` helper; used by services to avoid repeated `app()` calls
-- No global scopes — explicit `->where('store_id', ...)` in queries
-
-### API Route Architecture
-
-- Master `routes/api.php` loads **15 per-module route files**
-- **4 middleware groups**: Public → Storefront → Customer → Staff/Admin
-- Storefront group (`/api/storefront/*`): public + store-scoped
-- Customer portal (`/api/cart|checkout|addresses|wishlist|my/*|customer/*`): `store + stateful + auth:customer`
-
-### Service Layer
-
-Each module has a dedicated `Services/` directory. Business logic is extracted from controllers into services:
-
-| Service                  | Module      | Responsibility                                          |
-|--------------------------|-------------|---------------------------------------------------------|
-| `OrderService`           | Sales       | POS order creation, status transitions, returns, stock  |
-| `InvoiceService`         | Sales       | Invoice creation and linking                            |
-| `InvoiceNumberGenerator` | Sales       | DB-locked sequential ORD/INV number generation          |
-| `OnlineOrderService`     | ECommerce   | Transactional COD checkout (order + stock + invoice + shipment) |
-| `CartService`            | ECommerce   | Cart CRUD with stock validation                         |
-| `WishlistService`        | ECommerce   | Wishlist toggle, listing, clearing                      |
-| `MyOrderService`         | ECommerce   | Customer-facing order history and cancellation          |
-| `ProductService`         | Catalog     | Product + variant create/update/delete orchestration    |
-| `ProductImportService`   | Catalog     | CSV import with per-row validation                      |
-| `ProductExportService`   | Catalog     | CSV export with headers                                 |
-| `StorefrontService`      | Catalog     | Store-scoped public product/category/settings queries   |
-| `MediaService`           | Catalog     | Image upload and storage management                     |
-| `DashboardService`       | Report      | Dashboard summary aggregation                           |
-| `ReportService`          | Report      | Sales, best-sellers, payment-method analytics           |
-
-### Repository Pattern
-
-The `Core` module defines a base `Repository` class. The ECommerce module uses repositories to isolate data access for frequently-used queries:
-
-- `CartItemRepository` — cart queries scoped to customer
-- `WishlistItemRepository` — wishlist queries with product loading
-- `ShipmentRepository` — shipment creation at checkout
-
-### ECommerce Module
-
-- **Cart**: Server-side, stock-validated, tied to authenticated customers
-- **Wishlist**: Toggle-based add/remove per authenticated customer
-- **COD Checkout**: Via `OnlineOrderService` (transactional: order + invoice + shipment + stock deduction + cart clear)
-- **Order lifecycle**: `processing → shipped → delivered` (forward) / `processing → cancelled` (restock)
-- **`source`** field on orders: `pos` or `online` (backed by `OrderSource` enum)
-
-### Database
-
-- **PostgreSQL 16+** for development/production
-- **SQLite in-memory** for tests (configured in `phpunit.xml`)
-- Sequential number generators with DB-level locking: `INV-{YYYYMMDD}-{XXXX}`, `ORD-{YYYYMMDD}-{XXXX}`
-
-### Backup System
-
-Driver-aware backup controller: `pg_dump` for PostgreSQL, `mysqldump` for MySQL, file copy for SQLite. Filenames include driver extension. `basename()` prevents path traversal on downloads.
+| Component | Type | Purpose |
+|-----------|------|---------|
+| `Enums/` (11 files) | PHP 8.1+ backed enums | `UserRole`, `OrderStatus`, `OrderSource`, `InvoiceStatus`, `PaymentMethod`, `DiscountType`, `DiscountScope`, `StockMovementReason`, `ShipmentMethod`, `AddressType`, `AuditAction` |
+| `ApiResponse` | Trait | `success()` / `error()` / `message()` helpers for consistent JSON responses |
+| `QueryFilter` | Trait | Eloquent scope: `scopeFilter($query, $filters)` — search/date/status filtering |
+| `StoreScope` | Trait | `resolveStoreId()` — canonical method for multi-tenant store resolution |
+| `AuthorizesOwnership` | Trait | `authorizeOwnership($model)` — gates for customer-owned resources |
+| `HandlesPasswordUpdate` | Trait | `updatePasswordIfProvided()` — shared hash-on-update logic |
+| `Repository` | Class | Base repository with common Eloquent query scaffolding |
 
 ---
 
-## 4. Multi-Store Data Model
+## 4. Multi-Store Architecture
 
-### The `stores` Table
+### Resolution Flow
 
-| Column        | Type            | Notes                                      |
-|---------------|-----------------|--------------------------------------------|
-| `id`          | BIGINT PK       | Auto-increment                             |
-| `name`        | VARCHAR(255)    | Store display name                         |
-| `slug`        | VARCHAR(255)    | UNIQUE — identifier sent as `X-Store` header |
-| `domain`      | VARCHAR(255)    | NULL — Custom domain for storefront        |
-| `description` | TEXT            | NULL                                       |
-| `logo`        | VARCHAR(255)    | NULL                                       |
-| `phone`       | VARCHAR(255)    | NULL                                       |
-| `email`       | VARCHAR(255)    | NULL                                       |
-| `is_active`   | BOOLEAN         | Default `true`                             |
-| `settings`    | JSON            | NULL — Freeform store config (currency, theme, shipping) |
+```mermaid
+sequenceDiagram
+    participant N as Nuxt Storefront
+    participant MW as ResolveStore Middleware
+    participant DB as PostgreSQL
+    participant S as Service Layer
 
-### Store Resolution
-
-```
-Nuxt storefront → NUXT_PUBLIC_STORE_SLUG=clothing
-                → X-Store: clothing header on every request
-                → ResolveStore middleware reads header
-                → Store::where('slug', $slug)->firstOrFail()
-                → app('current_store') = resolved Store model
-                → StoreScope::resolveStoreId() = store.id
+    N->>MW: GET /api/storefront/products<br/>Header: X-Store: clothing
+    MW->>DB: SELECT * FROM stores WHERE slug = 'clothing'
+    DB-->>MW: Store { id: 2, slug: "clothing", ... }
+    MW->>MW: app('current_store') = store
+    MW->>S: proceed to controller
+    S->>S: $storeId = StoreScope::resolveStoreId()
+    S->>DB: SELECT * FROM products WHERE store_id = 2
+    DB-->>S: scoped results
 ```
 
-### Tables with `store_id`
+### Store-Scoped Tables
 
-| Table           | Nullable | Scoped in Storefront?      |
-|-----------------|----------|----------------------------|
-| `products`      | Yes      | ✅                          |
-| `categories`    | Yes      | ✅                          |
-| `orders`        | Yes      | ✅ Set at checkout          |
-| `customers`     | Yes      | ✅ Set at registration      |
-| `discounts`     | Yes      | ⏳ Not yet                  |
-| `suppliers`     | Yes      | ⏳ Not yet                  |
-| `cash_sessions` | Yes      | Staff only                  |
-| `users`         | FK       | Staff assignment only       |
+| Table | FK | Nullable | Scoped In |
+|-------|-----|----------|-----------|
+| `products` | `store_id` | Yes | Storefront, Staff |
+| `categories` | `store_id` | Yes | Storefront, Staff |
+| `brands` | `store_id` | No | Storefront, Staff |
+| `orders` | `store_id` | Yes | Set at checkout |
+| `customers` | `store_id` | Yes | Set at registration |
+| `discounts` | `store_id` | Yes | Staff dashboard |
+| `suppliers` | `store_id` | Yes | Staff dashboard |
+| `cash_sessions` | `store_id` | Yes | Staff dashboard |
+| `users` | `store_id` (FK) | Yes | Staff assignment |
+
+**Design principle**: No global scopes. All store filtering is explicit via `->where('store_id', ...)`. The `StoreScope` trait provides the canonical `resolveStoreId()` helper used across all services.
 
 ---
 
-## 5. Enums
+## 5. API Route Architecture
 
-All domain string values are backed by PHP 8.1+ backed enums in `app/Modules/Core/Enums/`:
+`routes/api.php` is the master loader. It delegates to **15 per-module route files** organized into 4 middleware groups:
 
+```mermaid
+graph LR
+    A[routes/api.php] --> B[Public<br/>throttle, timeout]
+    A --> C[Storefront<br/>store, throttle, timeout]
+    A --> D[Customer Portal<br/>store, stateful, auth:customer, throttle, timeout]
+    A --> E[Staff Dashboard<br/>store, cached.auth, throttle, timeout]
+
+    B --> B1[auth.php<br/>login, register, OAuth]
+
+    C --> C1[storefront.php<br/>products, categories, brands, settings]
+
+    D --> D1[customer-portal.php<br/>cart, checkout, addresses,<br/>wishlist, my/orders, customer/*]
+
+    E --> E1[identity.php]
+    E --> E2[catalog.php]
+    E --> E3[sales.php]
+    E --> E4[customer.php]
+    E --> E5[report.php]
+    E --> E6[promotion.php]
+    E --> E7[supplier.php]
+    E --> E8[cash.php]
+    E --> E9[inventory.php]
+    E --> E10[system.php]
+    E --> E11[audit.php]
+    E --> E12[store.php]
 ```
-AddressType.php          → Shipping, Billing
-AuditAction.php          → Created, Updated, Deleted
-DiscountScope.php        → All, Category, Product
-DiscountType.php         → Percentage, Fixed
-InvoiceStatus.php        → Draft, Issued, Paid, Cancelled, Overdue
-OrderSource.php          → Pos, Online
-OrderStatus.php          → Pending, Processing, Completed, Shipped, Delivered, Cancelled, Refunded
-PaymentMethod.php        → Cash, Transfer
-ShipmentMethod.php       → Cod, Standard, Express
-StockMovementReason.php  → Sale, Purchase, Adjustment, Return
-UserRole.php             → Root, StoreAdmin, Staff
-```
+
+| Group | Middleware | Purpose |
+|-------|-----------|---------|
+| **Public** | `throttle:auth`, `timeout` | Staff login, customer register/login, OAuth |
+| **Storefront** | `store`, `throttle:api`, `timeout`, `/storefront/*` | Public catalog browsing |
+| **Customer** | `store`, `stateful`, `auth:customer`, `throttle:api`, `timeout` | Customer portal |
+| **Staff** | `store`, `cached.auth`, `throttle:api`, `timeout` | Dashboard CRUD |
 
 ---
 
-## 6. API Routes
+## 6. Service Layer
 
-### Route Groups
+Business logic lives in dedicated service classes, not controllers. Each module has a `Services/` directory.
 
-| Group      | Prefix / Middleware                        | Purpose                          |
-|------------|--------------------------------------------|----------------------------------|
-| Public     | `throttle:10,1`                            | Login, register, OAuth           |
-| Storefront | `store`, `throttle:60,1` + `/storefront/*` | Public catalog browsing          |
-| Customer   | `store`, `stateful`, `auth:customer`, `throttle:60,1` | Customer portal     |
-| Staff      | `store`, `auth:sanctum`, `throttle:60,1`   | Dashboard CRUD                   |
-| Admin      | Staff + `admin` middleware                 | User management, audit, backups  |
-
-### Storefront Public Endpoints
-
-| Method | Endpoint                                           | Description                    |
-|--------|----------------------------------------------------|--------------------------------|
-| GET    | `/api/storefront/products?page=&category_id=&search=` | Paginated product listing   |
-| GET    | `/api/storefront/products/{slug}`                  | Product detail with variants   |
-| GET    | `/api/storefront/categories`                       | Category list with counts      |
-| GET    | `/api/storefront/settings`                         | Store config                   |
+| Service | Module | Responsibility |
+|---------|--------|---------------|
+| `OrderService` | Sales | POS order creation, status transitions, item returns, stock orchestration |
+| `InvoiceService` | Sales | Invoice creation, linking to orders |
+| `InvoiceNumberGenerator` | Sales | DB-locked sequential `ORD-`/`INV-` number generation |
+| `OnlineOrderService` | ECommerce | Transactional COD checkout (order + stock + invoice + shipment + cart clear) |
+| `CartService` | ECommerce | Cart CRUD with stock validation |
+| `WishlistService` | ECommerce | Wishlist toggle, listing, clearing |
+| `MyOrderService` | ECommerce | Customer-facing order history and cancellation (with double-cancel guard) |
+| `ProductService` | Catalog | Product + variant create/update/delete orchestration |
+| `ProductImportService` | Catalog | CSV import with per-row validation, dispatched as `ProcessProductImportJob` |
+| `ProductExportService` | Catalog | CSV export with headers |
+| `StorefrontService` | Catalog | Store-scoped public product/category/brand/settings queries |
+| `StorefrontCacheService` | Catalog | Caching layer for storefront responses |
+| `MediaService` | Catalog | Image upload and storage (products, variants, categories, brands) |
+| `CustomerService` | Customer | Customer management |
+| `UserService` | Identity | Staff user management |
+| `StockService` | Inventory | Atomic stock operations |
+| `DiscountService` | Promotion | Discount application logic |
+| `CashSessionService` | Cash | Session open/close with expected balance calculation |
+| `DashboardService` | Report | Dashboard summary aggregation |
+| `ReportService` | Report | Sales, best-sellers, payment-method analytics |
+| `BackupService` | System | Driver-aware backup creation, dispatched as `CreateBackupJob` |
 
 ---
 
-## 7. Directory Structure
+## 7. Repository Pattern
+
+The `Core` module defines a base `Repository` class with common Eloquent query methods. All 14 modules use per-entity repositories for data access isolation.
+
+| Repository | Module |
+|-----------|--------|
+| `UserRepository` | Identity |
+| `StoreRepository` | Store |
+| `ProductRepository`, `ProductVariantRepository`, `CategoryRepository`, `BrandRepository` | Catalog |
+| `CustomerRepository`, `AddressRepository` | Customer |
+| `OrderRepository`, `OrderItemRepository`, `InvoiceRepository`, `PaymentRepository` | Sales |
+| `CartItemRepository`, `WishlistItemRepository`, `ShipmentRepository` | ECommerce |
+| `StockMovementRepository` | Inventory |
+| `DiscountRepository` | Promotion |
+| `SupplierRepository` | Supplier |
+| `CashSessionRepository` | Cash |
+| `AuditLogRepository` | Audit |
+
+---
+
+## 8. Database Design Highlights
+
+| Feature | Detail |
+|---------|--------|
+| **Engine** | PostgreSQL 16+ (production), SQLite in-memory (tests) |
+| **Partitioning** | `audit_logs` and `orders` tables (range partitioning, migration `2026_06_09`) |
+| **Performance indexes** | Added in migration `2026_06_08_000001` for scaling |
+| **Number generation** | `ORD-{YYYYMMDD}-{XXXX}`, `INV-{YYYYMMDD}-{XXXX}` — sequential per date, DB-level locking via `InvoiceNumberGenerator` |
+| **Category hierarchy** | Self-referencing `parent_id` FK on `categories` (migration `2026_06_10_111500`) |
+| **Queue driver** | Database (`jobs` table), used by `ProcessProductImportJob` and `CreateBackupJob` |
+
+---
+
+## 9. Auth & Security Architecture
+
+```mermaid
+graph TB
+    subgraph Guards["Auth Guards"]
+        STAFF["api (Sanctum)<br/>Provider: users<br/>Token: 24h"]
+        CUST["customer (Session)<br/>Provider: customers<br/>Token: 7d"]
+        OAUTH["OAuth (Session)<br/>Provider: Google<br/>Session Cookie: 7d"]
+    end
+
+    subgraph Middleware["Permission Middleware"]
+        ROLE["RoleMiddleware<br/>Accepts: root, store_admin, staff"]
+        OWN["AuthorizesOwnership<br/>Scopes to customer-owned models"]
+    end
+
+    STAFF --> ROLE
+    CUST --> OWN
+    OAUTH --> OWN
+```
+
+| Control | Implementation |
+|---------|---------------|
+| **Token auth** | Sanctum `auth:sanctum` guard with `personal_access_tokens` table |
+| **Token lifetimes** | Staff: 24h, Customer: 7d |
+| **Session auth** | `auth:customer` guard with stateful Sanctum sessions (OAuth flow) |
+| **Role enforcement** | `RoleMiddleware` at route level — accepts array of allowed roles |
+| **Cached token auth** | `CachedTokenAuth` middleware reduces DB hits on every request |
+| **Rate limiting** | Auth: 10/min, API: 60/min, Checkout: 10/min + idempotency key |
+| **Password policy** | Min 8 chars, uppercase + lowercase + digit |
+| **OAuth security** | OAuth customers have `password = null`, cannot use password login |
+| **CORS** | Configurable per environment via `config/cors.php` |
+
+---
+
+## 10. ECommerce Module
+
+```mermaid
+graph LR
+    C[Customer] -->|add| CT[Cart<br/>stock-validated]
+    C -->|toggle| WL[Wishlist]
+    CT -->|POST /checkout| CO[OnlineOrderService<br/>transactional]
+    CO --> O[Order<br/>status: processing]
+    CO --> I[Invoice<br/>status: issued]
+    CO --> S[Shipment<br/>method: standard]
+    CO --> ST[Stock Deduction]
+    CO --> CM[StockMovements]
+
+    C -->|GET| MO[My Orders]
+    C -->|POST cancel| CAN[Cancellation<br/>restocks + cancels invoice]
+```
+
+- **Cart**: Server-side, per-customer, stock-validated. Unit price = `product.base_price + variant.price_adjustment`.
+- **COD Checkout**: Atomic transaction via `OnlineOrderService` — order + invoice + shipment + stock deduction + cart clear.
+- **Idempotency**: `IdempotencyMiddleware` on checkout prevents duplicate orders from network retries.
+- **Cancellation**: Processing orders only. Restocks with `StockMovement` (reason=Return). Double-cancel guarded.
+- **Shipments**: Linked to address, tracks `shipped_at`/`delivered_at`, supports tracking numbers.
+
+---
+
+## 11. Directory Structure
 
 ```
 simpcommerce-api/
 ├── app/
-│   └── Modules/
-│       ├── Core/
-│       │   ├── Enums/          # 11 domain enums
-│       │   ├── Traits/         # ApiResponse, QueryFilter, StoreScope,
-│       │   │                   #   AuthorizesOwnership, HandlesPasswordUpdate
-│       │   └── Repositories/   # Base Repository class
-│       ├── Identity/           # AuthController, UserController, ProfileController,
-│       │                       #   AdminMiddleware, User model (UserRole enum)
-│       ├── Store/              # StoreController, ResolveStore middleware, Store model
-│       ├── Catalog/            # ProductController, ProductVariantController,
-│       │                       #   CategoryController, StorefrontController,
-│       │                       #   ProductService, ProductImportService,
-│       │                       #   ProductExportService, StorefrontService, MediaService
-│       ├── Customer/           # CustomerController, CustomerAuthController,
-│       │                       #   CustomerProfileController, AddressController,
-│       │                       #   OAuthController, Customer model (Authenticatable),
-│       │                       #   Address model (AddressType enum)
-│       ├── Sales/              # OrderController, InvoiceController,
-│       │                       #   OrderService, InvoiceService,
-│       │                       #   InvoiceNumberGenerator, Order/OrderItem/Payment/Invoice models
-│       ├── Inventory/          # StockMovementController, StockMovement model
-│       ├── Promotion/          # DiscountController, Discount model
-│       ├── Supplier/           # SupplierController, Supplier model
-│       ├── Cash/               # CashSessionController, CashSession model
-│       ├── Audit/              # AuditLogController, AuditLog model
-│       ├── Report/             # DashboardController, ReportController,
-│       │                       #   DashboardService, ReportService
-│       ├── System/             # BackupController (driver-aware: pg_dump/mysqldump/copy)
-│       └── ECommerce/          # CartController, CheckoutController,
-│                               #   MyOrderController, WishlistController,
-│                               #   OnlineOrderService, CartService,
-│                               #   WishlistService, MyOrderService,
-│                               #   CartItemRepository, WishlistItemRepository,
-│                               #   ShipmentRepository,
-│                               #   CartItem, WishlistItem, Shipment models
+│   ├── Http/
+│   │   └── Middleware/           # Idempotency, RequestTimeout
+│   ├── Modules/                  # 14 domain modules
+│   │   ├── Core/                 # Enums, Traits, Repository base
+│   │   ├── Identity/             # Auth, Users, Profile, User model
+│   │   ├── Store/                # Store model, ResolveStore middleware
+│   │   ├── Catalog/              # Products, Variants, Categories, Brands, Storefront
+│   │   ├── Customer/             # CRM, CustomerAuth, OAuth, AddressBook
+│   │   ├── Sales/                # Orders, Invoices, Payments, order services
+│   │   ├── ECommerce/            # Cart, Wishlist, Checkout, MyOrders, Shipments
+│   │   ├── Inventory/            # StockMovement, StockService
+│   │   ├── Promotion/            # Discount, DiscountService
+│   │   ├── Supplier/             # Supplier CRUD
+│   │   ├── Cash/                 # CashSession, CashSessionService
+│   │   ├── Audit/                # AuditLog
+│   │   ├── Report/               # Dashboard, Reports
+│   │   └── System/               # Backups
+│   └── Providers/                # Module service providers
 ├── database/
-│   ├── factories/              # 15 model factories
-│   ├── migrations/             # 31 migration files
-│   └── seeders/                # DatabaseSeeder (store + staff + data)
+│   ├── factories/                # 16 model factories
+│   ├── migrations/               # 37 migration files
+│   └── seeders/                  # DatabaseSeeder
 ├── routes/
-│   ├── api.php                 # Master route loader (4 middleware groups)
-│   └── modules/                # 15 per-module route files
-├── docs/                       # Project documentation (README, API, SPEC, ARCH)
+│   ├── api.php                   # Master route loader (4 middleware groups)
+│   └── modules/                  # 15 per-module route files
+├── docs/                         # ARCHITECTURE, SPECIFICATION, API, PRD, PROJECT_ANALYSIS
 └── tests/
-    ├── Feature/Api/            # 19 feature test files (147 tests)
-    └── ApiTestCase.php         # Base test case with helpers
+    ├── Feature/Api/              # 20 test files (147+ tests)
+    └── ApiTestCase.php           # Base test case with helpers
 ```
 
----
-
-## 8. Factories (15 total)
-
-| Factory                  | Model             |
-|--------------------------|-------------------|
-| `UserFactory`            | User              |
-| `StoreFactory`           | Store             |
-| `CategoryFactory`        | Category          |
-| `ProductFactory`         | Product           |
-| `ProductVariantFactory`  | ProductVariant    |
-| `CustomerFactory`        | Customer          |
-| `OrderFactory`           | Order             |
-| `OrderItemFactory`       | OrderItem         |
-| `PaymentFactory`         | Payment           |
-| `InvoiceFactory`         | Invoice           |
-| `SupplierFactory`        | Supplier          |
-| `DiscountFactory`        | Discount          |
-| `CashSessionFactory`     | CashSession       |
-| `CartItemFactory`        | CartItem          |
-| `WishlistItemFactory`    | WishlistItem      |
-
----
-
-## 9. Current Status
-
-### ✅ Completed
-
-- [x] **14 modules** fully operational
-- [x] **Multi-store**: `store_id` on 8 tables, `ResolveStore` middleware, `StoreScope` trait
-- [x] **Storefront API**: `/api/storefront/products|categories|settings` public endpoints
-- [x] **ECommerce**: Cart, Wishlist, COD checkout, shipments, customer orders
-- [x] **OAuth**: Google social login via Socialite → Session Cookie (`OAuthController`)
-- [x] **Enums**: 11 strongly-typed enums replacing all magic strings
-- [x] **Repository pattern**: Base `Repository` class + ECommerce repositories
-- [x] **Service layer**: 14 dedicated services extracted from controllers
-- [x] **Shared traits**: `StoreScope`, `AuthorizesOwnership`, `HandlesPasswordUpdate`
-- [x] **103 routes**: Fully registered and mapped
-- [x] **147 tests**: All passing
-- [x] **Backup**: Driver-aware (`pg_dump`/`mysqldump`/copy)
-
-### ⏳ Next Steps
-
-1. **Discount/Supplier storefront scoping** — Apply `store_id` filter in storefront for discounts and suppliers
-2. **Payment gateways** — KBZ Pay / Wave Money (deferred)
-3. **Plain products** — Support products without variants (deferred)
-4. **Storefront cookie auth** — Switch to Sanctum HttpOnly cookie auth for storefronts
-5. **Admin online order management** — Ship/deliver actions in dashboard
+Each module follows a consistent internal structure (not every module has all layers):
+```
+Module/
+├── Http/Controllers/    # Request handling
+├── Http/Resources/      # API resource transformers
+├── Http/Requests/       # Form request validation
+├── Models/              # Eloquent models
+├── Services/            # Business logic
+├── Repositories/        # Data access
+├── Providers/           # Service providers
+└── Jobs/                # Async jobs
+```

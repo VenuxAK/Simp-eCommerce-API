@@ -1,171 +1,90 @@
 # SimpCommerce API
 
-Laravel 13 REST API backend for SimpCommerce — a modular commerce platform with POS, multi-storefront e-commerce, customer CRM, inventory management, and bilingual (EN/MY) support.
+> Modular commerce platform — self-hosted, open-source, built for Myanmar's mid-market retailers.
 
-**Repositories**: `simpcommerce-api` (this repo), `simpcommerce-dashboard` (Vue 3 SPA), `simpcommerce-storefront-*` (Nuxt 4 SSR)
+**Stack**: Laravel 13 · PHP 8.4 · PostgreSQL 16+ · 14 modules · 112 routes · 147+ tests
 
-## Requirements
+**Repositories**: `simpcommerce-api` (this repo) · `simpcommerce-dashboard` (Vue 3 SPA) · `simpcommerce-storefront-*` (Nuxt 4 SSR)
 
-- PHP 8.4+
-- PostgreSQL 16+ (SQLite for testing)
-- Composer
-- Node.js (for asset bundling)
+---
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 composer install
-
-# Configure environment
 cp .env.example .env
 php artisan key:generate
 
-# Ensure PostgreSQL is running with a database created.
-# Default config expects: host=127.0.0.1, port=5432,
-# database=simp_commerce, user=postgres, password=secret
-# (adjust .env if your setup differs)
-
-# Run database migrations and seed
+# Configure PostgreSQL in .env (defaults: 127.0.0.1:5432, simp_commerce)
 php artisan migrate --seed
-
-# Create storage symlink for images
 php artisan storage:link
-
-# Start the development server
-php artisan serve
-# → http://localhost:8000
+php artisan serve   # → http://localhost:8000
 ```
 
 ## Default Credentials
 
-| Role       | Email                  | Password   |
-|------------|------------------------|------------|
-| Root       | `admin@simppos.test`   | `Pass1234` |
-| Staff      | `staff@simppos.test`   | `Pass1234` |
+| Role | Email | Password |
+|------|-------|----------|
+| Root | `admin@simppos.test` | `Pass1234` |
+| Staff | `staff@simppos.test` | `Pass1234` |
 
 ## Testing
 
 ```bash
 php artisan test --compact
-# 147 tests covering all endpoints
 ```
+
+## Documentation
+
+| Document | Covers |
+|----------|--------|
+| [`SPECIFICATION.md`](docs/SPECIFICATION.md) | Tech stack, database schema, enums, security, testing strategy |
+| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Module design, multi-store model, service layer, route architecture |
+| [`API.md`](docs/API.md) | Complete endpoint reference (112 routes, request/response formats) |
+| [`PRD.md`](docs/PRD.md) | Product requirements, user personas, roadmap |
+| [`PROJECT_ANALYSIS.md`](docs/PROJECT_ANALYSIS.md) | Codebase analysis, business domains, module inventory |
 
 ## Architecture
 
-**Modular monolith** — 14 modules under `app/Modules/` with per-module route files under `routes/modules/`. Master loader at `routes/api.php`.
+**Modular monolith** — 14 domain modules under `app/Modules/` sharing a common `Core` kernel.
 
 ```
-Core → Identity → Store → Catalog → Customer → Sales → Inventory
-     → Promotion → Supplier → Cash → Audit → Report → System → ECommerce
+Core → Identity → Store → Catalog → Customer → Sales → ECommerce
+     → Inventory → Promotion → Supplier → Cash → Audit → Report → System
 ```
 
-**Database**: PostgreSQL (development/production), SQLite in-memory (tests).
+**Multi-store**: `store_id` FK on 9 tables, `ResolveStore` middleware reads `X-Store` header.
 
-**Multi-store**: `store_id` FK on 6 tables. `ResolveStore` middleware reads `X-Store` header, scopes catalog queries by store.
+**Auth**: Sanctum token-based, two guards (`api` for staff 24h, `customer` for customers 7d) + Google OAuth.
 
-**Auth**: Sanctum token-based, two guards (`web` + `customer`), 24h staff / 7d customer tokens.
+**Routes**: 4 middleware groups → 15 per-module route files → 112 endpoints.
 
-## API Endpoints
+See [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) for module diagrams and design rationale.
 
-All endpoints are prefixed with `/api`. Routes are organized into 15 per-module files. **103 total routes**.
+## API Overview
 
-### Storefront (Public — no auth)
+| Group | Prefix | Auth | Purpose |
+|-------|--------|------|---------|
+| Public | `/auth/*`, `/customer/*` | None | Login, register, OAuth |
+| Storefront | `/storefront/*` | None (public) | Product catalog, categories, brands |
+| Customer Portal | `/cart`, `/checkout`, `/addresses`, `/wishlist`, `/my/*` | `auth:customer` | Shopping, orders, profile |
+| Staff Dashboard | `/products`, `/orders`, `/invoices`, `/customers`, etc. | `auth:sanctum` | Admin, POS, CRM, reports |
 
-| Method | Endpoint                           | Description                              |
-|--------|------------------------------------|------------------------------------------|
-| GET    | `/api/storefront/products`         | Paginated products (store-scoped)        |
-| GET    | `/api/storefront/products/{slug}`  | Product detail with variants             |
-| GET    | `/api/storefront/categories`       | Category list with product counts        |
-| GET    | `/api/storefront/settings`         | Store config (branding, contact, currency) |
+Full reference: [`API.md`](docs/API.md).
 
-### Staff Auth & Dashboard (`auth:sanctum`)
+## Key Capabilities
 
-| Module             | Description                                                                |
-|--------------------|----------------------------------------------------------------------------|
-| Auth               | Staff login/logout/me                                                      |
-| Profile            | Self-update name/email/password                                             |
-| Users              | CRUD (admin only)                                                           |
-| Products           | CRUD, CSV import/export, image upload, barcode labels                       |
-| Variants           | Stock adjustment, image upload, barcode lookup by SKU                       |
-| Categories         | CRUD (write = admin)                                                        |
-| Orders             | List/detail/create (POS), status updates (admin), item returns (admin)      |
-| Invoices           | List/detail/print/PDF/receipt                                               |
-| Customers (CRM)    | CRUD + order history                                                        |
-| Suppliers          | CRUD (admin)                                                                |
-| Discounts          | CRUD + active list (admin)                                                  |
-| Stock Movements    | Filtered list (admin)                                                       |
-| Cash Sessions      | Open/close/active session                                                   |
-| Stores             | CRUD (admin)                                                                |
-| Backups            | Driver-aware create/list/download (pg_dump/mysqldump/copy)                  |
-| Reports            | Dashboard summary, sales, best-sellers, payment methods                     |
-| Audit Logs         | Filtered list (admin)                                                       |
+- **Multi-store e-commerce** — public Nuxt storefronts per store, scoped by `X-Store` header
+- **Customer portal** — server-side cart, COD checkout, wishlist, order history, cancellations
+- **Staff dashboard** — product/inventory management, POS orders, CRM, invoicing (PDF/receipt)
+- **Myanmar localization** — EN/MY dual-language, MMK currency, Myanmar numerals
+- **RBAC** — 3 staff roles (root, store_admin, staff) with middleware-enforced permissions
+- **Atomic stock** — row-locked checkout, idempotent cancellation
+- **Backup system** — driver-aware (pg_dump/mysqldump/copy), non-blocking via queue jobs
 
-### Customer Portal (`auth:customer`)
+## Requirements
 
-| Method         | Endpoint                          | Description                    |
-|----------------|-----------------------------------|--------------------------------|
-| POST           | `/api/customer/register\|login\|logout` | Customer auth               |
-| GET/PUT        | `/api/customer/me\|profile`       | Profile management             |
-| CRUD           | `/api/addresses`                  | Address book                   |
-| PUT            | `/api/addresses/{id}/default`     | Set default address            |
-| CRUD           | `/api/cart`                       | Shopping cart                  |
-| DELETE         | `/api/cart`                       | Clear entire cart              |
-| POST           | `/api/checkout`                   | Place COD order                |
-| GET            | `/api/checkout/validate`          | Validate stock before checkout |
-| GET            | `/api/my/orders`                  | Order history                  |
-| POST           | `/api/my/orders/{id}/cancel`      | Cancel order (processing only) |
-| GET/POST/DELETE| `/api/wishlist`                   | Wishlist management            |
-
-Full documentation: see [`SPECIFICATION.md`](SPECIFICATION.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), and [`API.md`](API.md).
-
-## Key Features
-
-- **Modular monolith**: 14 modules, 15 route files, 103 routes, 147 tests
-- **Sanctum auth**: Token-based, two guards (staff 24h, customer 7d)
-- **OAuth (Google)**: Customer social login via Socialite → Session Cookie
-- **E-Commerce**: Server-side cart, COD checkout, shipments, wishlist, online order management
-- **Multi-store**: `store_id` scoping via `ResolveStore` middleware, public storefront API
-- **Driver-aware backup**: `pg_dump`/`mysqldump`/file copy based on database driver
-- **i18n**: English + Burmese server-side error translations
-- **Atomic stock**: Transaction-safe decrement, idempotent cancel guard
-- **PDF/Receipt**: Invoice PDF download + thermal receipt format
-- **Password policy**: Min 8 chars, uppercase + lowercase + digit
-- **Enums**: Strongly-typed enums for all domain values (roles, statuses, types)
-- **Repository pattern**: Core `Repository` base class; ECommerce module uses CartItem, Wishlist, Shipment repositories
-- **Service layer**: Dedicated services for Orders, Invoices, Cart, Checkout, Wishlist, Reports, Dashboard, Products, Storefront
-
-## Directory Structure
-
-```
-api/
-├── app/
-│   └── Modules/           # 14 domain modules
-│       ├── Core/          # Enums, Traits (ApiResponse, QueryFilter, StoreScope,
-│       │                  #   AuthorizesOwnership, HandlesPasswordUpdate), Repository base
-│       ├── Identity/      # Auth, Users, Profiles, UserRole enum, AdminMiddleware
-│       ├── Store/         # StoreController, ResolveStore middleware, Store model
-│       ├── Catalog/       # Products, Variants, Categories, Storefront, ProductService,
-│       │                  #   ProductImportService, ProductExportService, StorefrontService
-│       ├── Customer/      # CRM, CustomerAuth, OAuthController, AddressBook
-│       ├── Sales/         # Orders, Invoices, OrderService, InvoiceService,
-│       │                  #   InvoiceNumberGenerator
-│       ├── Inventory/     # StockMovements, StockService
-│       ├── Promotion/     # Discounts, DiscountService
-│       ├── Supplier/      # Suppliers
-│       ├── Cash/          # CashSessions, CashSessionService
-│       ├── Audit/         # AuditLogs
-│       ├── Report/        # Dashboard & Reports (DashboardService, ReportService)
-│       ├── System/        # Backups (driver-aware)
-│       └── ECommerce/     # Cart, Checkout, MyOrders, Wishlist, OnlineOrderService,
-│                          #   CartItemRepository, WishlistItemRepository, ShipmentRepository
-├── database/
-│   ├── factories/         # 15 model factories
-│   ├── migrations/        # 31 migration files
-│   └── seeders/
-├── routes/
-│   ├── api.php            # Master route loader
-│   └── modules/           # 15 per-module route files
-├── docs/                  # Project documentation
-└── tests/                 # 147 tests (Feature + Unit)
-```
+- PHP 8.4+
+- PostgreSQL 16+
+- Composer
+- Node.js (for frontend assets — `simpcommerce-dashboard` and `simpcommerce-storefront-*` repos)
