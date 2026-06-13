@@ -3,12 +3,14 @@
 namespace App\Modules\Sales\Services;
 
 use App\Modules\Catalog\Repositories\ProductVariantRepository;
+use App\Modules\Core\Enums\OrderSource;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Enums\StockMovementReason;
 use App\Modules\Inventory\Repositories\StockMovementRepository;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
+use App\Modules\Sales\Notifications\OrderStatusUpdatedNotification;
 use App\Modules\Sales\Repositories\InvoiceRepository;
 use App\Modules\Sales\Repositories\OrderItemRepository;
 use App\Modules\Sales\Repositories\OrderRepository;
@@ -199,6 +201,14 @@ class OrderService
                         $item->variant, -$item->quantity, StockMovementReason::Sale->value, 'order', $order->id,
                     );
                 }
+            }
+
+            // Notify the customer when an online order's status changes
+            // to shipped, delivered, or cancelled. POS orders (source=pos)
+            // are excluded — they are completed in-store and don't require
+            // email notifications.
+            if ($order->source === OrderSource::Online && $order->customer && in_array($newStatus, ['shipped', 'delivered', 'cancelled'])) {
+                $order->customer->notify(new OrderStatusUpdatedNotification($order, $currentStatus, $newStatus));
             }
 
             return $order;

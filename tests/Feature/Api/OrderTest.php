@@ -8,6 +8,7 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Sales\Models\Order;
+use Illuminate\Support\Facades\Notification;
 use Tests\ApiTestCase;
 
 class OrderTest extends ApiTestCase
@@ -189,5 +190,86 @@ class OrderTest extends ApiTestCase
             ->first();
         $this->assertNotNull($movement);
         $this->assertEquals(-2, $movement->quantity_change);
+    }
+
+    // ─── Status Update Notifications ───────────────────────────
+
+    public function test_online_order_shipped_dispatches_notification(): void
+    {
+        Notification::fake();
+
+        $customer = Customer::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $customer->id,
+            'source' => 'online',
+            'status' => 'processing',
+        ]);
+
+        $this->patchJson("/api/orders/{$order->id}/status", [
+            'status' => 'shipped',
+        ], $this->adminHeaders);
+
+        Notification::assertSentTo(
+            $customer,
+            \App\Modules\Sales\Notifications\OrderStatusUpdatedNotification::class,
+            fn ($notification) => $notification->newStatus === 'shipped',
+        );
+    }
+
+    public function test_online_order_delivered_dispatches_notification(): void
+    {
+        Notification::fake();
+
+        $customer = Customer::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $customer->id,
+            'source' => 'online',
+            'status' => 'shipped',
+        ]);
+
+        $this->patchJson("/api/orders/{$order->id}/status", [
+            'status' => 'delivered',
+        ], $this->adminHeaders);
+
+        Notification::assertSentTo(
+            $customer,
+            \App\Modules\Sales\Notifications\OrderStatusUpdatedNotification::class,
+            fn ($notification) => $notification->newStatus === 'delivered',
+        );
+    }
+
+    public function test_pos_order_does_not_dispatch_notification(): void
+    {
+        Notification::fake();
+
+        $customer = Customer::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $customer->id,
+            'source' => 'pos',
+            'status' => 'pending',
+        ]);
+
+        $this->patchJson("/api/orders/{$order->id}/status", [
+            'status' => 'completed',
+        ], $this->adminHeaders);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_online_order_without_customer_does_not_notify(): void
+    {
+        Notification::fake();
+
+        $order = Order::factory()->create([
+            'customer_id' => null,
+            'source' => 'online',
+            'status' => 'processing',
+        ]);
+
+        $this->patchJson("/api/orders/{$order->id}/status", [
+            'status' => 'shipped',
+        ], $this->adminHeaders);
+
+        Notification::assertNothingSent();
     }
 }

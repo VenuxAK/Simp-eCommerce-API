@@ -407,4 +407,90 @@ class StorefrontTest extends TestCase
         $response->assertOk()
             ->assertJsonCount(0, 'data');
     }
+
+    // ─── Category Hierarchy ────────────────────────────────────
+
+    public function test_categories_includes_parent_id(): void
+    {
+        Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'Parent Cat',
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/categories');
+
+        $response->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'slug', 'parent_id', 'children', 'products_count']]]);
+    }
+
+    public function test_categories_returns_nested_children(): void
+    {
+        $parent = Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'Clothing',
+            'slug' => 'clothing',
+        ]);
+
+        Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'T-Shirts',
+            'slug' => 't-shirts',
+            'parent_id' => $parent->id,
+        ]);
+
+        Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'Jeans',
+            'slug' => 'jeans',
+            'parent_id' => $parent->id,
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/categories');
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+
+        $category = $response->json('data.0');
+        $this->assertEquals('Clothing', $category['name']);
+        $this->assertCount(2, $category['children']);
+        $this->assertEquals('Jeans', $category['children'][0]['name']);
+        $this->assertEquals('T-Shirts', $category['children'][1]['name']);
+    }
+
+    public function test_leaf_categories_have_empty_children(): void
+    {
+        Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'Shoes',
+            'slug' => 'shoes',
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/categories');
+
+        $response->assertOk();
+        $this->assertEmpty($response->json('data.0.children'));
+    }
+
+    public function test_category_includes_product_count(): void
+    {
+        $category = Category::factory()->create([
+            'store_id' => $this->store->id,
+            'name' => 'Tops',
+            'slug' => 'tops',
+        ]);
+
+        Product::factory()->create([
+            'store_id' => $this->store->id,
+            'category_id' => $category->id,
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/categories');
+
+        $response->assertOk();
+        $this->assertEquals(1, $response->json('data.0.products_count'));
+    }
 }
