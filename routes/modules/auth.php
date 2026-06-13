@@ -1,8 +1,10 @@
 <?php
 
 use App\Modules\Customer\Http\Controllers\CustomerAuthController;
+use App\Modules\Customer\Http\Controllers\CustomerForgotPasswordController;
 use App\Modules\Customer\Http\Controllers\OAuthController;
 use App\Modules\Identity\Http\Controllers\AuthController;
+use App\Modules\Identity\Http\Controllers\ForgotPasswordController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Staff login ───────────────────────────────────────────────
@@ -16,6 +18,20 @@ Route::post('/customer/register', [CustomerAuthController::class, 'register'])
     ->middleware(['store', 'stateful']);
 
 Route::post('/customer/login', [CustomerAuthController::class, 'login'])
+    ->middleware(['store', 'stateful', 'throttle:auth']);
+
+// ─── Staff password reset ─────────────────────────────────────
+Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+    ->middleware('throttle:auth');
+
+Route::post('/auth/reset-password', [ForgotPasswordController::class, 'reset'])
+    ->middleware('throttle:auth');
+
+// ─── Customer password reset ──────────────────────────────────
+Route::post('/customer/forgot-password', [CustomerForgotPasswordController::class, 'sendResetLink'])
+    ->middleware(['store', 'stateful', 'throttle:auth']);
+
+Route::post('/customer/reset-password', [CustomerForgotPasswordController::class, 'reset'])
     ->middleware(['store', 'stateful', 'throttle:auth']);
 
 // ─── OAuth (Google) ──────────────────────────────────────────

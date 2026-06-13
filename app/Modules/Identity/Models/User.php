@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
+use App\Modules\Identity\Notifications\StaffPasswordResetNotification;
 use App\Modules\Audit\Models\AuditLog;
 use App\Modules\Cash\Models\CashSession;
 use App\Modules\Core\Enums\UserRole;
@@ -41,6 +42,21 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Dispatch a password-reset notification to this staff user.
+     *
+     * Called by PasswordBroker after a reset token is created.  Delegates
+     * to Laravel's Notification system instead of sending mail directly —
+     * the model decides WHEN to notify, the Notification decides WHICH
+     * channels, and the Mailable renders the content (SRP).
+     *
+     * @param  string  $token  Reset token (60-min expiry).
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new StaffPasswordResetNotification($token));
     }
 
     public function isRoot(): bool

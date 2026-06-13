@@ -68,6 +68,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dashboard Frontend Application URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used to redirect the user back to the dashboard SPA after
+    | performing actions like password reset.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
