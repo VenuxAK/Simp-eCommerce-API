@@ -23,7 +23,7 @@ class ProductVariant extends Model
     /** @use HasFactory<ProductVariantFactory> */
     use HasFactory;
 
-    protected $fillable = ['product_id', 'sku', 'size', 'color', 'image', 'price_adjustment', 'purchase_price', 'stock_quantity'];
+    protected $fillable = ['product_id', 'sku', 'size', 'color', 'image', 'price_adjustment', 'purchase_price', 'stock_quantity', 'low_stock_threshold'];
 
     /**
      * Get the attributes that should be cast.
@@ -34,6 +34,7 @@ class ProductVariant extends Model
             'price_adjustment' => 'decimal:2',
             'purchase_price' => 'decimal:2',
             'stock_quantity' => 'integer',
+            'low_stock_threshold' => 'integer',
         ];
     }
 

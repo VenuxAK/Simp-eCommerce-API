@@ -40,7 +40,11 @@ class ProductVariantController extends Controller
     public function updateStock(UpdateStockRequest $request, ProductVariant $variant): ProductVariantResource
     {
         $oldStock = $variant->stock_quantity;
-        $variant->update(['stock_quantity' => $request->quantity]);
+        $data = ['stock_quantity' => $request->quantity];
+        if ($request->has('low_stock_threshold')) {
+            $data['low_stock_threshold'] = $request->low_stock_threshold;
+        }
+        $variant->update($data);
         $diff = $request->quantity - $oldStock;
 
         if ($diff !== 0) {

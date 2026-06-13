@@ -24,6 +24,7 @@ class UpdateStockRequest extends FormRequest
     {
         return [
             'quantity' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 }

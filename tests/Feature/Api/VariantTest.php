@@ -40,4 +40,61 @@ class VariantTest extends TestCase
     {
         $this->getJson('/api/variants/by-sku/DOES-NOT-EXIST', $this->headers)->assertNotFound();
     }
+
+    // ─── Stock & Threshold ─────────────────────────────────────
+
+    public function test_can_update_stock(): void
+    {
+        $variant = $this->createVariant();
+        $initial = $variant->stock_quantity;
+
+        $response = $this->patchJson(
+            "/api/variants/{$variant->id}/stock",
+            ['quantity' => $initial + 10],
+            $this->headers,
+        );
+
+        $response->assertOk()->assertJsonPath('data.stock_quantity', $initial + 10);
+    }
+
+    public function test_can_update_low_stock_threshold(): void
+    {
+        $variant = $this->createVariant();
+
+        $response = $this->patchJson(
+            "/api/variants/{$variant->id}/stock",
+            ['quantity' => $variant->stock_quantity, 'low_stock_threshold' => 20],
+            $this->headers,
+        );
+
+        $response->assertOk()->assertJsonPath('data.low_stock_threshold', 20);
+    }
+
+    public function test_threshold_must_be_non_negative(): void
+    {
+        $variant = $this->createVariant();
+
+        $response = $this->patchJson(
+            "/api/variants/{$variant->id}/stock",
+            ['quantity' => $variant->stock_quantity, 'low_stock_threshold' => -1],
+            $this->headers,
+        );
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['low_stock_threshold']);
+    }
+
+    public function test_threshold_defaults_to_10(): void
+    {
+        $variant = $this->createVariant();
+
+        $this->assertEquals(10, $variant->fresh()->low_stock_threshold);
+    }
+
+    private function createVariant(): ProductVariant
+    {
+        $category = Category::factory()->create();
+        $product = Product::factory()->create(['category_id' => $category->id]);
+
+        return ProductVariant::factory()->create(['product_id' => $product->id]);
+    }
 }

@@ -27,6 +27,7 @@ class ProductVariantResource extends JsonResource
             'price_adjustment' => (float) $this->price_adjustment,
             'purchase_price' => $this->purchase_price ? (float) $this->purchase_price : null,
             'stock_quantity' => $this->stock_quantity,
+            'low_stock_threshold' => $this->low_stock_threshold,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

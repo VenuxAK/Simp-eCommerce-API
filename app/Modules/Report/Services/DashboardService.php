@@ -34,12 +34,14 @@ class DashboardService
         // Single aggregation query replaces 3 separate variant queries.
         // Computes total/low/out-of-stock counts in one pass using
         // conditional aggregation (CASE inside SUM/COUNT).
+        // "Low stock" is defined per-variant via low_stock_threshold;
+        // variants with threshold = 0 are never considered low stock.
         $stockSummary = ProductVariant::whereIn('product_id', $productIds->toArray())
             ->select([
                 DB::raw('COUNT(*) as total_variants'),
                 DB::raw("COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock_count"),
-                DB::raw("COUNT(CASE WHEN stock_quantity > 0 AND stock_quantity <= 5 THEN 1 END) as low_stock_count"),
-                DB::raw("COUNT(CASE WHEN stock_quantity > 5 THEN 1 END) as well_stocked_count"),
+                DB::raw("COUNT(CASE WHEN stock_quantity > 0 AND low_stock_threshold > 0 AND stock_quantity <= low_stock_threshold THEN 1 END) as low_stock_count"),
+                DB::raw("COUNT(CASE WHEN stock_quantity > COALESCE(NULLIF(low_stock_threshold, 0), 10) THEN 1 END) as well_stocked_count"),
             ])
             ->first();
 
@@ -47,8 +49,9 @@ class DashboardService
         $lowStockVariants = ProductVariant::with('product:id,name')
             ->whereIn('product_id', $productIds->toArray())
             ->where('stock_quantity', '>', 0)
-            ->where('stock_quantity', '<=', 5)
-            ->select('id', 'product_id', 'sku', 'size', 'color', 'stock_quantity')
+            ->where('low_stock_threshold', '>', 0)
+            ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+            ->select('id', 'product_id', 'sku', 'size', 'color', 'stock_quantity', 'low_stock_threshold')
             ->orderBy('stock_quantity')
             ->limit(5)
             ->get();
@@ -70,6 +73,7 @@ class DashboardService
                 'size' => $v->size,
                 'color' => $v->color,
                 'stock' => $v->stock_quantity,
+                'threshold' => $v->low_stock_threshold,
             ]),
             'recent_orders' => $recentOrders,
         ];
