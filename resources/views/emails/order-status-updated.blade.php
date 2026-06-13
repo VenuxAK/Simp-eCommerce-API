@@ -175,7 +175,7 @@
             <hr class="hr">
             <p class="meta">
                 Order placed on: {{ $order->created_at?->format('M d, Y g:i A') ?? 'N/A' }}<br>
-                Order total: {{ number_format($order->total_amount, 0) }} Ks
+                Order total: {{ \App\Modules\Core\Helpers\CurrencyFormatter::format($order->total_amount) }}
             </p>
         </div>
     </div>

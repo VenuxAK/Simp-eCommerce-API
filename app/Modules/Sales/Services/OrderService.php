@@ -3,6 +3,7 @@
 namespace App\Modules\Sales\Services;
 
 use App\Modules\Catalog\Repositories\ProductVariantRepository;
+use App\Modules\Core\Helpers\CurrencyFormatter;
 use App\Modules\Core\Enums\OrderSource;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Enums\StockMovementReason;
@@ -156,7 +157,7 @@ class OrderService
             }
 
             $notes = $order->notes ? $order->notes."\n" : '';
-            $notes .= 'Return: '.now()->toDateString().' - '.$totalReturn.' Ks returned';
+            $notes .= 'Return: '.now()->toDateString().' - '.CurrencyFormatter::format($totalReturn).' returned';
             $order->update(['notes' => $notes]);
 
             return $order;

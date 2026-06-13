@@ -22,7 +22,7 @@ class CustomerForgotPasswordController extends Controller
         $customer = $this->customerRepository->findByEmail($request->email);
 
         if (! $customer || ! $customer->password) {
-            return $this->respondMessage('If the account exists and uses email login, a reset link has been sent.');
+            return $this->respondMessage(__('messages.auth.forgot_generic'));
         }
 
         $status = Password::broker('customers')->sendResetLink(
@@ -30,7 +30,7 @@ class CustomerForgotPasswordController extends Controller
         );
 
         return $status === Password::RESET_LINK_SENT
-            ? $this->respondMessage('If the account exists and uses email login, a reset link has been sent.')
+            ? $this->respondMessage(__('messages.auth.forgot_generic'))
             : $this->respondError(__($status), 422);
     }
 

@@ -38,7 +38,7 @@ class CheckoutController extends Controller
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                return $this->respondError('Cart is empty.', 422);
+                return $this->respondError(__('messages.checkout.cart_empty'), 422);
             }
 
             $address = Address::where('id', $request->address_id)
@@ -46,14 +46,14 @@ class CheckoutController extends Controller
                 ->first();
 
             if (! $address) {
-                return $this->respondError('Invalid shipping address.', 422);
+                return $this->respondError(__('messages.checkout.invalid_address'), 422);
             }
 
             // Double-check stock for every cart item before proceeding.
             foreach ($cartItems as $item) {
                 if ($item->variant->stock_quantity < $item->quantity) {
                     return $this->respondError(
-                        "Insufficient stock for '{$item->variant->sku}'. Available: {$item->variant->stock_quantity}.", 422);
+                        __('messages.checkout.insufficient_stock', ['sku' => $item->variant->sku, 'available' => $item->variant->stock_quantity]), 422);
                 }
             }
 

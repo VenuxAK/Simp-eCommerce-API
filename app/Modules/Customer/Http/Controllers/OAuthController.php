@@ -53,11 +53,11 @@ class OAuthController extends Controller
         } catch (\Exception $e) {
             Log::warning('OAuth callback failed', ['provider' => $provider, 'error' => $e->getMessage()]);
 
-            return $this->respondError('OAuth authentication failed.', 422);
+            return $this->respondError(__('messages.auth.oauth_failed'), 422);
         }
 
         if (! $socialUser->email) {
-            return $this->respondError('Email is required from OAuth provider.', 422);
+            return $this->respondError(__('messages.auth.oauth_email_required'), 422);
         }
 
         $customer = $this->customerRepository->findByEmail($socialUser->email);

@@ -73,7 +73,7 @@ class ProductVariantController extends Controller
         $variant = $this->variantRepo->findBySku($sku);
 
         if (! $variant) {
-            return $this->respondError('Variant not found for the given SKU.', 404);
+            return $this->respondError(__('messages.catalog.variant_not_found'), 404);
         }
 
         return $this->respond([

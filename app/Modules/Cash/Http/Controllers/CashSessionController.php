@@ -56,7 +56,7 @@ class CashSessionController extends Controller
         $existing = $this->cashSessionRepository->findActiveByStore($this->resolveStoreId());
 
         if ($existing) {
-            return $this->respondError('A cash session is already open for this store.');
+            return $this->respondError(__('messages.cash.session_already_open'));
         }
 
         $data = $request->validated();
@@ -76,7 +76,7 @@ class CashSessionController extends Controller
         $session = $this->cashSessionRepository->findActiveByStore($this->resolveStoreId());
 
         if (! $session) {
-            return $this->respondError('No open cash session for this store.');
+            return $this->respondError(__('messages.cash.no_open_session'));
         }
 
         $data = $request->validated();

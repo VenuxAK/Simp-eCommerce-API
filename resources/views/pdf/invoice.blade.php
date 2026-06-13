@@ -58,15 +58,15 @@
                 <td>{{ $item->variant->product->name }}</td>
                 <td>{{ $item->variant->size }} / {{ $item->variant->color }}</td>
                 <td class="text-right">{{ $item->quantity }}</td>
-                <td class="text-right">{{ number_format($item->unit_price, 0) }} Ks</td>
-                <td class="text-right">{{ number_format($item->subtotal, 0) }} Ks</td>
+                <td class="text-right">{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($item->unit_price) }}</td>
+                <td class="text-right">{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($item->subtotal) }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
     <div class="total">
-        Total: {{ number_format($invoice->order->total_amount, 0) }} Ks
+        Total: {{ \App\Modules\Core\Helpers\CurrencyFormatter::format($invoice->order->total_amount) }}
     </div>
 
     @if($invoice->terms)

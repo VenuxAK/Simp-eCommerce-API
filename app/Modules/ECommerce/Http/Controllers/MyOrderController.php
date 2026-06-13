@@ -58,7 +58,7 @@ class MyOrderController extends Controller
         }
 
         if ($order->status !== OrderStatus::Processing) {
-            return $this->respondError('Only orders in processing status can be cancelled.', 422);
+            return $this->respondError(__('messages.orders.cancel_not_allowed'), 422);
         }
 
         $this->myOrderService->cancelOrder($order);

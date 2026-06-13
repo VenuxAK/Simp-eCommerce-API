@@ -4,6 +4,7 @@ namespace App\Modules\Promotion\Services;
 
 use App\Modules\Core\Enums\DiscountScope;
 use App\Modules\Core\Enums\DiscountType;
+use App\Modules\Core\Helpers\CurrencyFormatter;
 use App\Modules\Promotion\Models\Discount;
 use App\Modules\Promotion\Repositories\DiscountRepository;
 
@@ -56,7 +57,7 @@ class DiscountService
         } else {
             // Fixed discount capped at the eligible total.
             $discountAmount = min($discount->value, $discountableTotal);
-            $discountLabel = "{$discount->name} (-{$discount->value} Ks)";
+            $discountLabel = "{$discount->name} (-" . CurrencyFormatter::format($discount->value) . ")";
         }
 
         return [$discountAmount, $discountLabel];

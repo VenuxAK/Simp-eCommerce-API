@@ -97,12 +97,12 @@ class CategoryController extends Controller
         $productCount = $this->categoryRepo->getProductCount($category->id);
 
         if ($productCount > 0) {
-            return $this->respondError("Cannot delete category: {$productCount} product(s) are linked to it.");
+            return $this->respondError(__('messages.catalog.category_delete_blocked', ['count' => $productCount]));
         }
 
         $childCount = Category::where('parent_id', $category->id)->count();
         if ($childCount > 0) {
-            return $this->respondError("Cannot delete category: it has {$childCount} sub-categor(ies).");
+            return $this->respondError(__('messages.catalog.category_has_children', ['count' => $childCount]));
         }
 
         $this->categoryRepo->delete($category);

@@ -5,6 +5,7 @@ use App\Modules\Identity\Http\Middleware\RoleMiddleware;
 use App\Modules\Store\Http\Middleware\ResolveStore;
 use App\Http\Middleware\IdempotencyMiddleware;
 use App\Http\Middleware\RequestTimeoutMiddleware;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cached.auth' => CachedTokenAuth::class,
             'idempotent' => IdempotencyMiddleware::class,
             'timeout' => RequestTimeoutMiddleware::class,
+            'locale' => SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

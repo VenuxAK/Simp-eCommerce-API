@@ -83,7 +83,7 @@ class BrandController extends Controller
         $productCount = $this->brandRepo->getProductCount($brand->id);
 
         if ($productCount > 0) {
-            return $this->respondError("Cannot delete brand: {$productCount} product(s) are linked to it.");
+            return $this->respondError(__('messages.catalog.brand_delete_blocked', ['count' => $productCount]));
         }
 
         $this->brandRepo->delete($brand);

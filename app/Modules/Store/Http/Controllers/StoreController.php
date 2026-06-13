@@ -47,7 +47,7 @@ class StoreController extends Controller
     public function destroy(Store $store): JsonResponse
     {
         if ($store->slug === 'main') {
-            return $this->respondError('Cannot delete the main store.');
+            return $this->respondError(__('messages.store.cannot_delete_main'));
         }
         $store->delete();
 

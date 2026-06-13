@@ -35,7 +35,7 @@ class BackupController extends Controller
 
         $path = "backups/{$filename}";
         if (! Storage::disk('local')->exists($path)) {
-            return $this->respondError('Backup not found.', 404);
+            return $this->respondError(__('messages.backup.not_found'), 404);
         }
 
         return response()->download(Storage::disk('local')->path($path));

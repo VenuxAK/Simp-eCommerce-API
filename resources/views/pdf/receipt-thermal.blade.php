@@ -40,7 +40,7 @@
         @endforeach
         <tr class="total-row">
             <td colspan="2">TOTAL</td>
-            <td class="price">{{ number_format($invoice->order->total_amount, 0) }} Ks</td>
+            <td class="price">{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($invoice->order->total_amount) }}</td>
         </tr>
     </table>
     <div class="divider"></div>

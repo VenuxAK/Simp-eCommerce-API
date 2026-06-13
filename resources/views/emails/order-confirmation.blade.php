@@ -166,13 +166,13 @@
                             @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
-                        <td>{{ number_format($item->unit_price, 0) }} Ks</td>
-                        <td>{{ number_format($item->subtotal, 0) }} Ks</td>
+                        <td>{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($item->unit_price) }}</td>
+                        <td>{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($item->subtotal) }}</td>
                     </tr>
                     @endforeach
                     <tr>
                         <td colspan="3" class="total-label">Total</td>
-                        <td class="total-value">{{ number_format($order->total_amount, 0) }} Ks</td>
+                        <td class="total-value">{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($order->total_amount) }}</td>
                     </tr>
                 </tbody>
             </table>

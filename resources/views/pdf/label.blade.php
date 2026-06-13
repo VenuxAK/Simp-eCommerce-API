@@ -21,7 +21,7 @@
         <div class="sku">{{ $variant->sku }}</div>
         <div class="name">{{ $variant->product->name }}</div>
         <div class="detail">{{ $variant->size }} / {{ $variant->color }}</div>
-        <div class="price">{{ number_format($variant->product->base_price + $variant->price_adjustment, 0) }} Ks</div>
+        <div class="price">{{ \App\Modules\Core\Helpers\CurrencyFormatter::format($variant->product->base_price + $variant->price_adjustment) }}</div>
     </div>
     <div style="page-break-after: always;"></div>
     @endforeach

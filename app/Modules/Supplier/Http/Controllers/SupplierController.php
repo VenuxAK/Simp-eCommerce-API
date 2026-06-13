@@ -58,7 +58,7 @@ class SupplierController extends Controller
     {
         $productCount = $this->supplierRepo->getProductCount($supplier->id);
         if ($productCount > 0) {
-            return $this->respondError("Cannot delete supplier with {$productCount} product(s).");
+            return $this->respondError(__('messages.supplier.delete_blocked', ['count' => $productCount]));
         }
         $this->supplierRepo->delete($supplier);
 

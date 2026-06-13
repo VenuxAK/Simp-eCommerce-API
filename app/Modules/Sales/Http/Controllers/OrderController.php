@@ -139,7 +139,7 @@ class OrderController extends Controller
     public function returnItems(ReturnOrderRequest $request, Order $order): JsonResponse
     {
         if (! in_array($order->status, [OrderStatus::Completed, OrderStatus::Refunded])) {
-            return $this->respondError('Order cannot be returned.');
+            return $this->respondError(__('messages.orders.cannot_return'));
         }
 
         try {
@@ -170,7 +170,7 @@ class OrderController extends Controller
         ];
 
         if (! isset($allowedFrom[$currentStatus]) || ! in_array($newStatus, $allowedFrom[$currentStatus])) {
-            return $this->respondError("Cannot transition from '{$currentStatus}' to '{$newStatus}'.");
+            return $this->respondError(__('messages.order_status.invalid_transition', ['current' => $currentStatus, 'new' => $newStatus]));
         }
 
         try {
