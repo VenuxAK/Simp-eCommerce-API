@@ -26,7 +26,8 @@ class StorefrontController extends Controller
     ) {}
 
     /**
-     * Paginated product listing filtered by availability and search.
+     * Paginated product listing filtered by availability, category,
+     * brand, price range, search text, and configurable sorting.
      */
     public function products(Request $request): JsonResponse
     {
@@ -37,6 +38,10 @@ class StorefrontController extends Controller
             $request->input('category_slug'),
             $request->input('search'),
             $request->input('brand_id'), // Can be array or comma-separated
+            $request->input('sort_by', 'name'),   // name, price, newest
+            $request->input('sort_dir', 'asc'),   // asc, desc
+            $request->input('min_price'),          // nullable float
+            $request->input('max_price'),          // nullable float
             (int) $request->input('per_page', 20),
             (int) $request->input('page', 1),
         );

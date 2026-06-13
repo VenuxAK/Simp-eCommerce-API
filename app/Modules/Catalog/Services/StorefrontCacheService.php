@@ -39,31 +39,45 @@ class StorefrontCacheService
     /**
      * Cached paginated product listing.
      *
-     * Search queries bypass the cache entirely — too many permutations
-     * for meaningful hit rates, and search latency tolerance is higher.
+     * Search and price-filtered queries bypass the cache entirely
+     * because their parameter space is too wide for meaningful cache hits.
      */
     public function products(
         Store $store,
         ?string $categorySlug,
         ?string $search,
         mixed $brandIds = null,
+        string $sortBy = 'name',
+        string $sortDir = 'asc',
+        ?float $minPrice = null,
+        ?float $maxPrice = null,
         int $perPage = 20,
         int $page = 1,
     ) {
-        if ($search) {
-            $paginator = $this->storefrontService->products($store, $categorySlug, $search, $brandIds, $perPage);
+        // Bypass cache for search (high cardinality) and price filters (rarely repeated).
+        if ($search || $minPrice !== null || $maxPrice !== null) {
+            $paginator = $this->storefrontService->products(
+                $store, $categorySlug, $search, $brandIds,
+                $sortBy, $sortDir, $minPrice, $maxPrice, $perPage,
+            );
+
             return ProductResource::collection($paginator)->response()->getData(true);
         }
 
         $key = $this->key($store->id, 'products', [
             'cat' => $categorySlug,
             'brd' => is_array($brandIds) ? implode(',', $brandIds) : $brandIds,
+            'sort' => $sortBy . '-' . $sortDir,
             'pp' => $perPage,
             'p' => $page,
         ]);
 
-        return Cache::remember($key, self::TTL, function () use ($store, $categorySlug, $brandIds, $perPage) {
-            $paginator = $this->storefrontService->products($store, $categorySlug, null, $brandIds, $perPage);
+        return Cache::remember($key, self::TTL, function () use ($store, $categorySlug, $brandIds, $sortBy, $sortDir, $perPage) {
+            $paginator = $this->storefrontService->products(
+                $store, $categorySlug, null, $brandIds,
+                $sortBy, $sortDir, null, null, $perPage,
+            );
+
             return ProductResource::collection($paginator)->response()->getData(true);
         });
     }

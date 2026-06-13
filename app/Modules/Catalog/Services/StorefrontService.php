@@ -22,16 +22,23 @@ class StorefrontService
     ) {}
 
     /**
-     * Paginated product listing filtered by availability, category, and search.
-     *
-     * A product is considered "available" if it has no variants (simple product)
-     * or at least one variant with positive stock. Only in-stock variants are
-     * eager-loaded to keep the response lean.
+     * Paginated product listing with availability, category, brand,
+     * price-range, search-text filtering, and configurable sorting.
      */
-    public function products(Store $store, ?string $categorySlug, ?string $search, mixed $brandIds = null, int $perPage = 20)
-    {
+    public function products(
+        Store $store,
+        ?string $categorySlug,
+        ?string $search,
+        mixed $brandIds = null,
+        string $sortBy = 'name',
+        string $sortDir = 'asc',
+        ?float $minPrice = null,
+        ?float $maxPrice = null,
+        int $perPage = 20,
+    ) {
         return $this->productRepo->findAvailableByStore(
-            $store->id, $categorySlug, $search, $brandIds, $perPage,
+            $store->id, $categorySlug, $search, $brandIds,
+            $sortBy, $sortDir, $minPrice, $maxPrice, $perPage,
         );
     }
 

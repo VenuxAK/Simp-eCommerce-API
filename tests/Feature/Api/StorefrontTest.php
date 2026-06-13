@@ -167,8 +167,8 @@ class StorefrontTest extends TestCase
 
     public function test_can_filter_products_by_category(): void
     {
-        $cat1 = Category::factory()->create(['store_id' => $this->store->id, 'name' => 'Tops']);
-        $cat2 = Category::factory()->create(['store_id' => $this->store->id, 'name' => 'Bottoms']);
+        $cat1 = Category::factory()->create(['store_id' => $this->store->id, 'slug' => 'tops', 'name' => 'Tops']);
+        $cat2 = Category::factory()->create(['store_id' => $this->store->id, 'slug' => 'bottoms', 'name' => 'Bottoms']);
 
         Product::factory()->create([
             'store_id' => $this->store->id,
@@ -182,7 +182,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?category_id='.$cat1->id);
+            ->getJson('/api/storefront/products?category_slug=' . $cat1->slug);
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -202,5 +202,209 @@ class StorefrontTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
+    }
+
+    // ─── Sorting ───────────────────────────────────────────────
+
+    public function test_can_sort_products_by_price_ascending(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $cheap = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Cheap Item', 'base_price' => 10,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $cheap->id, 'stock_quantity' => 5]);
+
+        $expensive = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Expensive Item', 'base_price' => 100,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?sort_by=price&sort_dir=asc');
+
+        $response->assertOk();
+        $names = collect($response->json('data'))->pluck('name');
+        $this->assertEquals('Cheap Item', $names->first());
+        $this->assertEquals('Expensive Item', $names->last());
+    }
+
+    public function test_can_sort_products_by_price_descending(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $cheap = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Cheap Item', 'base_price' => 10,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $cheap->id, 'stock_quantity' => 5]);
+
+        $expensive = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Expensive Item', 'base_price' => 100,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?sort_by=price&sort_dir=desc');
+
+        $response->assertOk();
+        $names = collect($response->json('data'))->pluck('name');
+        $this->assertEquals('Expensive Item', $names->first());
+        $this->assertEquals('Cheap Item', $names->last());
+    }
+
+    public function test_default_sort_is_name_ascending(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $b = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'B Item', 'base_price' => 50,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $b->id, 'stock_quantity' => 5]);
+
+        $a = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'A Item', 'base_price' => 50,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $a->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products');
+
+        $response->assertOk();
+        $names = collect($response->json('data'))->pluck('name');
+        $this->assertEquals('A Item', $names->first());
+        $this->assertEquals('B Item', $names->last());
+    }
+
+    // ─── Price Filter ──────────────────────────────────────────
+
+    public function test_can_filter_products_by_min_price(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $cheap = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Cheap', 'base_price' => 10,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $cheap->id, 'stock_quantity' => 5]);
+
+        $mid = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Mid', 'base_price' => 50,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $mid->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?min_price=30');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Mid');
+    }
+
+    public function test_can_filter_products_by_max_price(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $mid = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Mid', 'base_price' => 50,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $mid->id, 'stock_quantity' => 5]);
+
+        $expensive = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Expensive', 'base_price' => 100,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?max_price=70');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Mid');
+    }
+
+    public function test_can_filter_products_by_price_range(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+
+        $cheap = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Cheap', 'base_price' => 10,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $cheap->id, 'stock_quantity' => 5]);
+
+        $mid = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Mid', 'base_price' => 50,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $mid->id, 'stock_quantity' => 5]);
+
+        $expensive = Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Expensive', 'base_price' => 100,
+        ]);
+        ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?min_price=30&max_price=70');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Mid');
+    }
+
+    // ─── Extended Search ───────────────────────────────────────
+
+    public function test_search_matches_product_name(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+        Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Red Jacket', 'description' => 'A warm winter coat.',
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?search=jacket');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_search_matches_product_description(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+        Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Blue Shirt', 'description' => 'Made from organic cotton.',
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?search=cotton');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_search_returns_empty_when_no_match(): void
+    {
+        $category = Category::factory()->create(['store_id' => $this->store->id]);
+        Product::factory()->create([
+            'store_id' => $this->store->id, 'category_id' => $category->id,
+            'name' => 'Shoes',
+        ]);
+
+        $response = $this->withHeaders($this->storeHeaders)
+            ->getJson('/api/storefront/products?search=xxxnonexistentxxx');
+
+        $response->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 }
