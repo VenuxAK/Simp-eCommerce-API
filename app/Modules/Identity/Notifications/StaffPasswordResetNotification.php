@@ -51,7 +51,7 @@ class StaffPasswordResetNotification extends Notification implements ShouldQueue
         $mail = new StaffPasswordResetMail(
             token: $this->token,
             email: $notifiable->getEmailForPasswordReset(),
-            frontendUrl: config('app.frontend_url'),
+            frontendUrl: config('app.admin_url'),
         );
 
         return $mail->to($notifiable->getEmailForPasswordReset());

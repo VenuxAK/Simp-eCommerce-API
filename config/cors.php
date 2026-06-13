@@ -6,7 +6,7 @@ if ($allowedOrigins) {
     $origins = explode(',', $allowedOrigins);
 } else {
     $origins = [
-        env('FRONTEND_URL', 'http://localhost:5173'),
+        env('ADMIN_URL', 'http://localhost:5173'),
         env('STOREFRONT_URL', 'http://localhost:3000'),
     ];
 }
