@@ -7,6 +7,7 @@ use App\Modules\Customer\Models\Address;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\ECommerce\Repositories\CartItemRepository;
 use App\Modules\ECommerce\Repositories\ShipmentRepository;
+use App\Modules\ECommerce\Notifications\OrderConfirmationNotification;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
@@ -100,6 +101,9 @@ class OnlineOrderService
 
             // Clear cart after successful placement.
             $this->cartItemRepository->deleteByCustomer($customer->id);
+
+            // Dispatch order confirmation notification.
+            $customer->notify(new OrderConfirmationNotification($order));
 
             return $order;
         });
