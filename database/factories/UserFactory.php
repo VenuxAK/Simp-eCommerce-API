@@ -7,23 +7,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<User>
- */
 class UserFactory extends Factory
 {
     protected $model = User::class;
 
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -32,7 +21,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('Pass1234'),
             'remember_token' => Str::random(10),
-            'role' => 'staff',
+            'role' => 'sales_staff',
         ];
     }
 
@@ -43,10 +32,31 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function storeAdmin(): static
+    public function storeOwner(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'store_admin',
+            'role' => 'store_owner',
+        ]);
+    }
+
+    public function storeManager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'store_manager',
+        ]);
+    }
+
+    public function inventoryStaff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'inventory_staff',
+        ]);
+    }
+
+    public function salesStaff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'sales_staff',
         ]);
     }
 
@@ -54,13 +64,6 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
-        ]);
-    }
-
-    public function staff(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'staff',
         ]);
     }
 }

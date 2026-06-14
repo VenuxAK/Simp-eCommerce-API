@@ -14,7 +14,7 @@ class ReturnOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('returnItems', \App\Modules\Sales\Models\Order::class) ?? false;
     }
 
     /**

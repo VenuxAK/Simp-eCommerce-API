@@ -2,6 +2,7 @@
 
 namespace App\Modules\Catalog\Http\Requests;
 
+use App\Modules\Catalog\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,7 @@ class UpdateProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('update', Product::class) ?? false;
     }
 
     /**

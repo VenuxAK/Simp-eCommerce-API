@@ -5,10 +5,14 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * Suppliers — staff authenticated.
- * Write operations require admin role.
+ * Write operations require inventory access or higher.
  */
+
 Route::get('/suppliers', [SupplierController::class, 'index']);
 Route::get('/suppliers/{supplier}', [SupplierController::class, 'show']);
-Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role:root,store_admin');
-Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('role:root,store_admin');
-Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('role:root,store_admin');
+
+Route::middleware('role:root,store_owner,store_manager,inventory_staff')->group((function () {
+    Route::post('/suppliers', [SupplierController::class, 'store']);
+    Route::put('/suppliers/{supplier}', [SupplierController::class, 'update']);
+    Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy']);
+}));

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
  * Scope Eloquent queries by the current store and auto-assign store_id on create.
  *
  * Resolution order:
- * 1. Staff/store_admin users → their assigned store_id
+ * 1. Staff/store users → their assigned store_id
  * 2. Root users → X-Store header (set via store selector)
  * 3. Fallback → the store resolved by ResolveStore middleware (default 'main')
  */
@@ -19,9 +19,9 @@ trait StoreScope
     {
         $user = request()->user();
 
-        // Staff/store_admin assigned to a specific store.
+        // Staff/store users assigned to a specific store.
         if ($user instanceof \App\Modules\Identity\Models\User) {
-            if (($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
+            if ($user->isStoreUser() && $user->store_id) {
                 return $user->store_id;
             }
 

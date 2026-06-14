@@ -14,7 +14,7 @@ class UpdateStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('update', \App\Modules\Store\Models\Store::class) ?? false;
     }
 
     /**

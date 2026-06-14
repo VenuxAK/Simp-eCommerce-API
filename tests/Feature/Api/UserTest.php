@@ -21,7 +21,8 @@ class UserTest extends ApiTestCase
     public function test_admin_can_create_user(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'New User', 'email' => 'new@test.com', 'password' => 'Pass1234', 'role' => 'staff',
+            'name' => 'New User', 'email' => 'new@test.com', 'password' => 'Pass1234', 'role' => 'sales_staff',
+            'store_id' => 1,
         ], $this->adminHeaders)->assertCreated();
     }
 
@@ -60,7 +61,7 @@ class UserTest extends ApiTestCase
 
     public function test_admin_cannot_delete_user_with_orders(): void
     {
-        $staff = User::where('role', 'staff')->first();
+        $staff = User::where('role', 'sales_staff')->first();
         Order::factory()->create(['user_id' => $staff->id]);
 
         $this->deleteJson("/api/users/{$staff->id}", [], $this->adminHeaders)->assertUnprocessable();
@@ -69,7 +70,7 @@ class UserTest extends ApiTestCase
 
     public function test_admin_can_delete_user_without_orders(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->salesStaff()->create();
         $this->deleteJson("/api/users/{$staff->id}", [], $this->adminHeaders)->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $staff->id]);
     }
@@ -83,28 +84,28 @@ class UserTest extends ApiTestCase
     public function test_create_user_rejects_password_without_uppercase(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'Test', 'email' => 'test@test.com', 'password' => 'alllowercase1', 'role' => 'staff',
+            'name' => 'Test', 'email' => 'test@test.com', 'password' => 'alllowercase1', 'role' => 'sales_staff', 'store_id' => 1,
         ], $this->adminHeaders)->assertUnprocessable();
     }
 
     public function test_create_user_rejects_password_without_lowercase(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'Test', 'email' => 'test2@test.com', 'password' => 'ALLUPPERCASE1', 'role' => 'staff',
+            'name' => 'Test', 'email' => 'test2@test.com', 'password' => 'ALLUPPERCASE1', 'role' => 'sales_staff', 'store_id' => 1,
         ], $this->adminHeaders)->assertUnprocessable();
     }
 
     public function test_create_user_rejects_password_without_digit(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'Test', 'email' => 'test3@test.com', 'password' => 'NoDigitsHere', 'role' => 'staff',
+            'name' => 'Test', 'email' => 'test3@test.com', 'password' => 'NoDigitsHere', 'role' => 'sales_staff', 'store_id' => 1,
         ], $this->adminHeaders)->assertUnprocessable();
     }
 
     public function test_create_user_rejects_short_password(): void
     {
         $this->postJson('/api/users', [
-            'name' => 'Test', 'email' => 'test4@test.com', 'password' => 'Ab1', 'role' => 'staff',
+            'name' => 'Test', 'email' => 'test4@test.com', 'password' => 'Ab1', 'role' => 'sales_staff', 'store_id' => 1,
         ], $this->adminHeaders)->assertUnprocessable();
     }
 }

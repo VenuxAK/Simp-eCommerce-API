@@ -53,7 +53,7 @@ class ReturnOrderTest extends ApiTestCase
 
     public function test_staff_cannot_return_order(): void
     {
-        $staffUser = User::factory()->create(['role' => 'staff']);
+        $staffUser = User::factory()->salesStaff()->create();
         $this->actingAs($staffUser, 'sanctum');
 
         $response = $this->postJson("/api/orders/{$this->orderId}/return", [

@@ -13,7 +13,7 @@ Route::get('/auth/me', [AuthController::class, 'me']);
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::put('/profile', [ProfileController::class, 'update']);
 
-// ─── User management (admin only) ──────────────────────────────
-Route::middleware('role:root')->group(function () {
+// ─── User management (root or store_owner) ─────────────────────
+Route::middleware('role:root,store_owner')->group(function () {
     Route::apiResource('users', UserController::class);
 });

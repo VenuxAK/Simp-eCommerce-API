@@ -14,7 +14,7 @@ class StoreDiscountRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('create', \App\Modules\Promotion\Models\Discount::class) ?? false;
     }
 
     /**

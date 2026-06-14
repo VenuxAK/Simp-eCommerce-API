@@ -2,6 +2,7 @@
 
 namespace App\Modules\Customer\Http\Requests;
 
+use App\Modules\Customer\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -14,7 +15,7 @@ class UpdateCustomerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('update', Customer::class) ?? false;
     }
 
     /**

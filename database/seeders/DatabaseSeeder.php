@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
         }
 
         if (! User::where('email', 'staff@simppos.test')->exists()) {
-            User::factory()->staff()->create([
+            User::factory()->salesStaff()->create([
                 'name' => 'Staff',
                 'email' => 'staff@simppos.test',
                 'password' => bcrypt('Pass1234'),
@@ -73,7 +73,7 @@ class DatabaseSeeder extends Seeder
         if (! User::where('email', 'clothing@simppos.test')->exists()) {
             $clothingStore = Store::where('slug', 'clothing')->first();
 
-            User::factory()->storeAdmin()->create([
+            User::factory()->storeOwner()->create([
                 'name' => 'Clothing Admin',
                 'email' => 'clothing@simppos.test',
                 'password' => bcrypt('Pass1234'),

@@ -13,8 +13,11 @@ Route::get('/orders', [OrderController::class, 'index']);
 Route::get('/orders/{order}', [OrderController::class, 'show']);
 Route::post('/orders', [OrderController::class, 'store'])
     ->middleware(['throttle:checkout', 'idempotent']);
-Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->middleware('role:root,store_admin');
-Route::post('/orders/{order}/return', [OrderController::class, 'returnItems'])->middleware('role:root,store_admin');
+
+Route::middleware('role:root,store_owner,store_manager')->group(function () {
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+    Route::post('/orders/{order}/return', [OrderController::class, 'returnItems']);
+});
 
 Route::get('/invoices', [InvoiceController::class, 'index']);
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);

@@ -148,7 +148,7 @@ class OrderTest extends ApiTestCase
         $create->assertCreated();
         $orderId = $create->json('data.id');
 
-        $staffUser = User::factory()->create(['role' => 'staff']);
+        $staffUser = User::factory()->salesStaff()->create();
         $this->actingAs($staffUser, 'sanctum');
 
         $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled']);

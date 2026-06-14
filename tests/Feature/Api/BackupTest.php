@@ -44,7 +44,7 @@ class BackupTest extends ApiTestCase
 
     public function test_staff_cannot_list_backups(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
         $response = $this->getJson('/api/backups', $staffHeaders);
@@ -53,7 +53,7 @@ class BackupTest extends ApiTestCase
 
     public function test_staff_cannot_create_backup(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
         $response = $this->postJson('/api/backups', [], $staffHeaders);
@@ -62,7 +62,7 @@ class BackupTest extends ApiTestCase
 
     public function test_staff_cannot_download_backup(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
         $response = $this->getJson('/api/backups/backup-test.sqlite/download', $staffHeaders);

@@ -20,9 +20,11 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Internal staff/auth user — separate from e-commerce customer accounts.
  *
- * Supports three roles (Root, StoreAdmin, Staff) and is tied to a store
- * for multi-tenant scoping. This is NOT the same as Customer, which uses
- * a independent auth guard.
+ * Supports five roles (Root, StoreOwner, StoreManager, InventoryStaff, SalesStaff)
+ * and is tied to a store for multi-tenant scoping. This is NOT the same as
+ * Customer, which uses a independent auth guard.
+ *
+ * @see UserRole
  */
 class User extends Authenticatable
 {
@@ -64,14 +66,76 @@ class User extends Authenticatable
         return $this->role === UserRole::Root;
     }
 
-    public function isStoreAdmin(): bool
+    public function isStoreOwner(): bool
     {
-        return $this->role === UserRole::StoreAdmin;
+        return $this->role === UserRole::StoreOwner;
     }
 
-    public function isStaff(): bool
+    public function isStoreManager(): bool
     {
-        return $this->role === UserRole::Staff;
+        return $this->role === UserRole::StoreManager;
+    }
+
+    public function isInventoryStaff(): bool
+    {
+        return $this->role === UserRole::InventoryStaff;
+    }
+
+    public function isSalesStaff(): bool
+    {
+        return $this->role === UserRole::SalesStaff;
+    }
+
+    /**
+     * Any store-level role that has operational access (not Root).
+     */
+    public function isStoreUser(): bool
+    {
+        return in_array($this->role, [
+            UserRole::StoreOwner,
+            UserRole::StoreManager,
+            UserRole::InventoryStaff,
+            UserRole::SalesStaff,
+        ], true);
+    }
+
+    /**
+     * Roles that can manage other users within their store.
+     */
+    public function canManageStoreUsers(): bool
+    {
+        return in_array($this->role, [
+            UserRole::Root,
+            UserRole::StoreOwner,
+        ], true);
+    }
+
+    /**
+     * Has permission to manage catalog (products, categories, brands).
+     */
+    public function canManageCatalog(): bool
+    {
+        return $this->isRoot() || in_array($this->role, [
+            UserRole::StoreOwner, UserRole::StoreManager, UserRole::InventoryStaff,
+        ], true);
+    }
+
+    /**
+     * Has permission to manage sales (orders, discounts, returns).
+     */
+    public function canManageSales(): bool
+    {
+        return $this->isRoot() || in_array($this->role, [
+            UserRole::StoreOwner, UserRole::StoreManager,
+        ], true);
+    }
+
+    /**
+     * Has permission to manage suppliers.
+     */
+    public function canManageSuppliers(): bool
+    {
+        return $this->canManageCatalog();
     }
 
     public function store(): BelongsTo

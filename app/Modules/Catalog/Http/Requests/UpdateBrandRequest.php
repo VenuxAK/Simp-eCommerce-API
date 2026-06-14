@@ -2,6 +2,7 @@
 
 namespace App\Modules\Catalog\Http\Requests;
 
+use App\Modules\Catalog\Models\Brand;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,7 @@ class UpdateBrandRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isRoot() || $this->user()?->isStoreAdmin();
+        return $this->user()?->can('update', Brand::class) ?? false;
     }
 
     public function rules(): array

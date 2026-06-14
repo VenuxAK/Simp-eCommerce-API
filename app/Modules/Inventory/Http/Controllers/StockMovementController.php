@@ -24,7 +24,7 @@ class StockMovementController extends Controller
         $query = $this->stockMovementRepository->query()->with(['variant.product', 'user']);
 
         $user = $request->user();
-        if ($user && ($user->isStaff() || $user->isStoreAdmin()) && $user->store_id) {
+        if ($user && ($user->isStoreUser()) && $user->store_id) {
             $query->whereHas('variant.product', fn ($q) => $q->where('store_id', $user->store_id));
         } elseif ($user && $user->isRoot() && $request->header('X-Store')) {
             $store = $this->storeRepository->findBySlug($request->header('X-Store'));
