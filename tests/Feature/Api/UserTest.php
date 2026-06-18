@@ -47,7 +47,7 @@ class UserTest extends ApiTestCase
 
     public function test_admin_cannot_delete_self(): void
     {
-        $admin = User::where('role', 'root')->first();
+        $admin = User::role('root')->first();
         $this->deleteJson("/api/users/{$admin->id}", [], $this->adminHeaders)->assertUnprocessable();
     }
 
@@ -61,7 +61,7 @@ class UserTest extends ApiTestCase
 
     public function test_admin_cannot_delete_user_with_orders(): void
     {
-        $staff = User::where('role', 'sales_staff')->first();
+        $staff = User::role('sales_staff')->first();
         Order::factory()->create(['user_id' => $staff->id]);
 
         $this->deleteJson("/api/users/{$staff->id}", [], $this->adminHeaders)->assertUnprocessable();

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Store\Models\Store;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,9 +18,15 @@ class CashSessionTest extends TestCase
     {
         parent::setUp();
         $this->seed(RolePermissionSeeder::class);
-        $user = User::factory()->create();
+
+        $store = Store::firstOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Test Store', 'is_active' => true],
+        );
+
+        $user = User::factory()->create(['store_id' => $store->id]);
         $user->assignRole('sales_staff');
-        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
+        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}", 'X-Store' => 'main'];
     }
 
     public function test_can_open_session(): void

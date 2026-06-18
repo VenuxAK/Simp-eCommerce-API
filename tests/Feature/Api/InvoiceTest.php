@@ -8,6 +8,7 @@ use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Core\Enums\InvoiceStatus;
 use App\Modules\Identity\Models\User;
 use App\Modules\Sales\Models\Invoice;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,8 +23,15 @@ class InvoiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $user = User::factory()->root()->create();
-        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
+        $this->seed(RolePermissionSeeder::class);
+
+        $store = \App\Modules\Store\Models\Store::firstOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Test Store', 'is_active' => true],
+        );
+
+        $user = User::factory()->root()->create(['store_id' => $store->id]);
+        $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}", 'X-Store' => 'main'];
 
         $category = Category::factory()->create();
         $product = Product::factory()->create(['category_id' => $category->id, 'base_price' => 50]);

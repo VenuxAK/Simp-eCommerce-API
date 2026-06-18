@@ -26,6 +26,8 @@ abstract class ApiTestCase extends TestCase
     {
         parent::setUp();
 
+        $this->seed(RolePermissionSeeder::class);
+
         $store = Store::firstOrCreate(
             ['slug' => 'main'],
             ['name' => 'Test Store', 'is_active' => true],
@@ -33,8 +35,6 @@ abstract class ApiTestCase extends TestCase
 
         $this->adminUser = User::factory()->root()->create(['store_id' => $store->id]);
         $this->staffUser = User::factory()->salesStaff()->create(['store_id' => $store->id]);
-
-        $this->seed(RolePermissionSeeder::class);
 
         $this->adminHeaders = ['Authorization' => "Bearer {$this->adminUser->createToken('test')->plainTextToken}"];
         $this->staffHeaders = ['Authorization' => "Bearer {$this->staffUser->createToken('test')->plainTextToken}"];

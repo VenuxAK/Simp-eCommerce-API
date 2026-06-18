@@ -37,12 +37,18 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $role = $data['role'] ?? null;
+        unset($data['role']);
 
         if (request()->user()->isStoreOwner()) {
             $data['store_id'] = request()->user()->store_id;
         }
 
         $user = $this->userService->createUser($data);
+
+        if ($role) {
+            $user->assignRole($role);
+        }
 
         return (new UserResource($user))->response()->setStatusCode(201);
     }
@@ -62,7 +68,15 @@ class UserController extends Controller
             abort(404);
         }
 
-        $this->userService->updateUser($user, $request->validated());
+        $data = $request->validated();
+        $role = $data['role'] ?? null;
+        unset($data['role']);
+
+        $this->userService->updateUser($user, $data);
+
+        if ($role) {
+            $user->syncRoles($role);
+        }
 
         return new UserResource($user);
     }

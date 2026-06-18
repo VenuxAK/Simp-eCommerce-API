@@ -21,43 +21,32 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('Pass1234'),
             'remember_token' => Str::random(10),
-            'role' => 'sales_staff',
         ];
     }
 
     public function root(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'root',
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole('root'));
     }
 
     public function storeOwner(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'store_owner',
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole('store_owner'));
     }
 
     public function storeManager(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'store_manager',
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole('store_manager'));
     }
 
     public function inventoryStaff(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'inventory_staff',
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole('inventory_staff'));
     }
 
     public function salesStaff(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'sales_staff',
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole('sales_staff'));
     }
 
     public function unverified(): static

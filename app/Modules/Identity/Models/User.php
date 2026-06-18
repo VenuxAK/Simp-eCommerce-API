@@ -34,19 +34,27 @@ class User extends Authenticatable
 
     protected static string $factory = UserFactory::class;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'store_id'];
-
-    protected $with = ['roles'];
+    protected $fillable = ['name', 'email', 'password', 'store_id'];
 
     protected $hidden = ['password', 'remember_token'];
+
+    protected $with = ['roles'];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Get the primary role name (from the first Spatie role assigned).
+     * Replaces the old `users.role` column.
+     */
+    public function getRoleAttribute(): ?string
+    {
+        return $this->roles->first()?->name;
     }
 
     /**
@@ -66,27 +74,27 @@ class User extends Authenticatable
 
     public function isRoot(): bool
     {
-        return $this->role === UserRole::Root;
+        return $this->role === UserRole::Root->value;
     }
 
     public function isStoreOwner(): bool
     {
-        return $this->role === UserRole::StoreOwner;
+        return $this->role === UserRole::StoreOwner->value;
     }
 
     public function isStoreManager(): bool
     {
-        return $this->role === UserRole::StoreManager;
+        return $this->role === UserRole::StoreManager->value;
     }
 
     public function isInventoryStaff(): bool
     {
-        return $this->role === UserRole::InventoryStaff;
+        return $this->role === UserRole::InventoryStaff->value;
     }
 
     public function isSalesStaff(): bool
     {
-        return $this->role === UserRole::SalesStaff;
+        return $this->role === UserRole::SalesStaff->value;
     }
 
     /**

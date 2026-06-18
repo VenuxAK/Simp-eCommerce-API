@@ -17,6 +17,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedMainStore();
+
+        // Seed Spatie roles/permissions before creating any users
+        // (UserFactory states assign Spatie roles via afterCreating).
+        $this->call(RolePermissionSeeder::class);
+
         $this->seedUsers();
         $this->seedClothingStore();
 

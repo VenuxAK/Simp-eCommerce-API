@@ -17,7 +17,7 @@ class OAuthTest extends TestCase
     public function test_redirect_returns_google_url(): void
     {
         $mockRedirect = Mockery::mock(Provider::class);
-        $mockRedirect->shouldReceive('stateless->redirect->getTargetUrl')
+        $mockRedirect->shouldReceive('stateless->with->redirect->getTargetUrl')
             ->andReturn('https://accounts.google.com/o/oauth2/auth?client_id=xxx');
 
         Socialite::shouldReceive('driver')
@@ -46,8 +46,9 @@ class OAuthTest extends TestCase
 
         $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
 
-        $response->assertOk()
-            ->assertJsonStructure(['customer' => ['id', 'name', 'email']]);
+        $response->assertRedirect();
+        $redirectUrl = $response->headers->get('Location');
+        $this->assertStringContainsString('/auth/callback', $redirectUrl);
 
         $this->assertDatabaseHas('customers', [
             'email' => 'googleuser@example.com',
@@ -76,9 +77,7 @@ class OAuthTest extends TestCase
 
         $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
 
-        $response->assertOk()
-            ->assertJsonPath('customer.email', 'existing@example.com');
-
+        $response->assertRedirect();
         $this->assertDatabaseCount('customers', 1);
     }
 

@@ -97,7 +97,7 @@ class ReturnOrderTest extends ApiTestCase
     public function test_cannot_return_pending_order(): void
     {
         $order = Order::create([
-            'user_id' => User::where('role', 'root')->first()->id,
+            'user_id' => User::role('root')->first()->id,
             'store_id' => 1,
             'order_number' => 'ORD-PEND-RET',
             'total_amount' => 50,
