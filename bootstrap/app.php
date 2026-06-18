@@ -1,7 +1,6 @@
 <?php
 
 use App\Modules\Identity\Http\Middleware\CachedTokenAuth;
-use App\Modules\Identity\Http\Middleware\RoleMiddleware;
 use App\Modules\Store\Http\Middleware\ResolveStore;
 use App\Http\Middleware\IdempotencyMiddleware;
 use App\Http\Middleware\RequestTimeoutMiddleware;
@@ -12,6 +11,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Spatie\Permission\Middleware\PermissionMiddleware;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -22,13 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withProviders([
-        App\Providers\AuthServiceProvider::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(null);
         $middleware->alias([
-            'admin' => RoleMiddleware::class,
-            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
             'store' => ResolveStore::class,
             'stateful' => EnsureFrontendRequestsAreStateful::class,
             'cached.auth' => CachedTokenAuth::class,

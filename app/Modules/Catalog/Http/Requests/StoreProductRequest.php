@@ -9,7 +9,7 @@ class StoreProductRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Product::class) ?? false;
+        return $this->user()?->hasPermissionTo('products.create') ?? false;
     }
 
     public function rules(): array

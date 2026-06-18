@@ -14,7 +14,7 @@ class UpdateOrderStatusRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('updateStatus', \App\Modules\Sales\Models\Order::class) ?? false;
+        return $this->user()?->hasPermissionTo('orders.update-status') ?? false;
     }
 
     /**

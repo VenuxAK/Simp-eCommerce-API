@@ -14,7 +14,7 @@ class StoreSupplierRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \App\Modules\Supplier\Models\Supplier::class) ?? false;
+        return $this->user()?->hasPermissionTo('suppliers.create') ?? false;
     }
 
     /**

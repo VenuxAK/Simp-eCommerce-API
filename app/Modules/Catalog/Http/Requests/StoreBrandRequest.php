@@ -9,7 +9,7 @@ class StoreBrandRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Brand::class) ?? false;
+        return $this->user()?->hasPermissionTo('brands.create') ?? false;
     }
 
     public function rules(): array

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Modules\Identity\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +16,9 @@ class CashSessionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(RolePermissionSeeder::class);
         $user = User::factory()->create();
+        $user->assignRole('sales_staff');
         $this->headers = ['Authorization' => "Bearer {$user->createToken('test')->plainTextToken}"];
     }
 

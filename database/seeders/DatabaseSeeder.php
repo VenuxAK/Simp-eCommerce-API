@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
         foreach (Store::all() as $store) {
             $this->seedStoreData($store);
         }
+
+        $this->call(RolePermissionSeeder::class);
     }
 
     private function seedMainStore(): void

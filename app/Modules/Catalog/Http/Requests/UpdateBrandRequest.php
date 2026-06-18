@@ -10,7 +10,7 @@ class UpdateBrandRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('update', Brand::class) ?? false;
+        return $this->user()?->hasPermissionTo('brands.update') ?? false;
     }
 
     public function rules(): array

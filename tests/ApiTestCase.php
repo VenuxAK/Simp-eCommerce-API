@@ -7,6 +7,7 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
 use App\Modules\Store\Models\Store;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 abstract class ApiTestCase extends TestCase
@@ -32,6 +33,9 @@ abstract class ApiTestCase extends TestCase
 
         $this->adminUser = User::factory()->root()->create(['store_id' => $store->id]);
         $this->staffUser = User::factory()->salesStaff()->create(['store_id' => $store->id]);
+
+        $this->seed(RolePermissionSeeder::class);
+
         $this->adminHeaders = ['Authorization' => "Bearer {$this->adminUser->createToken('test')->plainTextToken}"];
         $this->staffHeaders = ['Authorization' => "Bearer {$this->staffUser->createToken('test')->plainTextToken}"];
     }

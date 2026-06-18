@@ -14,7 +14,7 @@ class StoreStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \App\Modules\Store\Models\Store::class) ?? false;
+        return $this->user()?->hasPermissionTo('stores.create') ?? false;
     }
 
     /**

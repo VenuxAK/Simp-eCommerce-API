@@ -14,7 +14,7 @@ class UpdateSupplierRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', \App\Modules\Supplier\Models\Supplier::class) ?? false;
+        return $this->user()?->hasPermissionTo('suppliers.update') ?? false;
     }
 
     /**

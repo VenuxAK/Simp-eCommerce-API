@@ -14,7 +14,7 @@ class UpdateInvoiceStatusRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', \App\Modules\Sales\Models\Invoice::class) ?? false;
+        return $this->user()?->hasPermissionTo('invoices.update') ?? false;
     }
 
     /**

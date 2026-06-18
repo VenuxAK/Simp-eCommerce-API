@@ -14,7 +14,7 @@ class UpdateDiscountRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', \App\Modules\Promotion\Models\Discount::class) ?? false;
+        return $this->user()?->hasPermissionTo('discounts.update') ?? false;
     }
 
     /**

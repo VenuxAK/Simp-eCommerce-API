@@ -15,7 +15,7 @@ class UpdateCustomerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', Customer::class) ?? false;
+        return $this->user()?->hasPermissionTo('customers.update') ?? false;
     }
 
     /**

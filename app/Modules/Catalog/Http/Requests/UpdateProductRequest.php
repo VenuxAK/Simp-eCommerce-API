@@ -16,7 +16,7 @@ class UpdateProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('update', Product::class) ?? false;
+        return $this->user()?->hasPermissionTo('products.update') ?? false;
     }
 
     /**

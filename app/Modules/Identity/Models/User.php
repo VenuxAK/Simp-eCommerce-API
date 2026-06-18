@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * Internal staff/auth user — separate from e-commerce customer accounts.
@@ -29,11 +30,13 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected static string $factory = UserFactory::class;
 
     protected $fillable = ['name', 'email', 'password', 'role', 'store_id'];
+
+    protected $with = ['roles'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -115,9 +118,7 @@ class User extends Authenticatable
      */
     public function canManageCatalog(): bool
     {
-        return $this->isRoot() || in_array($this->role, [
-            UserRole::StoreOwner, UserRole::StoreManager, UserRole::InventoryStaff,
-        ], true);
+        return $this->isRoot() || $this->hasAnyRole(['store_owner', 'store_manager', 'inventory_staff']);
     }
 
     /**
@@ -125,9 +126,7 @@ class User extends Authenticatable
      */
     public function canManageSales(): bool
     {
-        return $this->isRoot() || in_array($this->role, [
-            UserRole::StoreOwner, UserRole::StoreManager,
-        ], true);
+        return $this->isRoot() || $this->hasAnyRole(['store_owner', 'store_manager']);
     }
 
     /**

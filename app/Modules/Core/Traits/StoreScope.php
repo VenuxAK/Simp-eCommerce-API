@@ -21,7 +21,7 @@ trait StoreScope
 
         // Staff/store users assigned to a specific store.
         if ($user instanceof \App\Modules\Identity\Models\User) {
-            if ($user->isStoreUser() && $user->store_id) {
+            if ($user->hasAnyRole(['store_owner', 'store_manager', 'inventory_staff', 'sales_staff']) && $user->store_id) {
                 return $user->store_id;
             }
 

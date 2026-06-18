@@ -9,7 +9,7 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->canManageStoreUsers();
+        return $this->user()?->hasPermissionTo('users.manage-store') ?? false;
     }
 
     public function rules(): array
