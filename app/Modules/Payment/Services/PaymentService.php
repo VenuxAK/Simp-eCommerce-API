@@ -4,11 +4,9 @@ namespace App\Modules\Payment\Services;
 
 use App\Modules\Core\Enums\PaymentMethod;
 use App\Modules\Payment\Contracts\PaymentGateway;
-use App\Modules\Payment\Enums\PaymentGatewayType;
-use App\Modules\Payment\Gateways\MMPayGateway;
 use App\Modules\Payment\Gateways\StripeGateway;
+use App\Modules\Sales\Models\Payment;
 use App\Modules\Sales\Services\InvoiceNumberGenerator;
-use Illuminate\Support\Collection;
 
 /**
  * Resolves the correct payment gateway and orchestrates payment operations.
@@ -26,14 +24,12 @@ class PaymentService
     {
         return match ($method) {
             PaymentMethod::Stripe => app(StripeGateway::class),
-            PaymentMethod::MMPay => app(MMPayGateway::class),
             default => throw new \InvalidArgumentException("Unsupported payment method: {$method->value}"),
         };
     }
 
     /**
      * Create a payment intent for the given cart total and method.
-     * Returns gateway-specific data (client_secret, QR code, etc.).
      */
     public function createIntent(float $totalAmount, PaymentMethod $method, array $metadata): array
     {
@@ -41,13 +37,11 @@ class PaymentService
 
         $orderNumber = $metadata['temp_order_number'] ?? $this->numberGenerator->generateOrderNumber();
 
-        $result = $gateway->createIntent(
+        return $gateway->createIntent(
             $totalAmount,
             'MMK',
             array_merge($metadata, ['order_number' => $orderNumber]),
         );
-
-        return $result;
     }
 
     /**
@@ -62,53 +56,24 @@ class PaymentService
     }
 
     /**
-     * Handle a webhook event from a payment gateway.
+     * Handle a Stripe webhook event.
      */
-    public function handleWebhook(PaymentGatewayType $gateway, string $payload, string $signature): void
+    public function handleStripeWebhook(string $payload, string $signature): void
     {
-        $gatewayImpl = match ($gateway) {
-            PaymentGatewayType::MMPay => app(MMPayGateway::class),
-            PaymentGatewayType::Stripe => app(StripeGateway::class),
-            default => throw new \InvalidArgumentException("Unknown gateway: {$gateway->value}"),
-        };
+        $gateway = app(StripeGateway::class);
 
-        if (! $gatewayImpl->verifyWebhook($payload, $signature)) {
+        if (! $gateway->verifyWebhook($payload, $signature)) {
             throw new \InvalidArgumentException('Invalid webhook signature');
         }
 
         $event = json_decode($payload, true);
-
-        match ($gateway) {
-            PaymentGatewayType::MMPay => $this->handleMMPayEvent($event),
-            PaymentGatewayType::Stripe => $this->handleStripeEvent($event),
-            default => null,
-        };
-    }
-
-    /**
-     * Process an incoming MMPay webhook event.
-     */
-    private function handleMMPayEvent(array $event): void
-    {
-        $transactionId = $event['transactionId'] ?? null;
-        $newStatus = match ($event['status'] ?? '') {
-            'success' => 'paid',
-            'failed' => 'failed',
-            'expired' => 'expired',
-            default => null,
-        };
-
-        if (! $transactionId || ! $newStatus) {
-            return;
-        }
-
-        $this->updatePaymentByTransaction($transactionId, $newStatus, $event);
+        $this->processStripeEvent($event);
     }
 
     /**
      * Process an incoming Stripe webhook event.
      */
-    private function handleStripeEvent(array $event): void
+    private function processStripeEvent(array $event): void
     {
         $type = $event['type'] ?? '';
         $intent = $event['data']['object'] ?? [];
@@ -124,16 +89,7 @@ class PaymentService
             return;
         }
 
-        $this->updatePaymentByTransaction($intentId, $newStatus, $event);
-    }
-
-    /**
-     * Find a payment by transaction ID and update its status.
-     * Also updates the invoice status when payment succeeds.
-     */
-    private function updatePaymentByTransaction(string $transactionId, string $newStatus, array $event): void
-    {
-        $payment = \App\Modules\Sales\Models\Payment::where('transaction_id', $transactionId)->first();
+        $payment = Payment::where('transaction_id', $intentId)->first();
 
         if (! $payment) {
             return;
@@ -149,9 +105,7 @@ class PaymentService
             $payment->order->invoice->update(['status' => 'paid']);
         }
 
-        // Update the transaction record if one exists.
-        \App\Modules\Payment\Models\PaymentTransaction::where('transaction_id', $transactionId)
+        \App\Modules\Payment\Models\PaymentTransaction::where('transaction_id', $intentId)
             ->update(['gateway_status' => $newStatus, 'response_data' => $event]);
     }
-
 }

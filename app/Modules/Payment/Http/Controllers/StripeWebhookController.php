@@ -4,7 +4,6 @@ namespace App\Modules\Payment\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
-use App\Modules\Payment\Enums\PaymentGatewayType;
 use App\Modules\Payment\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,11 +26,7 @@ class StripeWebhookController extends Controller
         $signature = $request->header('Stripe-Signature', '');
 
         try {
-            $this->paymentService->handleWebhook(
-                PaymentGatewayType::Stripe,
-                $payload,
-                $signature,
-            );
+            $this->paymentService->handleStripeWebhook($payload, $signature);
 
             return $this->respondMessage('OK');
         } catch (\InvalidArgumentException $e) {

@@ -14,7 +14,7 @@ class CreatePaymentIntentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', 'string', 'in:stripe,mmpay'],
+            'payment_method' => ['required', 'string', 'in:stripe'],
         ];
     }
 }

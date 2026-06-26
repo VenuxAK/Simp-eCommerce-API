@@ -44,5 +44,4 @@ Route::get('/auth/oauth/{provider}/callback', [OAuthController::class, 'callback
     ->middleware('web');
 
 // ─── Payment Gateway Webhooks ────────────────────────────────
-Route::post('/mmpay/webhook', [MMPayWebhookController::class, 'handle']);
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);

@@ -18,9 +18,8 @@ class PlaceOrderRequest extends FormRequest
     {
         return [
             'address_id' => ['required', 'exists:addresses,id'],
-            'payment_method' => ['sometimes', 'string', 'in:cash,stripe,mmpay'],
+            'payment_method' => ['sometimes', 'string', 'in:cash,stripe'],
             'payment_intent_id' => ['nullable', 'string', 'required_if:payment_method,stripe'],
-            'payment_transaction_id' => ['nullable', 'string', 'required_if:payment_method,mmpay'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
