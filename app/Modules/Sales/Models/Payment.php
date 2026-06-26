@@ -16,7 +16,7 @@ class Payment extends Model
     /** @use HasFactory<PaymentFactory> */
     use HasFactory;
 
-    protected $fillable = ['order_id', 'method', 'amount', 'paid_at'];
+    protected $fillable = ['order_id', 'method', 'amount', 'paid_at', 'gateway', 'transaction_id', 'gateway_status', 'gateway_response'];
 
     /**
      * Get the attributes that should be cast.
@@ -27,6 +27,7 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'method' => PaymentMethod::class,
+            'gateway_response' => 'array',
         ];
     }
 

@@ -41,4 +41,10 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'mmpay' => [
+        'api_key' => env('MMPAY_API_KEY', ''),
+        'webhook_secret' => env('MMPAY_WEBHOOK_SECRET', ''),
+        'base_url' => env('MMPAY_BASE_URL', 'https://api.myanmyanpay.com/v1'),
+    ],
+
 ];

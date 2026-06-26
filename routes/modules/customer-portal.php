@@ -7,12 +7,8 @@ use App\Modules\ECommerce\Http\Controllers\CartController;
 use App\Modules\ECommerce\Http\Controllers\CheckoutController;
 use App\Modules\ECommerce\Http\Controllers\MyOrderController;
 use App\Modules\ECommerce\Http\Controllers\WishlistController;
+use App\Modules\Payment\Http\Controllers\PaymentIntentController;
 use Illuminate\Support\Facades\Route;
-
-/*
- * Customer portal — authenticated via Sanctum with Customer guard.
- * Manages the customer's own profile, address book, and orders.
- */
 
 // Profile.
 Route::post('/customer/logout', [CustomerAuthController::class, 'logout']);
@@ -38,6 +34,9 @@ Route::delete('/cart', [CartController::class, 'clear']);
 Route::post('/checkout', [CheckoutController::class, 'placeOrder'])
     ->middleware(['throttle:checkout', 'idempotent']);
 Route::get('/checkout/validate', [CheckoutController::class, 'validateStock']);
+
+// Payment intent (gateway payment before checkout).
+Route::post('/checkout/payment-intent', [PaymentIntentController::class, 'create']);
 
 // Order history.
 Route::get('/my/orders', [MyOrderController::class, 'index']);

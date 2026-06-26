@@ -5,6 +5,7 @@ use App\Modules\Customer\Http\Controllers\CustomerForgotPasswordController;
 use App\Modules\Customer\Http\Controllers\OAuthController;
 use App\Modules\Identity\Http\Controllers\AuthController;
 use App\Modules\Identity\Http\Controllers\ForgotPasswordController;
+use App\Modules\Payment\Http\Controllers\MMPayWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Staff login ───────────────────────────────────────────────
@@ -40,3 +41,6 @@ Route::get('/auth/oauth/{provider}/redirect', [OAuthController::class, 'redirect
 // Callback — provider redirects here with ?code= after consent.
 Route::get('/auth/oauth/{provider}/callback', [OAuthController::class, 'callback'])
     ->middleware('web');
+
+// ─── Payment Gateway Webhooks ────────────────────────────────
+Route::post('/mmpay/webhook', [MMPayWebhookController::class, 'handle']);
