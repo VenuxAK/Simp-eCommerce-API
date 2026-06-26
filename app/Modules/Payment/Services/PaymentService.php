@@ -6,6 +6,7 @@ use App\Modules\Core\Enums\PaymentMethod;
 use App\Modules\Payment\Contracts\PaymentGateway;
 use App\Modules\Payment\Enums\PaymentGatewayType;
 use App\Modules\Payment\Gateways\MMPayGateway;
+use App\Modules\Payment\Gateways\StripeGateway;
 use App\Modules\Sales\Services\InvoiceNumberGenerator;
 use Illuminate\Support\Collection;
 
@@ -41,9 +42,9 @@ class PaymentService
         $orderNumber = $metadata['temp_order_number'] ?? $this->numberGenerator->generateOrderNumber();
 
         $result = $gateway->createIntent(
-            amount: $totalAmount,
-            currency: 'MMK',
-            metadata: array_merge($metadata, ['order_number' => $orderNumber]),
+            $totalAmount,
+            'MMK',
+            array_merge($metadata, ['order_number' => $orderNumber]),
         );
 
         return $result;
@@ -67,7 +68,7 @@ class PaymentService
     {
         $gatewayImpl = match ($gateway) {
             PaymentGatewayType::MMPay => app(MMPayGateway::class),
-            PaymentGatewayType::Stripe => throw new \RuntimeException('Stripe not yet implemented'),
+            PaymentGatewayType::Stripe => app(StripeGateway::class),
             default => throw new \InvalidArgumentException("Unknown gateway: {$gateway->value}"),
         };
 
@@ -79,7 +80,7 @@ class PaymentService
 
         match ($gateway) {
             PaymentGatewayType::MMPay => $this->handleMMPayEvent($event),
-            PaymentGatewayType::Stripe => throw new \RuntimeException('Stripe webhook not yet implemented'),
+            PaymentGatewayType::Stripe => $this->handleStripeEvent($event),
             default => null,
         };
     }
@@ -101,31 +102,56 @@ class PaymentService
             return;
         }
 
-        // Find the payment transaction and update its status.
-        $tx = \App\Modules\Payment\Models\PaymentTransaction::where('transaction_id', $transactionId)->first();
+        $this->updatePaymentByTransaction($transactionId, $newStatus, $event);
+    }
 
-        if (! $tx) {
+    /**
+     * Process an incoming Stripe webhook event.
+     */
+    private function handleStripeEvent(array $event): void
+    {
+        $type = $event['type'] ?? '';
+        $intent = $event['data']['object'] ?? [];
+        $intentId = $intent['id'] ?? null;
+
+        $newStatus = match ($type) {
+            'payment_intent.succeeded' => 'paid',
+            'payment_intent.payment_failed' => 'failed',
+            default => null,
+        };
+
+        if (! $intentId || ! $newStatus) {
             return;
         }
 
-        // Update the payment record.
-        $payment = \App\Modules\Sales\Models\Payment::find($tx->payment_id);
-        if ($payment) {
-            $payment->update([
-                'gateway_status' => $newStatus,
-                'paid_at' => $newStatus === 'paid' ? now() : $payment->paid_at,
-                'gateway_response' => $event,
-            ]);
+        $this->updatePaymentByTransaction($intentId, $newStatus, $event);
+    }
+
+    /**
+     * Find a payment by transaction ID and update its status.
+     * Also updates the invoice status when payment succeeds.
+     */
+    private function updatePaymentByTransaction(string $transactionId, string $newStatus, array $event): void
+    {
+        $payment = \App\Modules\Sales\Models\Payment::where('transaction_id', $transactionId)->first();
+
+        if (! $payment) {
+            return;
         }
 
-        // If paid, update the invoice status.
-        if ($newStatus === 'paid' && $payment && $payment->order && $payment->order->invoice) {
+        $payment->update([
+            'gateway_status' => $newStatus,
+            'paid_at' => $newStatus === 'paid' ? now() : $payment->paid_at,
+            'gateway_response' => $event,
+        ]);
+
+        if ($newStatus === 'paid' && $payment->order && $payment->order->invoice) {
             $payment->order->invoice->update(['status' => 'paid']);
         }
 
-        $tx->update([
-            'gateway_status' => $newStatus,
-            'response_data' => $event,
-        ]);
+        // Update the transaction record if one exists.
+        \App\Modules\Payment\Models\PaymentTransaction::where('transaction_id', $transactionId)
+            ->update(['gateway_status' => $newStatus, 'response_data' => $event]);
     }
+
 }

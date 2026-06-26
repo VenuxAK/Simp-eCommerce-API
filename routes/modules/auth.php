@@ -6,6 +6,7 @@ use App\Modules\Customer\Http\Controllers\OAuthController;
 use App\Modules\Identity\Http\Controllers\AuthController;
 use App\Modules\Identity\Http\Controllers\ForgotPasswordController;
 use App\Modules\Payment\Http\Controllers\MMPayWebhookController;
+use App\Modules\Payment\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Staff login ───────────────────────────────────────────────
@@ -44,3 +45,4 @@ Route::get('/auth/oauth/{provider}/callback', [OAuthController::class, 'callback
 
 // ─── Payment Gateway Webhooks ────────────────────────────────
 Route::post('/mmpay/webhook', [MMPayWebhookController::class, 'handle']);
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);

@@ -41,6 +41,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY', ''),
+        'secret' => env('STRIPE_SECRET', ''),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET', ''),
+    ],
+
     'mmpay' => [
         'api_key' => env('MMPAY_API_KEY', ''),
         'webhook_secret' => env('MMPAY_WEBHOOK_SECRET', ''),
