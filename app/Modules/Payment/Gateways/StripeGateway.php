@@ -19,6 +19,9 @@ class StripeGateway implements PaymentGateway
 {
     private const MMK_TO_USD = 2100;
 
+    /** Stripe minimum charge amount in USD cents. */
+    private const MIN_USD_CENTS = 50;
+
     public function __construct()
     {
         Stripe::setApiKey(config('services.stripe.secret'));
@@ -26,16 +29,21 @@ class StripeGateway implements PaymentGateway
 
     /**
      * Create a Stripe PaymentIntent. Accepts MMK amount, converts to USD.
+     * Enforces Stripe's minimum charge amount ($0.50 USD).
      */
     public function createIntent(float $amountMMK, string $currency, array $metadata): array
     {
-        $amountUSD = round($amountMMK / self::MMK_TO_USD, 2);
+        $amountUSD = max(
+            self::MIN_USD_CENTS,
+            (int) (round($amountMMK / self::MMK_TO_USD, 2) * 100),
+        );
 
         $intent = PaymentIntent::create([
-            'amount' => (int) ($amountUSD * 100),
+            'amount' => $amountUSD,
             'currency' => 'usd',
             'metadata' => array_merge($metadata, [
                 'amount_mmk' => (string) $amountMMK,
+                'amount_usd_cents' => (string) $amountUSD,
             ]),
             'automatic_payment_methods' => ['enabled' => true],
         ]);
@@ -59,13 +67,17 @@ class StripeGateway implements PaymentGateway
     }
 
     /**
-     * Refund a PaymentIntent (full or partial).
+     * Refund a PaymentIntent (full or partial). Amount in MMK, converted to USD.
      */
     public function refund(string $intentId, ?float $amount = null): array
     {
         $params = ['payment_intent' => $intentId];
+
         if ($amount !== null) {
-            $params['amount'] = (int) (round($amount / self::MMK_TO_USD, 2) * 100);
+            $params['amount'] = max(
+                self::MIN_USD_CENTS,
+                (int) (round($amount / self::MMK_TO_USD, 2) * 100),
+            );
         }
 
         $refund = Refund::create($params);
