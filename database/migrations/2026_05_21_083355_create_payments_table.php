@@ -14,6 +14,10 @@ return new class extends Migration
             $table->string('method')->default('cash');
             $table->decimal('amount', 10, 2);
             $table->timestamp('paid_at')->nullable();
+            $table->string('gateway')->nullable();
+            $table->string('transaction_id')->nullable();
+            $table->string('gateway_status')->nullable();
+            $table->json('gateway_response')->nullable();
             $table->timestamps();
         });
     }

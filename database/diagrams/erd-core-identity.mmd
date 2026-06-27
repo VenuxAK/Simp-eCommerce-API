@@ -1,0 +1,80 @@
+erDiagram
+    stores {
+        bigint id PK
+        varchar name
+        varchar slug UK
+        varchar domain
+        text description
+        varchar logo
+        varchar phone
+        varchar email
+        boolean is_active
+        json settings
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK
+        timestamp email_verified_at
+        varchar password
+        varchar remember_token
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    roles {
+        bigint id PK
+        varchar name
+        varchar guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    permissions {
+        bigint id PK
+        varchar name
+        varchar guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    model_has_roles {
+        bigint role_id PK, FK
+        varchar model_type PK
+        bigint model_id PK
+    }
+
+    model_has_permissions {
+        bigint permission_id PK, FK
+        varchar model_type PK
+        bigint model_id PK
+    }
+
+    role_has_permissions {
+        bigint permission_id PK, FK
+        bigint role_id PK, FK
+    }
+
+    personal_access_tokens {
+        bigint id PK
+        varchar tokenable_type
+        bigint tokenable_id
+        varchar name
+        varchar token UK
+        text abilities
+        timestamp last_used_at
+        timestamp expires_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stores ||--o{ users : "store_id"
+    users ||--o{ personal_access_tokens : "tokenable"
+    roles ||--o{ model_has_roles : "role_id"
+    roles ||--o{ role_has_permissions : "role_id"
+    permissions ||--o{ model_has_permissions : "permission_id"
+    permissions ||--o{ role_has_permissions : "permission_id"

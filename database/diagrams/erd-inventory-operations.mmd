@@ -1,0 +1,43 @@
+erDiagram
+    stock_movements {
+        bigint id PK
+        bigint product_variant_id FK
+        int quantity_change
+        varchar reason
+        varchar reference_type
+        bigint reference_id
+        bigint user_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    cash_sessions {
+        bigint id PK
+        bigint user_id FK
+        timestamp opened_at
+        timestamp closed_at
+        decimal opening_balance
+        decimal closing_balance
+        decimal expected_balance
+        decimal difference
+        text notes
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    cart_items {
+        bigint id PK
+        bigint customer_id FK
+        uuid session_id
+        bigint product_variant_id FK
+        int quantity
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_variants ||--o{ stock_movements : "product_variant_id"
+    product_variants ||--o{ cart_items : "product_variant_id"
+    users ||--o{ stock_movements : "user_id"
+    users ||--o{ cash_sessions : "user_id"
+    customers ||--o{ cart_items : "customer_id"

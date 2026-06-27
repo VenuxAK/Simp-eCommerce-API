@@ -1,0 +1,13 @@
+erDiagram
+    audit_logs {
+        bigint id PK
+        bigint user_id
+        varchar action
+        varchar model_type
+        bigint model_id
+        text old_values
+        text new_values
+        varchar ip_address
+        timestamp created_at PK
+        timestamp updated_at
+    }

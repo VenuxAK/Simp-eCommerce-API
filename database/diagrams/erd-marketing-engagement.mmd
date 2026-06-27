@@ -1,0 +1,30 @@
+erDiagram
+    discounts {
+        bigint id PK
+        varchar name
+        varchar type
+        decimal value
+        varchar applies_to
+        bigint category_id FK
+        bigint product_id FK
+        date starts_at
+        date ends_at
+        boolean is_active
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    wishlist_items {
+        bigint id PK
+        bigint customer_id FK
+        bigint product_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stores ||--o{ discounts : "store_id"
+    categories ||--o{ discounts : "category_id"
+    products ||--o{ discounts : "product_id"
+    customers ||--o{ wishlist_items : "customer_id"
+    products ||--o{ wishlist_items : "product_id"

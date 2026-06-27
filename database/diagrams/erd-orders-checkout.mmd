@@ -1,0 +1,79 @@
+erDiagram
+    customers {
+        bigint id PK
+        varchar name
+        varchar email UK
+        varchar phone
+        text address
+        int loyalty_points
+        varchar password
+        timestamp email_verified_at
+        varchar remember_token
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    addresses {
+        bigint id PK
+        bigint customer_id FK
+        varchar type
+        varchar name
+        varchar phone
+        varchar street
+        varchar city
+        varchar state
+        varchar postal_code
+        boolean is_default
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    orders {
+        bigint id PK
+        bigint user_id FK
+        bigint customer_id FK
+        varchar order_number UK
+        decimal total_amount
+        varchar status
+        varchar source
+        text notes
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint product_variant_id FK
+        int quantity
+        decimal unit_price
+        decimal subtotal
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    shipments {
+        bigint id PK
+        bigint order_id FK
+        bigint address_id FK
+        varchar method
+        varchar tracking_number
+        varchar tracking_url
+        timestamp shipped_at
+        timestamp delivered_at
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stores ||--o{ customers : "store_id"
+    stores ||--o{ orders : "store_id"
+    users ||--o{ orders : "user_id"
+    customers ||--o{ orders : "customer_id"
+    customers ||--o{ addresses : "customer_id"
+    orders ||--|{ order_items : "order_id"
+    orders ||--|| shipments : "order_id"
+    product_variants ||--o{ order_items : "product_variant_id"
+    addresses ||--o{ shipments : "address_id"

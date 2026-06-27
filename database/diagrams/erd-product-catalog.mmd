@@ -1,0 +1,75 @@
+erDiagram
+    brands {
+        bigint id PK
+        varchar name
+        varchar slug UK
+        varchar logo
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    categories {
+        bigint id PK
+        bigint parent_id FK
+        varchar name
+        varchar slug UK
+        text description
+        varchar image
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    suppliers {
+        bigint id PK
+        varchar name
+        varchar contact_person
+        varchar phone
+        varchar email
+        text address
+        text notes
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    products {
+        bigint id PK
+        bigint category_id FK
+        bigint brand_id FK
+        bigint supplier_id FK
+        varchar name
+        varchar slug UK
+        text description
+        decimal base_price
+        varchar image
+        bigint store_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_variants {
+        bigint id PK
+        bigint product_id FK
+        varchar sku UK
+        varchar size
+        varchar color
+        varchar image
+        decimal price_adjustment
+        decimal purchase_price
+        int stock_quantity
+        int low_stock_threshold
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    stores ||--o{ brands : "store_id"
+    stores ||--o{ categories : "store_id"
+    stores ||--o{ suppliers : "store_id"
+    stores ||--o{ products : "store_id"
+    categories ||--o{ categories : "parent_id"
+    categories ||--o{ products : "category_id"
+    brands ||--o{ products : "brand_id"
+    suppliers ||--o{ products : "supplier_id"
+    products ||--o{ product_variants : "product_id"

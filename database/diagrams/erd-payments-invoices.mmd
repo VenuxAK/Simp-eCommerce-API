@@ -1,0 +1,47 @@
+erDiagram
+    payments {
+        bigint id PK
+        bigint order_id FK
+        varchar method
+        decimal amount
+        timestamp paid_at
+        varchar gateway
+        varchar transaction_id
+        varchar gateway_status
+        json gateway_response
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    invoices {
+        bigint id PK
+        bigint order_id FK
+        varchar invoice_number UK
+        date issued_date
+        date due_date
+        varchar status
+        text notes
+        text terms
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    payment_transactions {
+        bigint id PK
+        bigint payment_id FK
+        bigint order_id FK
+        varchar gateway
+        varchar transaction_id UK
+        varchar gateway_status
+        decimal amount
+        varchar currency
+        json request_data
+        json response_data
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    orders ||--o{ payments : "order_id"
+    orders ||--|| invoices : "order_id"
+    orders ||--o{ payment_transactions : "order_id"
+    payments ||--o{ payment_transactions : "payment_id"

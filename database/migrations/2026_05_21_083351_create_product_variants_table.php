@@ -14,8 +14,11 @@ return new class extends Migration
             $table->string('sku')->unique();
             $table->string('size')->nullable();
             $table->string('color')->nullable();
+            $table->string('image')->nullable();
             $table->decimal('price_adjustment', 10, 2)->default(0);
+            $table->decimal('purchase_price', 10, 2)->nullable();
             $table->integer('stock_quantity')->default(0);
+            $table->integer('low_stock_threshold')->default(10);
             $table->timestamps();
         });
     }

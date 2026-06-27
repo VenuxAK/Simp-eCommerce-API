@@ -1,0 +1,41 @@
+erDiagram
+    sessions {
+        varchar id PK
+        bigint user_id
+        varchar ip_address
+        text user_agent
+        longtext payload
+        int last_activity
+    }
+
+    cache {
+        varchar key PK
+        mediumtext value
+        int expiration
+    }
+
+    cache_locks {
+        varchar key PK
+        varchar owner
+        int expiration
+    }
+
+    jobs {
+        bigint id PK
+        varchar queue
+        longtext payload
+        smallint attempts
+        int reserved_at
+        int available_at
+        int created_at
+    }
+
+    failed_jobs {
+        bigint id PK
+        varchar uuid UK
+        text connection
+        text queue
+        longtext payload
+        longtext exception
+        timestamp failed_at
+    }

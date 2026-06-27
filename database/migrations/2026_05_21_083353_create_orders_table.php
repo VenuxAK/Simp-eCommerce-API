@@ -10,12 +10,12 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
             $table->string('order_number')->unique();
             $table->decimal('total_amount', 10, 2);
             $table->string('status')->default('pending');
-            $table->string('source')->default('pos');          // 'pos' for in-store, 'online' for storefront orders.
+            $table->string('source')->default('pos');
             $table->text('notes')->nullable();
             $table->timestamps();
         });
