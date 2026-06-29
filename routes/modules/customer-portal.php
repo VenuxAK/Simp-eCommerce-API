@@ -26,6 +26,7 @@ Route::put('/addresses/{address}/default', [AddressController::class, 'setDefaul
 // Cart.
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'add']);
+Route::post('/cart/sync', [CartController::class, 'sync']);
 Route::put('/cart/{cartItem}', [CartController::class, 'update']);
 Route::delete('/cart/{cartItem}', [CartController::class, 'remove']);
 Route::delete('/cart', [CartController::class, 'clear']);

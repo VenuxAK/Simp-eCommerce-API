@@ -18,9 +18,16 @@ class RegisterCustomerRequest extends FormRequest
 
     public function rules(): array
     {
+        $storeId = app()->bound('current_store') ? app('current_store')->id : null;
+
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:customers,email'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('customers', 'email')->where('store_id', $storeId)
+            ],
             'password' => ['required', 'string', 'min:8', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/'],
         ];
     }

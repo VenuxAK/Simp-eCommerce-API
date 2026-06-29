@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
 use App\Modules\ECommerce\Http\Requests\AddCartItemRequest;
 use App\Modules\ECommerce\Http\Requests\UpdateCartItemRequest;
+use App\Modules\ECommerce\Http\Requests\SyncCartRequest;
 use App\Modules\ECommerce\Http\Resources\CartItemResource;
 use App\Modules\ECommerce\Models\CartItem;
 use App\Modules\ECommerce\Services\CartService;
@@ -79,5 +80,12 @@ class CartController extends Controller
         $this->cartService->clearCart($request->user());
 
         return $this->respondMessage('Cart cleared.');
+    }
+
+    public function sync(SyncCartRequest $request): JsonResponse
+    {
+        $items = $this->cartService->syncCart($request->user(), $request->validated()['items']);
+
+        return $this->respond(CartItemResource::collection($items));
     }
 }

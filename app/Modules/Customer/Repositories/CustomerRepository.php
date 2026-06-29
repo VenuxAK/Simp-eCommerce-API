@@ -21,9 +21,15 @@ class CustomerRepository extends Repository
     /**
      * Retrieve a customer by their email address.
      */
-    public function findByEmail(string $email): ?Customer
+    public function findByEmail(string $email, ?int $storeId = null): ?Customer
     {
-        return Customer::where('email', $email)->first();
+        if (! $storeId && app()->bound('current_store')) {
+            $storeId = app('current_store')->id;
+        }
+
+        return Customer::where('email', $email)
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->first();
     }
 
     /**

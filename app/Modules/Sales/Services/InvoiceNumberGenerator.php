@@ -4,6 +4,7 @@ namespace App\Modules\Sales\Services;
 
 use App\Modules\Sales\Models\Invoice;
 use App\Modules\Sales\Models\Order;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Business logic for InvoiceNumberGenerator operations.
@@ -32,12 +33,15 @@ class InvoiceNumberGenerator
         $date = now()->format('Ymd');
         $pattern = "{$prefix}-{$date}-%";
 
-        $last = $modelClass::where($column, 'like', $pattern)
-            ->orderBy($column, 'desc')
-            ->first();
+        return DB::transaction(function () use ($modelClass, $column, $prefix, $date, $pattern) {
+            $last = $modelClass::where($column, 'like', $pattern)
+                ->orderBy($column, 'desc')
+                ->lockForUpdate()
+                ->first();
 
-        $newNumber = $last ? ((int) substr($last->$column, -4)) + 1 : 1;
+            $newNumber = $last ? ((int) substr($last->$column, -4)) + 1 : 1;
 
-        return "{$prefix}-{$date}-".str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            return "{$prefix}-{$date}-".str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        });
     }
 }

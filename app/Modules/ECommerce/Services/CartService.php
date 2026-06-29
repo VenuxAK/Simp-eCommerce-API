@@ -57,6 +57,39 @@ class CartService
         $this->cartItemRepository->deleteByCustomer($customer->id);
     }
 
+    public function syncCart(Customer $customer, array $items): Collection
+    {
+        foreach ($items as $item) {
+            $variantId = $item['product_variant_id'];
+            $quantity = $item['quantity'];
+
+            $existing = $this->cartItemRepository->findExisting($customer->id, $variantId);
+            if ($existing) {
+                $newQty = $existing->quantity + $quantity;
+                // Cap at available stock
+                $variant = $this->productVariantRepository->find($variantId);
+                if ($variant) {
+                    $newQty = min($newQty, $variant->stock_quantity);
+                    $this->cartItemRepository->update($existing, ['quantity' => $newQty]);
+                }
+            } else {
+                $variant = $this->productVariantRepository->find($variantId);
+                if ($variant) {
+                    $quantity = min($quantity, $variant->stock_quantity);
+                    if ($quantity > 0) {
+                        $this->cartItemRepository->create([
+                            'customer_id' => $customer->id,
+                            'product_variant_id' => $variantId,
+                            'quantity' => $quantity,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $this->getItems($customer);
+    }
+
     private function validateStock(int $variantId, int $quantity): void
     {
         $variant = $this->productVariantRepository->findOrFail($variantId);
