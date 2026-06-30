@@ -22,7 +22,7 @@ class CustomerAuthTest extends TestCase
         Store::factory()->create(['slug' => self::STORE_SLUG]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/register', [
+            ->postJson('/api/v1/customer/register', [
                 'name' => 'New Customer',
                 'email' => 'new@customer.com',
                 'password' => 'Pass1234',
@@ -46,7 +46,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/login', [
+            ->postJson('/api/v1/customer/login', [
                 'email' => 'login@test.com',
                 'password' => 'Pass1234',
             ]);
@@ -64,7 +64,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/login', [
+            ->postJson('/api/v1/customer/login', [
                 'email' => 'wrong@test.com',
                 'password' => 'WrongPass1',
             ]);
@@ -84,7 +84,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/forgot-password', [
+            ->postJson('/api/v1/customer/forgot-password', [
                 'email' => $customer->email,
             ]);
 
@@ -101,7 +101,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/forgot-password', [
+            ->postJson('/api/v1/customer/forgot-password', [
                 'email' => 'oauth@customer.com',
             ]);
 
@@ -114,7 +114,7 @@ class CustomerAuthTest extends TestCase
         Store::factory()->create(['slug' => self::STORE_SLUG]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/forgot-password', [
+            ->postJson('/api/v1/customer/forgot-password', [
                 'email' => 'nobody@example.com',
             ]);
 
@@ -136,7 +136,7 @@ class CustomerAuthTest extends TestCase
         $token = Password::broker('customers')->createToken($customer);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/reset-password', [
+            ->postJson('/api/v1/customer/reset-password', [
                 'token' => $token,
                 'email' => $customer->email,
                 'password' => 'NewPass456',
@@ -160,7 +160,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/reset-password', [
+            ->postJson('/api/v1/customer/reset-password', [
                 'token' => 'not-a-real-token',
                 'email' => $customer->email,
                 'password' => 'NewPass456',
@@ -177,7 +177,7 @@ class CustomerAuthTest extends TestCase
         Store::factory()->create(['slug' => self::STORE_SLUG]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/forgot-password', []);
+            ->postJson('/api/v1/customer/forgot-password', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email']);
@@ -188,7 +188,7 @@ class CustomerAuthTest extends TestCase
         Store::factory()->create(['slug' => self::STORE_SLUG]);
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/reset-password', []);
+            ->postJson('/api/v1/customer/reset-password', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['token', 'email', 'password']);
@@ -200,13 +200,13 @@ class CustomerAuthTest extends TestCase
 
         for ($i = 0; $i < 10; $i++) {
             $this->withHeader('X-Store', self::STORE_SLUG)
-                ->postJson('/api/customer/forgot-password', [
+                ->postJson('/api/v1/customer/forgot-password', [
                     'email' => 'rate@customer.com',
                 ]);
         }
 
         $response = $this->withHeader('X-Store', self::STORE_SLUG)
-            ->postJson('/api/customer/forgot-password', [
+            ->postJson('/api/v1/customer/forgot-password', [
                 'email' => 'rate@customer.com',
             ]);
 

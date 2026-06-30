@@ -24,7 +24,7 @@ class OAuthTest extends TestCase
             ->with('google')
             ->andReturn($mockRedirect);
 
-        $response = $this->getJson('/api/auth/oauth/google/redirect');
+        $response = $this->getJson('/api/v1/auth/oauth/google/redirect');
 
         $response->assertOk()
             ->assertJsonStructure(['redirect_url']);
@@ -44,7 +44,7 @@ class OAuthTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
+        $response = $this->withSession([])->getJson('/api/v1/auth/oauth/google/callback?code=valid_code');
 
         $response->assertRedirect();
         $redirectUrl = $response->headers->get('Location');
@@ -75,7 +75,7 @@ class OAuthTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback?code=valid_code');
+        $response = $this->withSession([])->getJson('/api/v1/auth/oauth/google/callback?code=valid_code');
 
         $response->assertRedirect();
         $this->assertDatabaseCount('customers', 1);
@@ -83,7 +83,7 @@ class OAuthTest extends TestCase
 
     public function test_callback_fails_without_code(): void
     {
-        $response = $this->withSession([])->getJson('/api/auth/oauth/google/callback');
+        $response = $this->withSession([])->getJson('/api/v1/auth/oauth/google/callback');
         $response->assertUnprocessable();
     }
 }

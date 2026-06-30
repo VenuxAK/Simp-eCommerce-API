@@ -59,11 +59,11 @@ class CustomerService
      * Eager-loads items → variant → product chain (for line-item display),
      * plus payment and invoice for financial context on the order detail page.
      */
-    public function getCustomerOrders(Customer $customer)
+    public function getCustomerOrders(Customer $customer, int $perPage = 20)
     {
         return $customer->orders()
             ->with(['items.variant.product', 'payment', 'invoice'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($perPage);
     }
 }

@@ -17,7 +17,7 @@ class ProductTest extends ApiTestCase
         $category = Category::factory()->create();
         Product::factory(3)->create(['category_id' => $category->id]);
 
-        $response = $this->getJson('/api/products', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/products', $this->adminHeaders);
 
         $response->assertOk()->assertJsonCount(3, 'data');
     }
@@ -26,7 +26,7 @@ class ProductTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->postJson('/api/products', [
+        $response = $this->postJson('/api/v1/products', [
             'category_id' => $category->id,
             'name' => 'Classic Tee',
             'base_price' => 29.99,
@@ -44,7 +44,7 @@ class ProductTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->postJson('/api/products', [
+        $response = $this->postJson('/api/v1/products', [
             'category_id' => $category->id,
             'name' => 'No Variants',
             'base_price' => 10,
@@ -59,7 +59,7 @@ class ProductTest extends ApiTestCase
         $category = Category::factory()->create();
         ProductVariant::factory()->create(['sku' => 'DUP-SKU']);
 
-        $response = $this->postJson('/api/products', [
+        $response = $this->postJson('/api/v1/products', [
             'category_id' => $category->id,
             'name' => 'Duplicate SKU',
             'base_price' => 10,
@@ -73,7 +73,7 @@ class ProductTest extends ApiTestCase
     {
         $product = Product::factory()->has(ProductVariant::factory(2), 'variants')->create();
 
-        $response = $this->getJson("/api/products/{$product->id}", $this->adminHeaders);
+        $response = $this->getJson("/api/v1/products/{$product->id}", $this->adminHeaders);
 
         $response->assertOk()->assertJsonPath('data.id', $product->id);
     }
@@ -82,7 +82,7 @@ class ProductTest extends ApiTestCase
     {
         $product = Product::factory()->create(['name' => 'Old Name']);
 
-        $response = $this->putJson("/api/products/{$product->id}", [
+        $response = $this->putJson("/api/v1/products/{$product->id}", [
             'name' => 'New Name',
         ], $this->adminHeaders);
 
@@ -94,7 +94,7 @@ class ProductTest extends ApiTestCase
         $product = Product::factory()->has(ProductVariant::factory(), 'variants')->create();
         $variant = $product->variants()->first();
 
-        $response = $this->putJson("/api/products/{$product->id}", [
+        $response = $this->putJson("/api/v1/products/{$product->id}", [
             'variants' => [
                 ['id' => $variant->id, 'sku' => 'UPDATED-SKU', 'stock_quantity' => 20],
             ],
@@ -111,7 +111,7 @@ class ProductTest extends ApiTestCase
         $order = Order::factory()->create();
         OrderItem::factory()->create(['order_id' => $order->id, 'product_variant_id' => $variant->id]);
 
-        $response = $this->deleteJson("/api/products/{$product->id}", [], $this->adminHeaders);
+        $response = $this->deleteJson("/api/v1/products/{$product->id}", [], $this->adminHeaders);
 
         $response->assertUnprocessable();
         $this->assertDatabaseHas('products', ['id' => $product->id]);
@@ -121,7 +121,7 @@ class ProductTest extends ApiTestCase
     {
         $product = Product::factory()->has(ProductVariant::factory(), 'variants')->create();
 
-        $response = $this->deleteJson("/api/products/{$product->id}", [], $this->adminHeaders);
+        $response = $this->deleteJson("/api/v1/products/{$product->id}", [], $this->adminHeaders);
 
         $response->assertOk();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
@@ -131,7 +131,7 @@ class ProductTest extends ApiTestCase
     {
         $variant = ProductVariant::factory()->create(['stock_quantity' => 5]);
 
-        $response = $this->patchJson("/api/variants/{$variant->id}/stock", [
+        $response = $this->patchJson("/api/v1/variants/{$variant->id}/stock", [
             'quantity' => 20,
         ], $this->adminHeaders);
 
@@ -143,7 +143,7 @@ class ProductTest extends ApiTestCase
     {
         $variant = ProductVariant::factory()->create();
 
-        $response = $this->patchJson("/api/variants/{$variant->id}/stock", [
+        $response = $this->patchJson("/api/v1/variants/{$variant->id}/stock", [
             'quantity' => -5,
         ], $this->adminHeaders);
 
@@ -153,7 +153,7 @@ class ProductTest extends ApiTestCase
     public function test_staff_cannot_create_product(): void
     {
         $category = Category::factory()->create();
-        $response = $this->postJson('/api/products', [
+        $response = $this->postJson('/api/v1/products', [
             'category_id' => $category->id, 'name' => 'Staff Product',
             'base_price' => 10, 'variants' => [['sku' => 'STAFF', 'stock_quantity' => 1]],
         ], $this->staffHeaders);
@@ -163,21 +163,21 @@ class ProductTest extends ApiTestCase
     public function test_staff_cannot_update_product(): void
     {
         $product = Product::factory()->create();
-        $response = $this->putJson("/api/products/{$product->id}", ['name' => 'Hacked'], $this->staffHeaders);
+        $response = $this->putJson("/api/v1/products/{$product->id}", ['name' => 'Hacked'], $this->staffHeaders);
         $response->assertForbidden();
     }
 
     public function test_staff_cannot_delete_product(): void
     {
         $product = Product::factory()->create();
-        $response = $this->deleteJson("/api/products/{$product->id}", [], $this->staffHeaders);
+        $response = $this->deleteJson("/api/v1/products/{$product->id}", [], $this->staffHeaders);
         $response->assertForbidden();
     }
 
     public function test_staff_cannot_import_csv(): void
     {
         $file = UploadedFile::fake()->createWithContent('products.csv', "name,sku\nTest,TST");
-        $response = $this->postJson('/api/products/import/csv', [
+        $response = $this->postJson('/api/v1/products/import/csv', [
             'file' => $file,
         ], $this->staffHeaders);
         $response->assertForbidden();
@@ -186,7 +186,7 @@ class ProductTest extends ApiTestCase
     public function test_csv_import_rejects_invalid_file_type(): void
     {
         $file = UploadedFile::fake()->create('products.pdf', 100);
-        $response = $this->postJson('/api/products/import/csv', [
+        $response = $this->postJson('/api/v1/products/import/csv', [
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertUnprocessable();
@@ -196,7 +196,7 @@ class ProductTest extends ApiTestCase
     {
         $csv = "name,sku,base_price\n,NO-NAME,10\n";
         $file = UploadedFile::fake()->createWithContent('products.csv', $csv);
-        $response = $this->postJson('/api/products/import/csv', [
+        $response = $this->postJson('/api/v1/products/import/csv', [
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
@@ -208,7 +208,7 @@ class ProductTest extends ApiTestCase
     {
         $csv = "name,sku,base_price\nBad Product,NEG,-5\n";
         $file = UploadedFile::fake()->createWithContent('products.csv', $csv);
-        $response = $this->postJson('/api/products/import/csv', [
+        $response = $this->postJson('/api/v1/products/import/csv', [
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
@@ -220,7 +220,7 @@ class ProductTest extends ApiTestCase
     {
         $csv = "name,sku,base_price,stock\nValid Product,VP-001,29.99,10\n";
         $file = UploadedFile::fake()->createWithContent('products.csv', $csv);
-        $response = $this->postJson('/api/products/import/csv', [
+        $response = $this->postJson('/api/v1/products/import/csv', [
             'file' => $file,
         ], $this->adminHeaders);
         $response->assertOk();
@@ -234,7 +234,7 @@ class ProductTest extends ApiTestCase
         $product = Product::factory()->has(ProductVariant::factory(), 'variants')->create();
         $variant = $product->variants()->first();
 
-        $response = $this->putJson("/api/products/{$product->id}", [
+        $response = $this->putJson("/api/v1/products/{$product->id}", [
             'variants' => [
                 ['id' => $variant->id, 'sku' => 'NEG-ADJ', 'price_adjustment' => -5],
             ],
@@ -248,7 +248,7 @@ class ProductTest extends ApiTestCase
         $product = Product::factory()->has(ProductVariant::factory(), 'variants')->create();
         $variant = $product->variants()->first();
 
-        $response = $this->putJson("/api/products/{$product->id}", [
+        $response = $this->putJson("/api/v1/products/{$product->id}", [
             'variants' => [
                 ['id' => $variant->id, 'sku' => 'NEG-STOCK', 'stock_quantity' => -1],
             ],

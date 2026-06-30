@@ -21,8 +21,8 @@ class CachedTokenAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip validation if already authenticated (e.g., via actingAs in tests)
-        if (Auth::hasUser()) {
+        // Skip validation if already authenticated and no bearer token is present (e.g., via actingAs in tests)
+        if (Auth::hasUser() && ! $request->bearerToken()) {
             return $next($request);
         }
 

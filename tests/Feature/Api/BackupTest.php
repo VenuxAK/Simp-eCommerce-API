@@ -19,26 +19,26 @@ class BackupTest extends ApiTestCase
 
     public function test_can_list_backups(): void
     {
-        $response = $this->getJson('/api/backups', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/backups', $this->adminHeaders);
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
     }
 
     public function test_can_download_backup(): void
     {
-        $response = $this->getJson('/api/backups/backup-test.sqlite/download', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/backups/backup-test.sqlite/download', $this->adminHeaders);
         $response->assertOk();
     }
 
     public function test_backup_download_rejects_path_traversal(): void
     {
-        $response = $this->getJson('/api/backups/..%2F..%2F..%2F.env/download', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/backups/..%2F..%2F..%2F.env/download', $this->adminHeaders);
         $response->assertStatus(404);
     }
 
     public function test_backup_download_rejects_direct_path(): void
     {
-        $response = $this->getJson('/api/backups/../../../.env/download', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/backups/../../../.env/download', $this->adminHeaders);
         $response->assertStatus(404);
     }
 
@@ -47,7 +47,7 @@ class BackupTest extends ApiTestCase
         $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
-        $response = $this->getJson('/api/backups', $staffHeaders);
+        $response = $this->getJson('/api/v1/backups', $staffHeaders);
         $response->assertForbidden();
     }
 
@@ -56,7 +56,7 @@ class BackupTest extends ApiTestCase
         $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
-        $response = $this->postJson('/api/backups', [], $staffHeaders);
+        $response = $this->postJson('/api/v1/backups', [], $staffHeaders);
         $response->assertForbidden();
     }
 
@@ -65,7 +65,7 @@ class BackupTest extends ApiTestCase
         $staff = User::factory()->salesStaff()->create();
         $staffHeaders = ['Authorization' => "Bearer {$staff->createToken('test')->plainTextToken}"];
 
-        $response = $this->getJson('/api/backups/backup-test.sqlite/download', $staffHeaders);
+        $response = $this->getJson('/api/v1/backups/backup-test.sqlite/download', $staffHeaders);
         $response->assertForbidden();
     }
 }

@@ -24,14 +24,14 @@ class ProfileTest extends TestCase
 
     public function test_can_get_profile(): void
     {
-        $response = $this->getJson('/api/profile', $this->headers);
+        $response = $this->getJson('/api/v1/profile', $this->headers);
         $response->assertOk();
         $response->assertJson(['data' => ['id' => $this->user->id]]);
     }
 
     public function test_can_update_profile_name(): void
     {
-        $response = $this->putJson('/api/profile', [
+        $response = $this->putJson('/api/v1/profile', [
             'name' => 'New Name', 'email' => $this->user->email,
         ], $this->headers);
         $response->assertOk();
@@ -42,7 +42,7 @@ class ProfileTest extends TestCase
 
     public function test_can_update_profile_password(): void
     {
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'password' => 'NewPass1!',
@@ -55,14 +55,14 @@ class ProfileTest extends TestCase
     {
         User::factory()->create(['email' => 'other@test.com']);
 
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => 'Test', 'email' => 'other@test.com',
         ], $this->headers)->assertUnprocessable();
     }
 
     public function test_profile_rejects_password_without_uppercase(): void
     {
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'password' => 'alllowercase1',
@@ -71,7 +71,7 @@ class ProfileTest extends TestCase
 
     public function test_profile_rejects_password_without_lowercase(): void
     {
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'password' => 'ALLUPPERCASE1',
@@ -80,7 +80,7 @@ class ProfileTest extends TestCase
 
     public function test_profile_rejects_password_without_digit(): void
     {
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'password' => 'NoDigitsHere',
@@ -89,7 +89,7 @@ class ProfileTest extends TestCase
 
     public function test_profile_rejects_short_password(): void
     {
-        $this->putJson('/api/profile', [
+        $this->putJson('/api/v1/profile', [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'password' => 'Ab1',

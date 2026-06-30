@@ -8,6 +8,7 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Modules\Inventory\Models\StockMovement;
 use App\Modules\Sales\Models\Order;
+use App\Modules\Sales\Notifications\OrderStatusUpdatedNotification;
 use Illuminate\Support\Facades\Notification;
 use Tests\ApiTestCase;
 
@@ -28,7 +29,7 @@ class OrderTest extends ApiTestCase
 
     public function test_can_create_order(): void
     {
-        $response = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $response = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
         $response->assertCreated()->assertJsonStructure([
             'data' => ['id', 'order_number', 'total_amount', 'status', 'items', 'payment', 'invoice'],
         ]);
@@ -39,7 +40,7 @@ class OrderTest extends ApiTestCase
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
         $initialStock = $variant->stock_quantity;
 
-        $response = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $response = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
 
         $response->assertCreated();
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
@@ -47,7 +48,7 @@ class OrderTest extends ApiTestCase
 
     public function test_cannot_order_with_insufficient_stock(): void
     {
-        $response = $this->postJson('/api/orders', [
+        $response = $this->postJson('/api/v1/orders', [
             'items' => [['product_variant_id' => $this->validPayload['items'][0]['product_variant_id'], 'quantity' => 999]],
             'payment' => ['method' => 'cash', 'amount' => 99999],
         ], $this->adminHeaders);
@@ -57,7 +58,7 @@ class OrderTest extends ApiTestCase
 
     public function test_cannot_order_with_underpayment(): void
     {
-        $response = $this->postJson('/api/orders', [
+        $response = $this->postJson('/api/v1/orders', [
             'items' => $this->validPayload['items'],
             'payment' => ['method' => 'cash', 'amount' => 1],
         ], $this->adminHeaders);
@@ -69,7 +70,7 @@ class OrderTest extends ApiTestCase
     {
         $variantId = $this->validPayload['items'][0]['product_variant_id'];
 
-        $response = $this->postJson('/api/orders', [
+        $response = $this->postJson('/api/v1/orders', [
             'items' => [
                 ['product_variant_id' => $variantId, 'quantity' => 1],
                 ['product_variant_id' => $variantId, 'quantity' => 1],
@@ -85,25 +86,25 @@ class OrderTest extends ApiTestCase
         $customer = Customer::factory()->create(['loyalty_points' => 0]);
         $this->validPayload['customer_id'] = $customer->id;
 
-        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
 
         $this->assertGreaterThan(0, $customer->fresh()->loyalty_points);
     }
 
     public function test_can_list_orders(): void
     {
-        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
 
-        $response = $this->getJson('/api/orders', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/orders', $this->adminHeaders);
         $response->assertOk()->assertJsonCount(1, 'data');
     }
 
     public function test_can_show_order(): void
     {
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $create = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
 
-        $response = $this->getJson("/api/orders/{$orderId}", $this->adminHeaders);
+        $response = $this->getJson("/api/v1/orders/{$orderId}", $this->adminHeaders);
         $response->assertOk()->assertJsonPath('data.id', $orderId);
     }
 
@@ -112,11 +113,11 @@ class OrderTest extends ApiTestCase
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
         $initialStock = $variant->stock_quantity;
 
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $create = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
 
-        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
+        $this->patchJson("/api/v1/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
 
         $this->assertEquals($initialStock, $variant->fresh()->stock_quantity);
     }
@@ -124,40 +125,40 @@ class OrderTest extends ApiTestCase
     public function test_double_cancel_is_idempotent(): void
     {
         $variant = ProductVariant::find($this->validPayload['items'][0]['product_variant_id']);
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $create = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
         $orderId = $create->json('data.id');
 
-        $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
+        $this->patchJson("/api/v1/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
         $afterFirst = $variant->fresh()->stock_quantity;
 
-        $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
+        $response = $this->patchJson("/api/v1/orders/{$orderId}/status", ['status' => 'cancelled'], $this->adminHeaders);
         $response->assertUnprocessable();
         $this->assertEquals($afterFirst, $variant->fresh()->stock_quantity);
     }
 
     public function test_order_creates_invoice_automatically(): void
     {
-        $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
 
         $this->assertDatabaseCount('invoices', 1);
     }
 
     public function test_staff_cannot_update_order_status(): void
     {
-        $create = $this->postJson('/api/orders', $this->validPayload, $this->adminHeaders);
+        $create = $this->postJson('/api/v1/orders', $this->validPayload, $this->adminHeaders);
         $create->assertCreated();
         $orderId = $create->json('data.id');
 
         $staffUser = User::factory()->salesStaff()->create();
         $this->actingAs($staffUser, 'sanctum');
 
-        $response = $this->patchJson("/api/orders/{$orderId}/status", ['status' => 'cancelled']);
+        $response = $this->patchJson("/api/v1/orders/{$orderId}/status", ['status' => 'cancelled']);
         $response->assertStatus(403);
     }
 
     public function test_staff_can_create_order(): void
     {
-        $response = $this->postJson('/api/orders', $this->validPayload, $this->staffHeaders);
+        $response = $this->postJson('/api/v1/orders', $this->validPayload, $this->staffHeaders);
         $response->assertCreated();
     }
 
@@ -181,7 +182,7 @@ class OrderTest extends ApiTestCase
             'subtotal' => 100,
         ]);
 
-        $this->patchJson("/api/orders/{$order->id}/status", ['status' => 'completed'], $this->adminHeaders);
+        $this->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'completed'], $this->adminHeaders);
 
         $this->assertEquals($initialStock - 2, $variant->fresh()->stock_quantity);
 
@@ -205,13 +206,13 @@ class OrderTest extends ApiTestCase
             'status' => 'processing',
         ]);
 
-        $this->patchJson("/api/orders/{$order->id}/status", [
+        $this->patchJson("/api/v1/orders/{$order->id}/status", [
             'status' => 'shipped',
         ], $this->adminHeaders);
 
         Notification::assertSentTo(
             $customer,
-            \App\Modules\Sales\Notifications\OrderStatusUpdatedNotification::class,
+            OrderStatusUpdatedNotification::class,
             fn ($notification) => $notification->newStatus === 'shipped',
         );
     }
@@ -227,13 +228,13 @@ class OrderTest extends ApiTestCase
             'status' => 'shipped',
         ]);
 
-        $this->patchJson("/api/orders/{$order->id}/status", [
+        $this->patchJson("/api/v1/orders/{$order->id}/status", [
             'status' => 'delivered',
         ], $this->adminHeaders);
 
         Notification::assertSentTo(
             $customer,
-            \App\Modules\Sales\Notifications\OrderStatusUpdatedNotification::class,
+            OrderStatusUpdatedNotification::class,
             fn ($notification) => $notification->newStatus === 'delivered',
         );
     }
@@ -249,7 +250,7 @@ class OrderTest extends ApiTestCase
             'status' => 'pending',
         ]);
 
-        $this->patchJson("/api/orders/{$order->id}/status", [
+        $this->patchJson("/api/v1/orders/{$order->id}/status", [
             'status' => 'completed',
         ], $this->adminHeaders);
 
@@ -266,7 +267,7 @@ class OrderTest extends ApiTestCase
             'status' => 'processing',
         ]);
 
-        $this->patchJson("/api/orders/{$order->id}/status", [
+        $this->patchJson("/api/v1/orders/{$order->id}/status", [
             'status' => 'shipped',
         ], $this->adminHeaders);
 

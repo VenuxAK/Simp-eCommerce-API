@@ -5,6 +5,7 @@ namespace App\Modules\ECommerce\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\PaginatesResults;
 use App\Modules\ECommerce\Services\MyOrderService;
 use App\Modules\Sales\Http\Resources\OrderResource;
 use App\Modules\Sales\Models\Order;
@@ -21,7 +22,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class MyOrderController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, PaginatesResults;
 
     public function __construct(
         private readonly MyOrderService $myOrderService,
@@ -35,7 +36,7 @@ class MyOrderController extends Controller
             ->where('source', 'online')
             ->with(['items.variant.product', 'shipment', 'invoice', 'payment'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($this->resolvePerPage());
 
         return OrderResource::collection($orders);
     }

@@ -18,7 +18,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -31,7 +31,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -41,7 +41,7 @@ class AuthTest extends TestCase
 
     public function test_cannot_login_with_nonexistent_email(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'nobody@test.com',
             'password' => 'password',
         ]);
@@ -51,7 +51,7 @@ class AuthTest extends TestCase
 
     public function test_requires_email_and_password(): void
     {
-        $response = $this->postJson('/api/auth/login', []);
+        $response = $this->postJson('/api/v1/auth/login', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
@@ -63,7 +63,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
-            ->postJson('/api/auth/logout');
+            ->postJson('/api/v1/auth/logout');
 
         $response->assertOk();
         $this->assertCount(0, $user->fresh()->tokens);
@@ -75,7 +75,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/auth/me');
 
         $response->assertOk()
             ->assertJson(['data' => ['id' => $user->id, 'email' => $user->email]]);
@@ -83,20 +83,20 @@ class AuthTest extends TestCase
 
     public function test_unauthenticated_requests_are_rejected(): void
     {
-        $response = $this->getJson('/api/auth/me');
+        $response = $this->getJson('/api/v1/auth/me');
         $response->assertUnauthorized();
     }
 
     public function test_login_is_rate_limited(): void
     {
         for ($i = 0; $i < 10; $i++) {
-            $this->postJson('/api/auth/login', [
+            $this->postJson('/api/v1/auth/login', [
                 'email' => 'test@test.com',
                 'password' => 'password',
             ]);
         }
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'test@test.com',
             'password' => 'password',
         ]);
@@ -108,17 +108,17 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('Pass1234')]);
 
-        $login1 = $this->postJson('/api/auth/login', [
+        $login1 = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email, 'password' => 'Pass1234',
         ]);
         $oldToken = $login1->json('token');
 
-        $this->postJson('/api/auth/login', [
+        $this->postJson('/api/v1/auth/login', [
             'email' => $user->email, 'password' => 'Pass1234',
         ]);
 
         $response = $this->withHeader('Authorization', "Bearer {$oldToken}")
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/auth/me');
 
         $response->assertUnauthorized();
     }
@@ -129,7 +129,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('Pass1234')]);
 
-        $response = $this->postJson('/api/auth/forgot-password', [
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => $user->email,
         ]);
 
@@ -138,7 +138,7 @@ class AuthTest extends TestCase
 
     public function test_cannot_request_reset_for_nonexistent_email(): void
     {
-        $response = $this->postJson('/api/auth/forgot-password', [
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'nobody@example.com',
         ]);
 
@@ -147,7 +147,7 @@ class AuthTest extends TestCase
 
     public function test_forgot_password_requires_email(): void
     {
-        $response = $this->postJson('/api/auth/forgot-password', []);
+        $response = $this->postJson('/api/v1/auth/forgot-password', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email']);
@@ -159,7 +159,7 @@ class AuthTest extends TestCase
 
         $token = Password::broker('users')->createToken($user);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
             'password' => 'NewPass456',
@@ -177,7 +177,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('OldPass123')]);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => 'garbage-token',
             'email' => $user->email,
             'password' => 'NewPass456',
@@ -192,7 +192,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('OldPass123')]);
         $token = Password::broker('users')->createToken($user);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
             'password' => 'short',
@@ -208,7 +208,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('OldPass123')]);
         $token = Password::broker('users')->createToken($user);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
             'password' => 'NewPass456',
@@ -222,12 +222,12 @@ class AuthTest extends TestCase
     public function test_forgot_password_is_rate_limited(): void
     {
         for ($i = 0; $i < 10; $i++) {
-            $this->postJson('/api/auth/forgot-password', [
+            $this->postJson('/api/v1/auth/forgot-password', [
                 'email' => 'rate@test.com',
             ]);
         }
 
-        $response = $this->postJson('/api/auth/forgot-password', [
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'rate@test.com',
         ]);
 

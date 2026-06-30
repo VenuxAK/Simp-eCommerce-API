@@ -16,8 +16,11 @@ class CartTest extends TestCase
     use RefreshDatabase;
 
     private Store $store;
+
     private Customer $customer;
+
     private ProductVariant $variant1;
+
     private ProductVariant $variant2;
 
     protected function setUp(): void
@@ -62,7 +65,7 @@ class CartTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->getJson('/api/cart');
+            ->getJson('/api/v1/cart');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -73,7 +76,7 @@ class CartTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/cart', [
+            ->postJson('/api/v1/cart', [
                 'product_variant_id' => $this->variant1->id,
                 'quantity' => 3,
             ]);
@@ -93,7 +96,7 @@ class CartTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/cart', [
+            ->postJson('/api/v1/cart', [
                 'product_variant_id' => $this->variant2->id,
                 'quantity' => 10, // Stock is only 5
             ]);
@@ -112,7 +115,7 @@ class CartTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/cart/sync', [
+            ->postJson('/api/v1/cart/sync', [
                 'items' => [
                     [
                         'product_variant_id' => $this->variant1->id, // Should sum with existing: 1 + 2 = 3
@@ -122,7 +125,7 @@ class CartTest extends TestCase
                         'product_variant_id' => $this->variant2->id, // New item
                         'quantity' => 2,
                     ],
-                ]
+                ],
             ]);
 
         $response->assertOk()
@@ -151,7 +154,7 @@ class CartTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->putJson("/api/cart/{$item->id}", [
+            ->putJson("/api/v1/cart/{$item->id}", [
                 'quantity' => 5,
             ]);
 
@@ -172,7 +175,7 @@ class CartTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->deleteJson("/api/cart/{$item->id}");
+            ->deleteJson("/api/v1/cart/{$item->id}");
 
         $response->assertOk();
         $this->assertDatabaseMissing('cart_items', [
@@ -190,7 +193,7 @@ class CartTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->deleteJson('/api/cart');
+            ->deleteJson('/api/v1/cart');
 
         $response->assertOk();
         $this->assertDatabaseMissing('cart_items', [

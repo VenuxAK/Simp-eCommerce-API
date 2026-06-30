@@ -82,7 +82,7 @@ class CheckoutTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -101,7 +101,7 @@ class CheckoutTest extends TestCase
     {
         $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -114,7 +114,7 @@ class CheckoutTest extends TestCase
     {
         $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -128,7 +128,7 @@ class CheckoutTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -144,7 +144,7 @@ class CheckoutTest extends TestCase
 
         $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -160,7 +160,7 @@ class CheckoutTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -172,7 +172,7 @@ class CheckoutTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => 9999,
             ]);
 
@@ -186,7 +186,7 @@ class CheckoutTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
             ]);
 
@@ -195,7 +195,7 @@ class CheckoutTest extends TestCase
 
     public function test_checkout_requires_authentication(): void
     {
-        $response = $this->postJson('/api/checkout', [
+        $response = $this->postJson('/api/v1/checkout', [
             'address_id' => $this->address->id,
         ]);
 
@@ -206,7 +206,7 @@ class CheckoutTest extends TestCase
     {
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->getJson('/api/checkout/validate');
+            ->getJson('/api/v1/checkout/validate');
 
         $response->assertOk()
             ->assertJsonStructure(['items']);

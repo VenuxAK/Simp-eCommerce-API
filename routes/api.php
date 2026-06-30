@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
-// ── Locale is set for all API routes via the 'locale' middleware ──
-Route::middleware(['locale'])->group(function () {
+// ── Health check — outside versioning for infrastructure tooling ──
+Route::get('/health', [HealthController::class, 'check']);
+
+// ── All versioned API routes ──────────────────────────────────────
+Route::prefix('v1')->middleware(['locale'])->group(function () {
 
     // ── 1. Public — no authentication required ─────────────────────
     Route::middleware(['timeout'])->group(function () {

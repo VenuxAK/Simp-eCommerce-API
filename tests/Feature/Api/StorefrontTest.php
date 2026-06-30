@@ -41,7 +41,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -65,7 +65,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -82,7 +82,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products/blue-tshirt');
+            ->getJson('/api/v1/storefront/products/blue-tshirt');
 
         $response->assertOk()
             ->assertJsonPath('data.slug', 'blue-tshirt');
@@ -94,7 +94,7 @@ class StorefrontTest extends TestCase
         Category::factory()->create(['store_id' => $this->store->id, 'name' => 'Bottoms']);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk()
             ->assertJsonCount(2, 'data');
@@ -108,7 +108,7 @@ class StorefrontTest extends TestCase
         Category::factory()->create(['store_id' => $this->store->id, 'name' => 'Clothing']);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -118,7 +118,7 @@ class StorefrontTest extends TestCase
     public function test_can_get_store_settings(): void
     {
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/settings');
+            ->getJson('/api/v1/storefront/settings');
 
         $response->assertOk()
             ->assertJsonPath('data.name', 'Clothing Store')
@@ -131,7 +131,7 @@ class StorefrontTest extends TestCase
         Store::factory()->create(['slug' => 'inactive', 'is_active' => false]);
 
         $response = $this->withHeaders(['X-Store' => 'inactive'])
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertNotFound();
     }
@@ -139,7 +139,7 @@ class StorefrontTest extends TestCase
     public function test_nonexistent_store_returns_404(): void
     {
         $response = $this->withHeaders(['X-Store' => 'nonexistent'])
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertNotFound();
     }
@@ -159,7 +159,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?search=shirt');
+            ->getJson('/api/v1/storefront/products?search=shirt');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -182,7 +182,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?category_slug=' . $cat1->slug);
+            ->getJson('/api/v1/storefront/products?category_slug='.$cat1->slug);
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -198,7 +198,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -223,7 +223,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?sort_by=price&sort_dir=asc');
+            ->getJson('/api/v1/storefront/products?sort_by=price&sort_dir=asc');
 
         $response->assertOk();
         $names = collect($response->json('data'))->pluck('name');
@@ -248,7 +248,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?sort_by=price&sort_dir=desc');
+            ->getJson('/api/v1/storefront/products?sort_by=price&sort_dir=desc');
 
         $response->assertOk();
         $names = collect($response->json('data'))->pluck('name');
@@ -273,7 +273,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $a->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products');
+            ->getJson('/api/v1/storefront/products');
 
         $response->assertOk();
         $names = collect($response->json('data'))->pluck('name');
@@ -300,7 +300,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $mid->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?min_price=30');
+            ->getJson('/api/v1/storefront/products?min_price=30');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -324,7 +324,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?max_price=70');
+            ->getJson('/api/v1/storefront/products?max_price=70');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -354,7 +354,7 @@ class StorefrontTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $expensive->id, 'stock_quantity' => 5]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?min_price=30&max_price=70');
+            ->getJson('/api/v1/storefront/products?min_price=30&max_price=70');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -372,7 +372,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?search=jacket');
+            ->getJson('/api/v1/storefront/products?search=jacket');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -387,7 +387,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?search=cotton');
+            ->getJson('/api/v1/storefront/products?search=cotton');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
@@ -402,7 +402,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/products?search=xxxnonexistentxxx');
+            ->getJson('/api/v1/storefront/products?search=xxxnonexistentxxx');
 
         $response->assertOk()
             ->assertJsonCount(0, 'data');
@@ -418,7 +418,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk()
             ->assertJsonStructure(['data' => [['id', 'name', 'slug', 'parent_id', 'children', 'products_count']]]);
@@ -447,7 +447,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk();
         $this->assertCount(1, $response->json('data'));
@@ -468,7 +468,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk();
         $this->assertEmpty($response->json('data.0.children'));
@@ -488,7 +488,7 @@ class StorefrontTest extends TestCase
         ]);
 
         $response = $this->withHeaders($this->storeHeaders)
-            ->getJson('/api/storefront/categories');
+            ->getJson('/api/v1/storefront/categories');
 
         $response->assertOk();
         $this->assertEquals(1, $response->json('data.0.products_count'));

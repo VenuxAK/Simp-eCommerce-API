@@ -34,14 +34,14 @@ class VariantTest extends TestCase
             'sku' => 'TEST-SKU-001',
         ]);
 
-        $response = $this->getJson('/api/variants/by-sku/TEST-SKU-001', $this->headers);
+        $response = $this->getJson('/api/v1/variants/by-sku/TEST-SKU-001', $this->headers);
 
         $response->assertOk()->assertJsonPath('variant.sku', 'TEST-SKU-001');
     }
 
     public function test_returns_404_for_unknown_sku(): void
     {
-        $this->getJson('/api/variants/by-sku/DOES-NOT-EXIST', $this->headers)->assertNotFound();
+        $this->getJson('/api/v1/variants/by-sku/DOES-NOT-EXIST', $this->headers)->assertNotFound();
     }
 
     // ─── Stock & Threshold ─────────────────────────────────────
@@ -52,7 +52,7 @@ class VariantTest extends TestCase
         $initial = $variant->stock_quantity;
 
         $response = $this->patchJson(
-            "/api/variants/{$variant->id}/stock",
+            "/api/v1/variants/{$variant->id}/stock",
             ['quantity' => $initial + 10],
             $this->headers,
         );
@@ -65,7 +65,7 @@ class VariantTest extends TestCase
         $variant = $this->createVariant();
 
         $response = $this->patchJson(
-            "/api/variants/{$variant->id}/stock",
+            "/api/v1/variants/{$variant->id}/stock",
             ['quantity' => $variant->stock_quantity, 'low_stock_threshold' => 20],
             $this->headers,
         );
@@ -78,7 +78,7 @@ class VariantTest extends TestCase
         $variant = $this->createVariant();
 
         $response = $this->patchJson(
-            "/api/variants/{$variant->id}/stock",
+            "/api/v1/variants/{$variant->id}/stock",
             ['quantity' => $variant->stock_quantity, 'low_stock_threshold' => -1],
             $this->headers,
         );

@@ -33,8 +33,8 @@ class LocalizationTest extends TestCase
         $missingInMy = array_diff($enKeys, $myKeys);
         $extraInMy = array_diff($myKeys, $enKeys);
 
-        $this->assertEmpty($missingInMy, 'Myanmar translation is missing keys: ' . implode(', ', $missingInMy));
-        $this->assertEmpty($extraInMy, 'Myanmar translation has extra keys: ' . implode(', ', $extraInMy));
+        $this->assertEmpty($missingInMy, 'Myanmar translation is missing keys: '.implode(', ', $missingInMy));
+        $this->assertEmpty($extraInMy, 'Myanmar translation has extra keys: '.implode(', ', $extraInMy));
     }
 
     // ─── Locale Switching ──────────────────────────────────────
@@ -42,7 +42,7 @@ class LocalizationTest extends TestCase
     public function test_accept_language_sets_locale(): void
     {
         $response = $this->withHeader('Accept-Language', 'my')
-            ->getJson('/api/storefront/settings', ['X-Store' => 'nonexistent']);
+            ->getJson('/api/v1/storefront/settings', ['X-Store' => 'nonexistent']);
 
         // The store is not found so it returns 404, but the locale
         // middleware should have set the locale before the route handler.
@@ -53,7 +53,7 @@ class LocalizationTest extends TestCase
 
     public function test_default_locale_is_english(): void
     {
-        $response = $this->getJson('/api/storefront/settings', ['X-Store' => 'nonexistent']);
+        $response = $this->getJson('/api/v1/storefront/settings', ['X-Store' => 'nonexistent']);
 
         $response->assertNotFound();
         $this->assertEquals('en', app()->getLocale());
@@ -107,13 +107,14 @@ class LocalizationTest extends TestCase
     {
         $keys = [];
         foreach ($array as $key => $value) {
-            $fullKey = $prefix ? $prefix . '.' . $key : $key;
+            $fullKey = $prefix ? $prefix.'.'.$key : $key;
             if (is_array($value)) {
                 $keys = array_merge($keys, $this->flattenKeys($value, $fullKey));
             } else {
                 $keys[] = $fullKey;
             }
         }
+
         return $keys;
     }
 }

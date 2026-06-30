@@ -31,7 +31,7 @@ class DashboardTest extends TestCase
         ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 10]);
         ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 2]);
 
-        $response = $this->getJson('/api/dashboard/summary', $this->headers);
+        $response = $this->getJson('/api/v1/dashboard/summary', $this->headers);
 
         $response->assertOk()->assertJsonStructure([
             'today_sales', 'today_orders_count', 'total_products',
@@ -46,7 +46,7 @@ class DashboardTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         ProductVariant::factory()->create(['product_id' => $product->id, 'stock_quantity' => 3]);
 
-        $response = $this->getJson('/api/dashboard/summary', $this->headers);
+        $response = $this->getJson('/api/v1/dashboard/summary', $this->headers);
 
         $response->assertOk();
         $this->assertGreaterThanOrEqual(1, $response->json('low_stock_count'));
@@ -84,7 +84,7 @@ class DashboardTest extends TestCase
             'low_stock_threshold' => 0,
         ]);
 
-        $response = $this->getJson('/api/dashboard/summary', $this->headers);
+        $response = $this->getJson('/api/v1/dashboard/summary', $this->headers);
 
         $response->assertOk();
         $data = $response->json();
@@ -111,7 +111,7 @@ class DashboardTest extends TestCase
             'low_stock_threshold' => 0,
         ]);
 
-        $response = $this->getJson('/api/dashboard/summary', $this->headers);
+        $response = $this->getJson('/api/v1/dashboard/summary', $this->headers);
 
         $response->assertOk();
         $this->assertEquals(0, $response->json('low_stock_count'));

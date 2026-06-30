@@ -4,6 +4,7 @@ namespace App\Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\PaginatesResults;
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Identity\Http\Requests\StoreUserRequest;
 use App\Modules\Identity\Http\Requests\UpdateUserRequest;
@@ -16,7 +17,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UserController extends Controller
 {
-    use ApiResponse, StoreScope;
+    use ApiResponse, PaginatesResults, StoreScope;
 
     public function __construct(
         private readonly UserService $userService,
@@ -31,7 +32,7 @@ class UserController extends Controller
             $query->where('store_id', request()->user()->store_id);
         }
 
-        return UserResource::collection($query->paginate(20));
+        return UserResource::collection($query->paginate($this->resolvePerPage()));
     }
 
     public function store(StoreUserRequest $request): JsonResponse

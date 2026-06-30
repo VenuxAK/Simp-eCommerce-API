@@ -4,6 +4,7 @@ namespace App\Modules\Customer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\PaginatesResults;
 use App\Modules\Core\Traits\StoreScope;
 use App\Modules\Customer\Http\Requests\StoreCustomerRequest;
 use App\Modules\Customer\Http\Requests\UpdateCustomerRequest;
@@ -24,7 +25,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CustomerController extends Controller
 {
-    use ApiResponse, StoreScope;
+    use ApiResponse, PaginatesResults, StoreScope;
 
     public function __construct(
         private readonly CustomerService $customerService,
@@ -34,7 +35,7 @@ class CustomerController extends Controller
     public function index(): AnonymousResourceCollection
     {
         return CustomerResource::collection(
-            $this->customerService->listCustomers(request('search')),
+            $this->customerService->listCustomers(request('search'), $this->resolvePerPage()),
         );
     }
 
@@ -71,7 +72,7 @@ class CustomerController extends Controller
     public function orders(Customer $customer): AnonymousResourceCollection
     {
         return OrderResource::collection(
-            $this->customerService->getCustomerOrders($customer),
+            $this->customerService->getCustomerOrders($customer, $this->resolvePerPage()),
         );
     }
 }

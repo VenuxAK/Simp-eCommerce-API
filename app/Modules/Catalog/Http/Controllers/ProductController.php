@@ -3,19 +3,21 @@
 namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Catalog\Http\Requests\ImportProductRequest;
 use App\Modules\Catalog\Http\Requests\StoreProductRequest;
 use App\Modules\Catalog\Http\Requests\UpdateProductRequest;
+use App\Modules\Catalog\Http\Requests\UploadImageRequest;
 use App\Modules\Catalog\Http\Resources\ProductResource;
+use App\Modules\Catalog\Jobs\ProcessProductImportJob;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Repositories\ProductRepository;
 use App\Modules\Catalog\Services\MediaService;
 use App\Modules\Catalog\Services\ProductExportService;
-use App\Modules\Catalog\Jobs\ProcessProductImportJob;
 use App\Modules\Catalog\Services\ProductImportService;
 use App\Modules\Catalog\Services\ProductService;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\PaginatesResults;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -29,7 +31,7 @@ use Illuminate\View\View;
  */
 class ProductController extends Controller
 {
-    use ApiResponse, \App\Modules\Core\Traits\StoreScope;
+    use ApiResponse, \App\Modules\Core\Traits\StoreScope, PaginatesResults;
 
     public function __construct(
         private readonly ProductService $productService,
@@ -45,7 +47,7 @@ class ProductController extends Controller
             storeId: $this->resolveStoreId(),
             categoryId: request('category_id'),
             search: request('search'),
-            perPage: (int) request('per_page', 20),
+            perPage: $this->resolvePerPage(),
         );
 
         return ProductResource::collection($products);
@@ -105,10 +107,8 @@ class ProductController extends Controller
      * Accepts .csv and .txt extensions (Excel often saves CSVs as .txt).
      * The file is stored temporarily and processed by a background job.
      */
-    public function importCsv(Request $request): JsonResponse
+    public function importCsv(ImportProductRequest $request): JsonResponse
     {
-        $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
-
         $path = $request->file('file')->store('imports');
 
         ProcessProductImportJob::dispatch($path, $this->resolveStoreId());
@@ -126,12 +126,8 @@ class ProductController extends Controller
         return view('pdf.label', ['variants' => $product->variants]);
     }
 
-    public function uploadImage(Request $request, Product $product): JsonResponse
+    public function uploadImage(UploadImageRequest $request, Product $product): JsonResponse
     {
-        $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-        ]);
-
         $this->mediaService->uploadImage($product, $request->file('image'));
 
         return $this->respond(new ProductResource($product->load(['category', 'variants'])));

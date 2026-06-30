@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Api;
 
-use App\Modules\Payment\Gateways\StripeGateway;
+use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Customer\Models\Address;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\ECommerce\Models\CartItem;
+use App\Modules\Payment\Gateways\StripeGateway;
 use App\Modules\Store\Models\Store;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -31,17 +34,17 @@ class StripePaymentTest extends TestCase
             'store_id' => $this->store->id,
         ]);
 
-        $category = \App\Modules\Catalog\Models\Category::create([
+        $category = Category::create([
             'name' => 'Test Category', 'slug' => 'test-cat', 'store_id' => $this->store->id,
         ]);
 
-        $product = \App\Modules\Catalog\Models\Product::factory()->create([
+        $product = Product::factory()->create([
             'category_id' => $category->id,
             'base_price' => 50,
             'store_id' => $this->store->id,
         ]);
 
-        $variant = \App\Modules\Catalog\Models\ProductVariant::factory()->create([
+        $variant = ProductVariant::factory()->create([
             'product_id' => $product->id,
             'stock_quantity' => 10,
             'price_adjustment' => 0,
@@ -92,7 +95,7 @@ class StripePaymentTest extends TestCase
 
         $response = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout/payment-intent', [
+            ->postJson('/api/v1/checkout/payment-intent', [
                 'payment_method' => 'stripe',
             ]);
 
@@ -111,7 +114,7 @@ class StripePaymentTest extends TestCase
         // Create intent.
         $intentRes = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout/payment-intent', [
+            ->postJson('/api/v1/checkout/payment-intent', [
                 'payment_method' => 'stripe',
             ]);
 
@@ -121,7 +124,7 @@ class StripePaymentTest extends TestCase
         // Checkout with Stripe.
         $checkoutRes = $this->actingAs($this->customer, 'customer')
             ->withHeader('X-Store', 'test-store')
-            ->postJson('/api/checkout', [
+            ->postJson('/api/v1/checkout', [
                 'address_id' => $this->address->id,
                 'payment_method' => 'stripe',
                 'payment_intent_id' => $txId,
@@ -143,7 +146,7 @@ class StripePaymentTest extends TestCase
 
     public function test_stripe_intent_requires_auth(): void
     {
-        $response = $this->postJson('/api/checkout/payment-intent', [
+        $response = $this->postJson('/api/v1/checkout/payment-intent', [
             'payment_method' => 'stripe',
         ]);
 

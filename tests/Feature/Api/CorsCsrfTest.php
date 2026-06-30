@@ -23,7 +23,7 @@ class CorsCsrfTest extends TestCase
         $response = $this->withHeaders([
             'Origin' => 'http://localhost:5173',
             'Accept' => 'application/json',
-        ])->get('/api/storefront/products');
+        ])->get('/api/v1/storefront/products');
 
         $response->assertHeader('Access-Control-Allow-Origin');
     }
@@ -33,7 +33,7 @@ class CorsCsrfTest extends TestCase
         $response = $this->withHeaders([
             'Origin' => 'http://localhost:5173',
             'Accept' => 'application/json',
-        ])->get('/api/storefront/products');
+        ])->get('/api/v1/storefront/products');
 
         $this->assertEquals('http://localhost:5173', $response->headers->get('Access-Control-Allow-Origin'));
     }
@@ -43,7 +43,7 @@ class CorsCsrfTest extends TestCase
         $response = $this->withHeaders([
             'Origin' => 'http://localhost:5173',
             'Access-Control-Request-Method' => 'POST',
-        ])->options('/api/auth/login');
+        ])->options('/api/v1/auth/login');
 
         $response->assertStatus(204)
             ->assertHeader('Access-Control-Allow-Origin')

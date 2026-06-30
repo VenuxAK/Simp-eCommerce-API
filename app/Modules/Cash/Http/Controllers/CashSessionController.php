@@ -9,6 +9,7 @@ use App\Modules\Cash\Http\Resources\CashSessionResource;
 use App\Modules\Cash\Repositories\CashSessionRepository;
 use App\Modules\Cash\Services\CashSessionService;
 use App\Modules\Core\Traits\ApiResponse;
+use App\Modules\Core\Traits\PaginatesResults;
 use App\Modules\Core\Traits\StoreScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,7 +23,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CashSessionController extends Controller
 {
-    use ApiResponse, StoreScope;
+    use ApiResponse, PaginatesResults, StoreScope;
 
     public function __construct(
         private readonly CashSessionService $cashSessionService,
@@ -35,7 +36,7 @@ class CashSessionController extends Controller
             ->with('user')
             ->when(fn ($q) => $this->scopeByStore($q))
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($this->resolvePerPage());
 
         return CashSessionResource::collection($sessions);
     }

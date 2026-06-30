@@ -11,14 +11,14 @@ class CategoryTest extends ApiTestCase
     {
         Category::factory(3)->create();
 
-        $response = $this->getJson('/api/categories', $this->adminHeaders);
+        $response = $this->getJson('/api/v1/categories', $this->adminHeaders);
 
         $response->assertOk()->assertJsonCount(3, 'data');
     }
 
     public function test_can_create_category(): void
     {
-        $response = $this->postJson('/api/categories', [
+        $response = $this->postJson('/api/v1/categories', [
             'name' => 'T-Shirts',
             'description' => 'All kinds of t-shirts',
         ], $this->adminHeaders);
@@ -31,7 +31,7 @@ class CategoryTest extends ApiTestCase
     {
         Category::factory()->create(['name' => 'T-Shirts']);
 
-        $response = $this->postJson('/api/categories', ['name' => 'T-Shirts'], $this->adminHeaders);
+        $response = $this->postJson('/api/v1/categories', ['name' => 'T-Shirts'], $this->adminHeaders);
 
         $response->assertUnprocessable()->assertJsonValidationErrors(['name']);
     }
@@ -40,7 +40,7 @@ class CategoryTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->getJson("/api/categories/{$category->id}", $this->adminHeaders);
+        $response = $this->getJson("/api/v1/categories/{$category->id}", $this->adminHeaders);
 
         $response->assertOk()->assertJsonPath('data.id', $category->id);
     }
@@ -49,7 +49,7 @@ class CategoryTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->putJson("/api/categories/{$category->id}", [
+        $response = $this->putJson("/api/v1/categories/{$category->id}", [
             'name' => 'Updated Name',
         ], $this->adminHeaders);
 
@@ -60,7 +60,7 @@ class CategoryTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->deleteJson("/api/categories/{$category->id}", [], $this->adminHeaders);
+        $response = $this->deleteJson("/api/v1/categories/{$category->id}", [], $this->adminHeaders);
 
         $response->assertOk();
         $this->assertDatabaseMissing('categories', ['id' => $category->id]);
@@ -68,7 +68,7 @@ class CategoryTest extends ApiTestCase
 
     public function test_staff_cannot_create_category(): void
     {
-        $response = $this->postJson('/api/categories', [
+        $response = $this->postJson('/api/v1/categories', [
             'name' => 'Staff Category',
         ], $this->staffHeaders);
 
@@ -79,7 +79,7 @@ class CategoryTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->putJson("/api/categories/{$category->id}", [
+        $response = $this->putJson("/api/v1/categories/{$category->id}", [
             'name' => 'Hacked Name',
         ], $this->staffHeaders);
 
@@ -90,7 +90,7 @@ class CategoryTest extends ApiTestCase
     {
         $category = Category::factory()->create();
 
-        $response = $this->deleteJson("/api/categories/{$category->id}", [], $this->staffHeaders);
+        $response = $this->deleteJson("/api/v1/categories/{$category->id}", [], $this->staffHeaders);
 
         $response->assertForbidden();
     }

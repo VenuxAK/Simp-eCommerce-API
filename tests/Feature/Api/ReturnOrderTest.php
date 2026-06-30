@@ -21,7 +21,7 @@ class ReturnOrderTest extends ApiTestCase
         $variant = $this->createVariant(10, 50);
         $this->variantId = $variant->id;
 
-        $orderRes = $this->postJson('/api/orders', [
+        $orderRes = $this->postJson('/api/v1/orders', [
             'items' => [['product_variant_id' => $variant->id, 'quantity' => 2]],
             'payment' => ['method' => 'cash', 'amount' => 100],
         ], $this->adminHeaders);
@@ -34,7 +34,7 @@ class ReturnOrderTest extends ApiTestCase
     {
         $stockBefore = ProductVariant::find($this->variantId)->stock_quantity;
 
-        $response = $this->postJson("/api/orders/{$this->orderId}/return", [
+        $response = $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 1, 'reason' => 'Wrong size']],
         ], $this->adminHeaders);
 
@@ -44,7 +44,7 @@ class ReturnOrderTest extends ApiTestCase
 
     public function test_cannot_return_more_than_ordered(): void
     {
-        $response = $this->postJson("/api/orders/{$this->orderId}/return", [
+        $response = $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 99]],
         ], $this->adminHeaders);
 
@@ -56,7 +56,7 @@ class ReturnOrderTest extends ApiTestCase
         $staffUser = User::factory()->salesStaff()->create();
         $this->actingAs($staffUser, 'sanctum');
 
-        $response = $this->postJson("/api/orders/{$this->orderId}/return", [
+        $response = $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 1]],
         ]);
         $response->assertForbidden();
@@ -64,12 +64,12 @@ class ReturnOrderTest extends ApiTestCase
 
     public function test_cannot_return_partial_then_exceed_remaining(): void
     {
-        $response = $this->postJson("/api/orders/{$this->orderId}/return", [
+        $response = $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 1]],
         ], $this->adminHeaders);
         $response->assertOk();
 
-        $response = $this->postJson("/api/orders/{$this->orderId}/return", [
+        $response = $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 2]],
         ], $this->adminHeaders);
         $response->assertUnprocessable();
@@ -79,14 +79,14 @@ class ReturnOrderTest extends ApiTestCase
     {
         $stockBefore = ProductVariant::find($this->variantId)->stock_quantity;
 
-        $this->postJson("/api/orders/{$this->orderId}/return", [
+        $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 1]],
         ], $this->adminHeaders);
 
         $stockAfterFirst = ProductVariant::find($this->variantId)->stock_quantity;
         $this->assertEquals($stockBefore + 1, $stockAfterFirst);
 
-        $this->postJson("/api/orders/{$this->orderId}/return", [
+        $this->postJson("/api/v1/orders/{$this->orderId}/return", [
             'items' => [['order_item_id' => $this->orderItemId, 'quantity' => 1]],
         ], $this->adminHeaders);
 
@@ -104,7 +104,7 @@ class ReturnOrderTest extends ApiTestCase
             'status' => 'pending',
         ]);
 
-        $response = $this->postJson("/api/orders/{$order->id}/return", [
+        $response = $this->postJson("/api/v1/orders/{$order->id}/return", [
             'items' => [['order_item_id' => 999, 'quantity' => 1]],
         ], $this->adminHeaders);
 
