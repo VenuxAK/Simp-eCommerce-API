@@ -98,12 +98,13 @@ graph TB
 | Component | Type | Purpose |
 |-----------|------|---------|
 | `Enums/` (11 files) | PHP 8.1+ backed enums | `UserRole`, `OrderStatus`, `OrderSource`, `InvoiceStatus`, `PaymentMethod`, `DiscountType`, `DiscountScope`, `StockMovementReason`, `ShipmentMethod`, `AddressType`, `AuditAction` |
-| `ApiResponse` | Trait | `success()` / `error()` / `message()` helpers for consistent JSON responses |
+| `ApiResponse` | Trait | `respond()` / `respondError()` / `respondMessage()` helpers for consistent JSON responses |
 | `QueryFilter` | Trait | Eloquent scope: `scopeFilter($query, $filters)` — search/date/status filtering |
 | `StoreScope` | Trait | `resolveStoreId()` — canonical method for multi-tenant store resolution |
 | `AuthorizesOwnership` | Trait | `authorizeOwnership($model)` — gates for customer-owned resources |
 | `HandlesPasswordUpdate` | Trait | `updatePasswordIfProvided()` — shared hash-on-update logic |
 | `Repository` | Class | Base repository with common Eloquent query scaffolding |
+| `PaginatesResults` | Trait | `resolvePerPage()` — standardizes pagination request validation and max 100 limit |
 
 ---
 
@@ -118,12 +119,12 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant S as Service Layer
 
-    N->>MW: GET /api/storefront/products<br/>Header: X-Store: clothing
+    N->>MW: GET /api/v1/storefront/products<br/>Header: X-Store: clothing
     MW->>DB: SELECT * FROM stores WHERE slug = 'clothing'
     DB-->>MW: Store { id: 2, slug: "clothing", ... }
     MW->>MW: app('current_store') = store
     MW->>S: proceed to controller
-    S->>S: $storeId = StoreScope::resolveStoreId()
+    MW->>S: $storeId = StoreScope::resolveStoreId()
     S->>DB: SELECT * FROM products WHERE store_id = 2
     DB-->>S: scoped results
 ```
@@ -148,7 +149,7 @@ sequenceDiagram
 
 ## 5. API Route Architecture
 
-`routes/api.php` is the master loader. It delegates to **15 per-module route files** organized into 4 middleware groups:
+`routes/api.php` is the master loader. Under a global `/v1` prefix group, it delegates to **16 per-module route files** organized into 4 middleware groups:
 
 ```mermaid
 graph LR
@@ -175,12 +176,13 @@ graph LR
     E --> E10[system.php]
     E --> E11[audit.php]
     E --> E12[store.php]
+    E --> E13[payment.php]
 ```
 
 | Group | Middleware | Purpose |
 |-------|-----------|---------|
 | **Public** | `throttle:auth`, `timeout` | Staff login, customer register/login, OAuth |
-| **Storefront** | `store`, `throttle:api`, `timeout`, `/storefront/*` | Public catalog browsing |
+| **Storefront** | `store`, `throttle:storefront`, `timeout`, `/storefront/*` | Public catalog browsing |
 | **Customer** | `store`, `stateful`, `auth:customer`, `throttle:api`, `timeout` | Customer portal |
 | **Staff** | `store`, `cached.auth`, `throttle:api`, `timeout` | Dashboard CRUD |
 

@@ -45,7 +45,6 @@ Staff dashboard accounts with role-based access.
 | `name` | VARCHAR(255) | NOT NULL |
 | `email` | VARCHAR(255) | UNIQUE, NOT NULL |
 | `password` | VARCHAR(255) | NOT NULL |
-| `role` | VARCHAR(255) | NOT NULL — `root`, `store_admin`, `staff` |
 | `store_id` | BIGINT | FK → `stores.id`, NOT NULL |
 | `remember_token` | VARCHAR(100) | NULL |
 | timestamps | — | `created_at`, `updated_at` |
@@ -200,6 +199,23 @@ Payments linked to orders.
 | `method` | VARCHAR(255) | NOT NULL — `cash`, `transfer` |
 | `amount` | DECIMAL(10,2) | NOT NULL |
 | `paid_at` | TIMESTAMP | NULL |
+| timestamps | — | `created_at`, `updated_at` |
+
+#### `payment_transactions`
+Tracks individual payment gateway transactions for audit and reconciliation.
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | BIGINT | PK, AUTO_INCREMENT |
+| `payment_id` | BIGINT | FK → `payments.id`, NULL, NULL_ON_DELETE |
+| `order_id` | BIGINT | FK → `orders.id`, NULL, NULL_ON_DELETE |
+| `gateway` | VARCHAR(255) | NOT NULL |
+| `transaction_id` | VARCHAR(255) | NOT NULL |
+| `gateway_status` | VARCHAR(255) | DEFAULT 'pending', NOT NULL |
+| `amount` | DECIMAL(10,2) | NOT NULL |
+| `currency` | VARCHAR(3) | DEFAULT 'MMK', NOT NULL |
+| `request_data` | JSON | NULL |
+| `response_data` | JSON | NULL |
 | timestamps | — | `created_at`, `updated_at` |
 
 #### `invoices`

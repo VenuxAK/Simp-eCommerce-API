@@ -7,8 +7,14 @@
 
 ## Base URL
 
+Versioned API endpoints:
 ```
-http://localhost:8000/api
+http://localhost:8000/api/v1
+```
+
+Infrastructure health endpoint (un-versioned):
+```
+http://localhost:8000/api/health
 ```
 
 ## Authentication
@@ -33,9 +39,10 @@ X-Store: clothing
 
 ## Rate Limiting
 
-- Login / register endpoints: **10 requests per minute**
-- Checkout endpoint: **10 requests per minute**
-- All other endpoints: **60 requests per minute**
+- Login / register endpoints: **5 requests per minute** (throttled under the `auth` limiter)
+- Checkout endpoint: **10 requests per minute** (throttled under the `checkout` limiter)
+- Storefront catalog endpoints: **120 requests per minute** (throttled under the `storefront` limiter)
+- All other endpoints: **60 requests per minute** (throttled under the `api` limiter)
 
 ## Response Format
 
@@ -201,15 +208,22 @@ All require `Authorization: Bearer <staff-token>` unless marked Public.
 | PUT | `/stores/{id}` | Admin | Update |
 | DELETE | `/stores/{id}` | Admin | Cannot delete default (`main`) store |
 
-### A.16 Backups
+### A.12 Backups
 
-| Method | Endpoint | Role | Notes |
-|--------|----------|------|-------|
-| POST | `/backups` | Admin | Create backup |
-| GET | `/backups` | Admin | List backups |
-| GET | `/backups/{filename}/download` | Admin | Download backup file |
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/backups` | Admin | List created backup files |
+| POST | `/backups` | Admin | Create a new backup archive |
+| GET | `/backups/{filename}` | Admin | Download backup file |
+| DELETE | `/backups/{filename}` | Admin | Delete backup file |
 
-### A.17 Reports & Dashboard
+### A.13 Payment Transactions
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/payment-transactions` | Staff | List and audit payment gateway transactions (paginated) |
+
+### A.14 Reports & Dashboard
 
 | Method | Endpoint | Role | Notes |
 |--------|----------|------|-------|
@@ -218,7 +232,7 @@ All require `Authorization: Bearer <staff-token>` unless marked Public.
 | GET | `/reports/best-sellers` | Staff | Top products by quantity sold |
 | GET | `/reports/payment-methods` | Staff | Sales breakdown by payment type |
 
-### A.18 Audit Logs
+### A.15 Audit Logs
 
 | Method | Endpoint | Role | Notes |
 |--------|----------|------|-------|
