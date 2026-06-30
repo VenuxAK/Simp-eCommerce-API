@@ -476,3 +476,28 @@ php artisan config:show mail
 # Test mail delivery
 php artisan tinker --execute 'Mail::raw("Test", fn($m) => $m->to("test@example.com")->subject("Test"));'
 ```
+
+### 9.6 Queue Job Failures and Recovery
+
+All failed queue jobs are logged to the `failed_jobs` database table. To inspect and recover failed background tasks:
+
+```bash
+# List all failed jobs
+php artisan queue:failed
+
+# Retry a specific failed job by its UUID/ID
+php artisan queue:retry <job-id>
+
+# Retry all failed jobs
+php artisan queue:retry all
+
+# Delete/Forget a specific failed job
+php artisan queue:forget <job-id>
+
+# Flush all failed jobs from the database
+php artisan queue:flush
+```
+
+For production, it is highly recommended to monitor the failed jobs table via a health check probe or third-party monitoring integration.
+
+

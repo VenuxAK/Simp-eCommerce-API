@@ -5,6 +5,7 @@ namespace App\Modules\Inventory\Services;
 use App\Modules\Catalog\Models\ProductVariant;
 use App\Modules\Identity\Models\User;
 use App\Modules\Inventory\Models\StockMovement;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Business logic for Stock operations.
@@ -20,7 +21,7 @@ class StockService
     ): StockMovement {
         $user = request()->user();
 
-        return StockMovement::create([
+        $movement = StockMovement::create([
             'product_variant_id' => $variant->id,
             'quantity_change' => $quantity,
             'reason' => $reason,
@@ -28,5 +29,17 @@ class StockService
             'reference_id' => $referenceId,
             'user_id' => $user instanceof User ? $user->id : null,
         ]);
+
+        Log::info('Stock movement recorded', [
+            'movement_id' => $movement->id,
+            'variant_id' => $variant->id,
+            'sku' => $variant->sku,
+            'quantity_change' => $quantity,
+            'reason' => $reason,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+        ]);
+
+        return $movement;
     }
 }

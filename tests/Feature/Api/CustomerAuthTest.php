@@ -15,6 +15,16 @@ class CustomerAuthTest extends TestCase
 
     private const STORE_SLUG = 'test-store';
 
+    protected function tearDown(): void
+    {
+        if (app()->bound('current_store')) {
+            // Unbind to prevent cross-test pollution
+            app()->offsetUnset('current_store');
+        }
+
+        parent::tearDown();
+    }
+
     // ─── Register ──────────────────────────────────────────────
 
     public function test_customer_can_register(): void
@@ -39,8 +49,9 @@ class CustomerAuthTest extends TestCase
 
     public function test_customer_can_login(): void
     {
-        Store::factory()->create(['slug' => self::STORE_SLUG]);
+        $store = Store::factory()->create(['slug' => self::STORE_SLUG]);
         Customer::factory()->create([
+            'store_id' => $store->id,
             'email' => 'login@test.com',
             'password' => bcrypt('Pass1234'),
         ]);
@@ -57,8 +68,9 @@ class CustomerAuthTest extends TestCase
 
     public function test_customer_cannot_login_with_wrong_password(): void
     {
-        Store::factory()->create(['slug' => self::STORE_SLUG]);
+        $store = Store::factory()->create(['slug' => self::STORE_SLUG]);
         Customer::factory()->create([
+            'store_id' => $store->id,
             'email' => 'wrong@test.com',
             'password' => bcrypt('Pass1234'),
         ]);

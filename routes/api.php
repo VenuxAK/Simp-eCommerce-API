@@ -38,6 +38,7 @@ Route::prefix('v1')->middleware(['locale'])->group(function () {
         require __DIR__.'/modules/system.php';
         require __DIR__.'/modules/audit.php';
         require __DIR__.'/modules/store.php';
+        require __DIR__.'/modules/payment.php';
     });
 
 });

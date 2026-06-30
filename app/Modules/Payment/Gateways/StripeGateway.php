@@ -93,8 +93,14 @@ class StripeGateway implements PaymentGateway
      */
     public function verifyWebhook(string $payload, string $signature): bool
     {
+        $secret = config('services.stripe.webhook_secret');
+
+        if (empty($secret)) {
+            return false;
+        }
+
         try {
-            Webhook::constructEvent($payload, $signature, config('services.stripe.webhook_secret'));
+            Webhook::constructEvent($payload, $signature, $secret);
 
             return true;
         } catch (SignatureVerificationException) {

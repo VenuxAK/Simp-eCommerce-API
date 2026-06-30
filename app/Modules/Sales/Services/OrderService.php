@@ -3,10 +3,10 @@
 namespace App\Modules\Sales\Services;
 
 use App\Modules\Catalog\Repositories\ProductVariantRepository;
-use App\Modules\Core\Helpers\CurrencyFormatter;
 use App\Modules\Core\Enums\OrderSource;
 use App\Modules\Core\Enums\OrderStatus;
 use App\Modules\Core\Enums\StockMovementReason;
+use App\Modules\Core\Helpers\CurrencyFormatter;
 use App\Modules\Inventory\Repositories\StockMovementRepository;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
@@ -17,6 +17,7 @@ use App\Modules\Sales\Repositories\OrderItemRepository;
 use App\Modules\Sales\Repositories\OrderRepository;
 use App\Modules\Sales\Repositories\PaymentRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Business logic for Order operations.
@@ -113,6 +114,14 @@ class OrderService
                 $order->customer->increment('loyalty_points', (int) ($finalAmount / 10));
             }
 
+            Log::info('POS Order created successfully', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'store_id' => $order->store_id,
+                'total_amount' => $order->total_amount,
+                'user_id' => $order->user_id,
+            ]);
+
             return $order;
         });
     }
@@ -159,6 +168,12 @@ class OrderService
             $notes = $order->notes ? $order->notes."\n" : '';
             $notes .= 'Return: '.now()->toDateString().' - '.CurrencyFormatter::format($totalReturn).' returned';
             $order->update(['notes' => $notes]);
+
+            Log::info('Order items returned', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'return_amount' => $totalReturn,
+            ]);
 
             return $order;
         });
@@ -211,6 +226,13 @@ class OrderService
             if ($order->source === OrderSource::Online && $order->customer && in_array($newStatus, ['shipped', 'delivered', 'cancelled'])) {
                 $order->customer->notify(new OrderStatusUpdatedNotification($order, $currentStatus, $newStatus));
             }
+
+            Log::info('Order status transitioned', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'old_status' => $currentStatus,
+                'new_status' => $newStatus,
+            ]);
 
             return $order;
         });

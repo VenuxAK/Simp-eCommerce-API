@@ -5,9 +5,9 @@ namespace App\Modules\ECommerce\Services;
 use App\Modules\Catalog\Repositories\ProductVariantRepository;
 use App\Modules\Customer\Models\Address;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\ECommerce\Notifications\OrderConfirmationNotification;
 use App\Modules\ECommerce\Repositories\CartItemRepository;
 use App\Modules\ECommerce\Repositories\ShipmentRepository;
-use App\Modules\ECommerce\Notifications\OrderConfirmationNotification;
 use App\Modules\Inventory\Services\StockService;
 use App\Modules\Sales\Models\Order;
 use App\Modules\Sales\Models\OrderItem;
@@ -15,6 +15,7 @@ use App\Modules\Sales\Repositories\OrderRepository;
 use App\Modules\Sales\Services\InvoiceNumberGenerator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Orchestrates online order placement.
@@ -104,6 +105,14 @@ class OnlineOrderService
 
             // Dispatch order confirmation notification.
             $customer->notify(new OrderConfirmationNotification($order));
+
+            Log::info('Online Order placed successfully', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'customer_id' => $customer->id,
+                'store_id' => $storeId,
+                'total_amount' => $order->total_amount,
+            ]);
 
             return $order;
         });
