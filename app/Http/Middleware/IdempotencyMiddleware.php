@@ -18,15 +18,23 @@ class IdempotencyMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->isMethodSafe() && $request->hasHeader('Idempotency-Key')) {
-            $key = 'idempotency:' . $request->header('Idempotency-Key');
+            $idempotencyKey = $request->header('Idempotency-Key');
+
+            // Enforce length limit (8-128 chars) and strict alphanumeric/dash/underscore format
+            if (! is_string($idempotencyKey) || ! preg_match('/^[a-zA-Z0-9_-]{8,128}$/', $idempotencyKey)) {
+                return response()->json(['message' => 'Invalid Idempotency-Key format. Must be alphanumeric (plus - and _) between 8 and 128 characters.'], 400);
+            }
+
+            $key = 'idempotency:'.$idempotencyKey;
 
             if (Cache::has($key)) {
                 $cached = Cache::get($key);
+
                 return response($cached['content'], $cached['status'], $cached['headers']);
             }
 
-            $lock = Cache::lock($key . ':lock', 15);
-            
+            $lock = Cache::lock($key.':lock', 15);
+
             if (! $lock->get()) {
                 return response()->json(['message' => 'Concurrent request in progress for this Idempotency-Key.'], 409);
             }

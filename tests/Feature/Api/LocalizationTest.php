@@ -59,6 +59,15 @@ class LocalizationTest extends TestCase
         $this->assertEquals('en', app()->getLocale());
     }
 
+    public function test_invalid_locale_falls_back_to_english(): void
+    {
+        $response = $this->withHeader('Accept-Language', 'fr')
+            ->getJson('/api/v1/storefront/settings', ['X-Store' => 'nonexistent']);
+
+        $response->assertNotFound();
+        $this->assertEquals('en', app()->getLocale());
+    }
+
     public function test_locale_middleware_returns_myanmar_translation(): void
     {
         app()->setLocale('my');

@@ -15,7 +15,7 @@ Route::prefix('v1')->middleware(['locale'])->group(function () {
     });
 
     // ── 2. Storefront — public, scoped by X-Store header ─────────
-    Route::middleware(['store', 'throttle:api', 'timeout'])->prefix('storefront')->group(function () {
+    Route::middleware(['store', 'throttle:storefront', 'timeout'])->prefix('storefront')->group(function () {
         require __DIR__.'/modules/storefront.php';
     });
 

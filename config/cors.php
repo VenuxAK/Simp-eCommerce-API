@@ -13,7 +13,10 @@ if ($allowedOrigins) {
 
 $originPatterns = [];
 
-if (env('CORS_ALLOW_LOCALHOST', true)) {
+// Enforce that localhost is never allowed by default in production environments
+$allowLocalhost = env('CORS_ALLOW_LOCALHOST', env('APP_ENV') !== 'production');
+
+if ($allowLocalhost) {
     $originPatterns[] = '#^http://localhost:\d+$#';
 }
 
