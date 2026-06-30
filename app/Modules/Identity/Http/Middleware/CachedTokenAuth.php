@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Http\Middleware;
 
+use App\Modules\Identity\Models\User;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
@@ -34,21 +35,25 @@ class CachedTokenAuth
 
         $cacheKey = "auth:token:" . hash('sha256', $token);
 
-        $user = Cache::get($cacheKey);
+        $userId = Cache::get($cacheKey);
 
-        if ($user) {
-            Auth::setUser($user);
-        } else {
-            $accessToken = PersonalAccessToken::findToken($token);
-
-            if ($accessToken && (! $accessToken->expires_at || $accessToken->expires_at->isFuture())) {
-                $user = $accessToken->tokenable;
+        if ($userId && is_numeric($userId)) {
+            $user = User::find($userId);
+            if ($user) {
                 Auth::setUser($user);
-                // Cache for 15 minutes to reduce DB load
-                Cache::put($cacheKey, $user, now()->addMinutes(15));
-            } else {
-                throw new AuthenticationException('Unauthenticated.');
+                return $next($request);
             }
+        }
+
+        $accessToken = PersonalAccessToken::findToken($token);
+
+        if ($accessToken && (! $accessToken->expires_at || $accessToken->expires_at->isFuture())) {
+            $user = $accessToken->tokenable;
+            Auth::setUser($user);
+            // Cache the user ID to reduce DB load and avoid model serialization issues
+            Cache::put($cacheKey, $user->id, now()->addMinutes(15));
+        } else {
+            throw new AuthenticationException('Unauthenticated.');
         }
 
         return $next($request);
