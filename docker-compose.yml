@@ -6,7 +6,7 @@ services:
     container_name: simpcommerce-app
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8000:80"
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -15,6 +15,7 @@ services:
       - ADMIN_URL=${ADMIN_URL:-http://localhost:5173}
       - STOREFRONT_URL=${STOREFRONT_URL:-http://localhost:3000}
       - DB_HOST=db
+      - DB_HOST_READ=db
       - DB_PORT=5432
       - DB_DATABASE=${DB_DATABASE:-simp_commerce}
       - DB_USERNAME=${DB_USERNAME:-simpcommerce}
@@ -78,8 +79,6 @@ services:
     image: postgres:16-alpine
     container_name: simpcommerce-db
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_DB=${DB_DATABASE:-simp_commerce}
       - POSTGRES_USER=${DB_USERNAME:-simpcommerce}
@@ -96,8 +95,6 @@ services:
     image: redis:7-alpine
     container_name: simpcommerce-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

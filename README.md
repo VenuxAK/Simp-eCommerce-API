@@ -21,6 +21,23 @@ php artisan storage:link
 php artisan serve   # → http://localhost:8000
 ```
 
+## MVP Deployment (Decoupled Cloud Approach)
+
+SimpCommerce is designed to be deployed using a decoupled architecture for the MVP:
+
+1. **Backend API (VPS with Docker)**
+   The API, PostgreSQL, and Redis should be deployed to a single VPS using Docker Compose.
+   ```bash
+   cp .env.production.example .env
+   # Edit .env with production URLs and secrets
+   docker compose up -d
+   ```
+
+2. **Frontend Apps (Serverless Hosting)**
+   The **Admin Dashboard** and **Storefront** should be deployed to modern serverless platforms like Vercel, Netlify, or Cloudflare Pages.
+   - Set environment variables (`NUXT_API_URL` or `VITE_API_URL`) to point to your VPS domain.
+   - Build commands: `bun run build`.
+
 ## Default Credentials
 
 | Role | Email | Password |
