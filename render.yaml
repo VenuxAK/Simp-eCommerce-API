@@ -1,0 +1,68 @@
+services:
+  # The main Laravel API Web Service
+  - type: web
+    name: simpcommerce-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: simpcommerce-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: simpcommerce-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: simpcommerce-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: simpcommerce-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: simpcommerce-db
+          property: password
+
+  # Background Queue Worker for handling emails/webhooks
+  - type: worker
+    name: simpcommerce-queue
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: "php artisan queue:work --sleep=3 --tries=3"
+    region: oregon
+    plan: starter
+    envVars:
+      # Sync the env variables with the web service
+      - key: APP_ENV
+        value: production
+      # ... you will mirror DB env vars here ...
+
+  # Cron job for Laravel Task Scheduler
+  - type: cron
+    name: simpcommerce-cron
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: "php artisan schedule:run"
+    schedule: "* * * * *"
+    region: oregon
+
+databases:
+  - name: simpcommerce-db
+    databaseName: simpcommerce
+    user: simpcommerce
+    region: oregon
+    plan: starter
