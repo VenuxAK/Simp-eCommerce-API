@@ -9,8 +9,10 @@ RUN apk add --no-cache \
     unzip \
     git \
     oniguruma-dev \
-    $([ "$(php -r 'echo PHP_INT_SIZE;')" = 4 ] && echo "" || echo "icu-dev") \
     icu-dev \
+&& apk add --no-cache --virtual .build-deps \
+    $PHPIZE_DEPS \
+    linux-headers \
 && docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     mbstring \
@@ -18,7 +20,8 @@ RUN apk add --no-cache \
     pcntl \
     bcmath \
 && pecl install redis \
-&& docker-php-ext-enable redis
+&& docker-php-ext-enable redis \
+&& apk del .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -31,7 +34,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
 && chmod -R 775 storage bootstrap/cache
 
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
-COPY docker/supervisor/*.conf /etc/supervisor.d/
+COPY docker/supervisor/*.ini /etc/supervisor.d/
 
 EXPOSE 80
 

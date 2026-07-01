@@ -38,9 +38,15 @@ class StoreController extends Controller
         return new StoreResource($store);
     }
 
-    public function update(UpdateStoreRequest $request, Store $store): StoreResource
+    public function update(UpdateStoreRequest $request, Store $store): JsonResponse|StoreResource
     {
-        $store->update($request->validated());
+        $data = $request->validated();
+        
+        if ($store->slug === 'main' && isset($data['is_active']) && $data['is_active'] === false) {
+            return $this->respondError('The main store cannot be deactivated.', 403);
+        }
+
+        $store->update($data);
 
         return new StoreResource($store);
     }
