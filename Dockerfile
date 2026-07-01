@@ -63,6 +63,15 @@ RUN echo '#!/bin/bash\n\
 php artisan config:cache\n\
 php artisan route:cache\n\
 php artisan view:cache\n\
+\n\
+if [ "$RUN_MIGRATIONS_AND_SEED" = "true" ]; then\n\
+    echo "Running migrations and seeders..."\n\
+    php artisan migrate:fresh --seed --force\n\
+elif [ "$RUN_MIGRATIONS" = "true" ]; then\n\
+    echo "Running migrations..."\n\
+    php artisan migrate --force\n\
+fi\n\
+\n\
 php-fpm -D\n\
 nginx -g "daemon off;"' > /usr/local/bin/start-app.sh
 RUN chmod +x /usr/local/bin/start-app.sh
